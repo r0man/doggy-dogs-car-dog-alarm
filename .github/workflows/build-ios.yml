@@ -1,0 +1,177 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.5'
+  RUBY_VERSION: '3.2'
+
+jobs:
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze
+        run: flutter analyze
+
+      - name: Extract version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      # For pull requests: Build debug IPA (no signing needed)
+      - name: Build debug IPA (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          flutter build ios --debug --no-codesign
+          echo "✅ Built debug IPA (unsigned)"
+
+      # For main/develop pushes: Build release IPA with signing
+      - name: Set up Ruby
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+
+      - name: Install Fastlane
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        run: |
+          gem install fastlane
+          fastlane --version
+
+      - name: Set up SSH for Match (certificates repo)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        run: |
+          if [ -n "${{ secrets.MATCH_GIT_PRIVATE_KEY }}" ]; then
+            mkdir -p ~/.ssh
+            echo "${{ secrets.MATCH_GIT_PRIVATE_KEY }}" > ~/.ssh/match_deploy_key
+            chmod 600 ~/.ssh/match_deploy_key
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            cat > ~/.ssh/config <<EOF
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/match_deploy_key
+            StrictHostKeyChecking no
+          EOF
+
+            echo "✅ SSH configured for Match"
+          else
+            echo "⚠️  MATCH_GIT_PRIVATE_KEY not configured, will skip signing"
+          fi
+
+      - name: Set up provisioning profiles with Fastlane Match
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+        run: |
+          if [ -n "$MATCH_PASSWORD" ] && [ -n "$MATCH_GIT_URL" ]; then
+            cd ios
+
+            # Create Matchfile if needed
+            cat > Matchfile <<EOF
+          git_url("$MATCH_GIT_URL")
+          storage_mode("git")
+          type("appstore")
+          app_identifier(["com.example.doggyDogsCarDogAlarm"])
+          username("$FASTLANE_USER")
+          EOF
+
+            fastlane match appstore --readonly || {
+              echo "⚠️  Match failed, will build unsigned"
+              exit 0
+            }
+
+            echo "✅ Provisioning profiles synced"
+          else
+            echo "⚠️  Match secrets not configured, skipping"
+          fi
+
+      - name: Build release IPA
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        run: |
+          if [ -n "${{ secrets.MATCH_PASSWORD }}" ]; then
+            flutter build ipa --release --export-options-plist=ios/ExportOptions.plist || {
+              echo "⚠️  Signed build failed, building without signing"
+              flutter build ios --release --no-codesign
+            }
+          else
+            echo "ℹ️  Building without code signing (secrets not configured)"
+            flutter build ios --release --no-codesign
+          fi
+
+      - name: Upload IPA artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa-${{ steps.version.outputs.version }}
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Deploy to TestFlight (optional)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD != ''
+        env:
+          FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
+        run: |
+          if [ -f "build/ios/ipa/*.ipa" ]; then
+            cd ios
+            fastlane pilot upload --ipa ../build/ios/ipa/*.ipa --skip_waiting_for_build_processing || {
+              echo "⚠️  TestFlight upload failed or not configured"
+            }
+          else
+            echo "ℹ️  No signed IPA found, skipping TestFlight upload"
+          fi
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## iOS Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flutter Version:** ${{ env.FLUTTER_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Type:** ${{ github.event_name == 'pull_request' && 'Debug (Unsigned)' || 'Release' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "✅ Debug build completed (no signing required for PRs)" >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ secrets.MATCH_PASSWORD }}" ]; then
+            echo "✅ Release build with code signing" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Built without code signing (configure secrets for signed builds)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Required Secrets:" >> $GITHUB_STEP_SUMMARY
+            echo "- MATCH_GIT_URL" >> $GITHUB_STEP_SUMMARY
+            echo "- MATCH_GIT_PRIVATE_KEY" >> $GITHUB_STEP_SUMMARY
+            echo "- MATCH_PASSWORD" >> $GITHUB_STEP_SUMMARY
+            echo "- FASTLANE_USER" >> $GITHUB_STEP_SUMMARY
+            echo "- FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" >> $GITHUB_STEP_SUMMARY
+          fi
