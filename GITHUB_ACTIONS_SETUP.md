@@ -6,10 +6,12 @@ This document provides a comprehensive guide to the GitHub Actions workflows imp
 
 ## Overview
 
-We have implemented two main workflows:
+We have implemented four comprehensive CI/CD workflows:
 
-1. **Test Workflow** (`test.yml`) - Runs on every PR and push
-2. **Android Build Workflow** (`build-android.yml`) - Builds APK/AAB on main/develop
+1. **Test Workflow** (`test.yml`) - Automated testing with coverage enforcement
+2. **Android Build Workflow** (`build-android.yml`) - Android APK/AAB builds
+3. **iOS Build Workflow** (`build-ios.yml`) - iOS IPA builds with Fastlane Match
+4. **Release Workflow** (`release.yml`) - Automated releases with semantic versioning
 
 ---
 
@@ -162,6 +164,8 @@ Both workflows use aggressive caching to speed up builds:
 |----------|-----------|------------|
 | Tests | 5-6 min | 2-3 min |
 | Android Build | 15-20 min | 8-12 min |
+| iOS Build | 25-30 min | 15-20 min |
+| Release (All platforms) | 35-45 min | 20-30 min |
 
 ---
 
@@ -312,9 +316,148 @@ THRESHOLD=80.0
 THRESHOLD=85.0
 ```
 
-### Adding More Platforms
+### Workflow 3: iOS Builds
 
-To add iOS builds, create `.github/workflows/build-ios.yml` following the pattern in `build-android.yml`. See [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md) for iOS setup details.
+**File**: `.github/workflows/build-ios.yml`
+
+See [IOS_SIGNING_SETUP.md](./IOS_SIGNING_SETUP.md) for complete iOS setup documentation.
+
+#### Triggers
+- **Pushes** to `main` or `develop` branches
+- **Pull Requests** to `main`
+- **Manual dispatch**
+
+#### What It Does
+
+**On Pull Requests:**
+- Builds **debug IPA** (unsigned) for testing
+
+**On Push to main/develop:**
+- Sets up Fastlane and Ruby
+- Syncs provisioning profiles with Fastlane Match
+- Builds **signed release IPA**
+- Uploads to TestFlight (optional, main branch only)
+
+#### Setup Requirements
+
+**Required Secrets** (for signed builds):
+
+1. `MATCH_GIT_URL` - SSH URL to certificates repository
+2. `MATCH_GIT_PRIVATE_KEY` - Private SSH key for accessing certificates repo
+3. `MATCH_PASSWORD` - Encryption passphrase for Match
+4. `FASTLANE_USER` - Apple ID email
+5. `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` - App-specific password
+
+See [IOS_SIGNING_SETUP.md](./IOS_SIGNING_SETUP.md) for step-by-step setup.
+
+#### Build Matrix
+
+| Branch | PR | Push |
+|--------|----|----|
+| `main` | Debug IPA | Signed IPA + TestFlight |
+| `develop` | Debug IPA | Signed IPA |
+| Other | Debug IPA | - |
+
+#### macOS Runner Requirements
+
+- iOS builds require macOS runners
+- Free for public repos
+- 2,000 minutes/month for private repos
+- macOS minutes count as 10x Linux minutes
+
+### Workflow 4: Automated Releases
+
+**File**: `.github/workflows/release.yml`
+
+#### Triggers
+- **Tag push** matching `v*.*.*` (e.g., v1.0.0, v2.1.3)
+- **Manual dispatch** with version input
+
+#### What It Does
+
+1. **Creates GitHub Release**
+   - Auto-generates changelog from commits
+   - Categorizes changes (Features, Bug Fixes, Other Changes)
+   - Links to full changelog comparison
+
+2. **Builds Android Artifacts**
+   - Signed APK
+   - Signed AAB (for Play Store)
+   - Uploads to release
+
+3. **Builds iOS Artifact**
+   - Signed IPA (if configured)
+   - Uploads to release
+
+4. **Updates CHANGELOG.md**
+   - Commits updated changelog to main branch
+   - Follows Keep a Changelog format
+
+#### Usage
+
+**Create a release:**
+
+```bash
+# Ensure you're on main and up-to-date
+git checkout main
+git pull
+
+# Create and push version tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# Or using annotated tag with message
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+The workflow will automatically:
+- Build all platforms
+- Create GitHub release
+- Upload artifacts
+- Update CHANGELOG.md
+
+**Manual trigger:**
+
+1. Go to **Actions** tab
+2. Select **Create Release** workflow
+3. Click **Run workflow**
+4. Enter version (e.g., 1.0.0)
+5. Click **Run workflow**
+
+#### Semantic Versioning
+
+Follow [semver.org](https://semver.org/) guidelines:
+
+- **MAJOR** (v2.0.0): Breaking changes
+- **MINOR** (v1.1.0): New features, backwards compatible
+- **PATCH** (v1.0.1): Bug fixes, backwards compatible
+
+**Pre-release versions:**
+- `v1.0.0-alpha.1` - Alpha release
+- `v1.0.0-beta.2` - Beta release
+- `v1.0.0-rc.1` - Release candidate
+
+Pre-releases are marked as "pre-release" on GitHub automatically.
+
+#### Commit Message Conventions
+
+For better changelogs, use conventional commits:
+
+- `feat: add jazz rhythm mini-game` → New Features
+- `fix: resolve sensor detection issue` → Bug Fixes
+- `docs: update README` → Other Changes
+- `chore: update dependencies` → Other Changes
+
+#### Setup Requirements
+
+**No additional secrets required!**
+
+The release workflow uses existing Android and iOS secrets. If signing is not configured, it will build unsigned artifacts.
+
+**Optional:**
+- Configure Android signing for signed APK/AAB
+- Configure iOS signing for signed IPA
 
 ### Parallel Builds
 
@@ -346,6 +489,8 @@ Add to your README.md:
 
 ![Tests](https://github.com/yourusername/doggy-dogs-car-dog-alarm/workflows/Flutter%20Tests/badge.svg)
 ![Android Build](https://github.com/yourusername/doggy-dogs-car-dog-alarm/workflows/Build%20Android/badge.svg)
+![iOS Build](https://github.com/yourusername/doggy-dogs-car-dog-alarm/workflows/Build%20iOS/badge.svg)
+![Release](https://github.com/yourusername/doggy-dogs-car-dog-alarm/workflows/Create%20Release/badge.svg)
 [![codecov](https://codecov.io/gh/yourusername/doggy-dogs-car-dog-alarm/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/doggy-dogs-car-dog-alarm)
 ```
 
@@ -441,23 +586,36 @@ permissions:
 
 ## Next Steps
 
-1. ✅ Workflows are set up
-2. [ ] Configure Android signing secrets
-3. [ ] Test workflow on a PR
-4. [ ] Set up branch protection rules
-5. [ ] Add status badges to README
-6. [ ] Configure Codecov (optional)
-7. [ ] Document team workflow
+1. ✅ Workflows are set up (test, Android, iOS, release)
+2. [ ] Configure Android signing secrets (see ANDROID_SIGNING_SETUP.md)
+3. [ ] Configure iOS signing with Fastlane Match (see IOS_SIGNING_SETUP.md)
+4. [ ] Test workflows on a PR
+5. [ ] Set up branch protection rules
+6. [ ] Add status badges to README
+7. [ ] Configure Codecov (optional)
+8. [ ] Create first release (git tag v0.1.0)
+9. [ ] Document team workflow
 
 ---
 
 ## Resources
 
+**Official Documentation:**
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Flutter CI/CD Guide](https://docs.flutter.dev/deployment/cd)
+- [Fastlane Documentation](https://docs.fastlane.tools/)
+- [Fastlane Match](https://docs.fastlane.tools/actions/match/)
+
+**GitHub Actions:**
 - [subosito/flutter-action](https://github.com/subosito/flutter-action)
-- [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md) - Full strategy document
-- [ANDROID_SIGNING_SETUP.md](./ANDROID_SIGNING_SETUP.md) - Signing setup
+- [ruby/setup-ruby](https://github.com/ruby/setup-ruby)
+- [actions/create-release](https://github.com/actions/create-release)
+
+**Project Documentation:**
+- [CI_CD_STRATEGY.md](./CI_CD_STRATEGY.md) - Complete CI/CD strategy and architecture
+- [ANDROID_SIGNING_SETUP.md](./ANDROID_SIGNING_SETUP.md) - Android keystore and signing
+- [IOS_SIGNING_SETUP.md](./IOS_SIGNING_SETUP.md) - iOS signing with Fastlane Match
+- [GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md) - This document
 
 ---
 
