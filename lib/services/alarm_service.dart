@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_state.dart';
 import '../models/sensor_data.dart';
 import '../models/dog.dart';
+import '../providers/dog_provider.dart';
 import 'sensor_detection_service.dart';
 import 'bark_audio_service.dart';
 
@@ -176,17 +177,34 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
     sensorDetectionServiceProvider(sensitivity),
   );
 
-  // TODO: Get actual dog from dog provider
-  final now = DateTime.now();
-  final guardDog = Dog(
-    id: 'temp',
-    name: 'Guard',
-    breed: DogBreed.germanShepherd,
-    stats: const DogStats(hunger: 80, happiness: 80, energy: 80, loyalty: 80),
-    personality: const DogPersonality(protective: true, brave: true),
-    createdAt: now,
-    lastInteraction: now,
-  );
+  // Get current dog from dog provider
+  final guardDog = ref.watch(dogProvider);
+
+  // If no dog yet, create temporary placeholder
+  if (guardDog == null) {
+    final now = DateTime.now();
+    final tempDog = Dog(
+      id: 'temp',
+      name: 'Guard',
+      breed: DogBreed.germanShepherd,
+      stats: const DogStats(hunger: 80, happiness: 80, energy: 80, loyalty: 80),
+      personality: const DogPersonality(protective: true, brave: true),
+      createdAt: now,
+      lastInteraction: now,
+    );
+
+    final barkService = ref.watch(barkAudioServiceProvider(tempDog));
+
+    final service = AlarmService(
+      sensorService: sensorService,
+      barkService: barkService,
+      guardDog: tempDog,
+    );
+
+    ref.onDispose(() => service.dispose());
+
+    return service;
+  }
 
   final barkService = ref.watch(barkAudioServiceProvider(guardDog));
 
