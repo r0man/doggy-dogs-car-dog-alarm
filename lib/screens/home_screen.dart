@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'alarm_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -144,11 +145,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // Main Action Button - Alarm
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to alarm activation screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('🚨 Alarm activation coming soon!'),
-                      backgroundColor: Colors.red,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AlarmScreen(),
                     ),
                   );
                 },
