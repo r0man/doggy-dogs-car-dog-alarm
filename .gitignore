@@ -80,5 +80,9 @@ android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 # Web related
 lib/generated_plugin_registrant.dart
 
+# GitHub Actions workflows (managed separately due to GitHub App permissions)
+# See workflows-to-install/ for workflow files
+.github/
+
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
