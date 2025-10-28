@@ -6,11 +6,17 @@ import '../models/dog.dart';
 import '../providers/dog_provider.dart';
 import 'sensor_detection_service.dart';
 import 'bark_audio_service.dart';
+import 'background_monitoring_service.dart';
+import 'notification_service.dart';
+import 'alarm_persistence_service.dart';
 
 /// Service for managing the car alarm system
 class AlarmService {
   final SensorDetectionService sensorService;
   final BarkAudioService barkService;
+  final BackgroundMonitoringService backgroundService;
+  final NotificationService notificationService;
+  final AlarmPersistenceService persistenceService;
   final Dog guardDog;
 
   StreamSubscription<MotionEvent>? _motionSubscription;
@@ -27,6 +33,9 @@ class AlarmService {
   AlarmService({
     required this.sensorService,
     required this.barkService,
+    required this.backgroundService,
+    required this.notificationService,
+    required this.persistenceService,
     required this.guardDog,
   });
 
@@ -44,8 +53,20 @@ class AlarmService {
     _currentState = _currentState.activate(mode);
     _alarmStateController.add(_currentState);
 
+    // Persist state
+    await persistenceService.saveAlarmState(_currentState);
+
     // Start monitoring sensors
     await sensorService.startMonitoring();
+
+    // Start background monitoring
+    await backgroundService.startMonitoring(mode: mode);
+
+    // Show activation notification
+    await notificationService.showAlarmActivated(
+      mode: mode,
+      dogName: guardDog.name,
+    );
 
     // Subscribe to motion events
     _motionSubscription = sensorService.motionEvents.listen(
@@ -67,9 +88,18 @@ class AlarmService {
     _currentState = _currentState.deactivate();
     _alarmStateController.add(_currentState);
 
+    // Clear persisted state
+    await persistenceService.clearAlarmState();
+
     // Stop monitoring sensors
     await _motionSubscription?.cancel();
     await sensorService.stopMonitoring();
+
+    // Stop background monitoring
+    await backgroundService.stopMonitoring();
+
+    // Show deactivation notification
+    await notificationService.showAlarmDeactivated(dogName: guardDog.name);
 
     // Clear verification data
     _recentMotions.clear();
@@ -149,11 +179,20 @@ class AlarmService {
     _currentState = _currentState.trigger();
     _alarmStateController.add(_currentState);
 
+    // Persist triggered state
+    persistenceService.saveAlarmState(_currentState);
+
     // Start barking with current mode
     barkService.startBarking(_currentState.mode);
 
-    // TODO: Send notification
-    // TODO: Log event
+    // Send notification
+    notificationService.showAlarmTriggered(
+      motionType: event.type,
+      intensity: event.intensity,
+      dogName: guardDog.name,
+    );
+
+    // TODO: Log event to database for history
   }
 
   /// Recalibrate sensors (e.g., after car parks in new location)
@@ -176,6 +215,9 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
   final sensorService = ref.watch(
     sensorDetectionServiceProvider(sensitivity),
   );
+  final backgroundService = ref.watch(backgroundMonitoringServiceProvider);
+  final notificationService = ref.watch(notificationServiceProvider);
+  final persistenceService = ref.watch(alarmPersistenceServiceProvider);
 
   // Get current dog from dog provider
   final guardDog = ref.watch(dogProvider);
@@ -198,6 +240,9 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
     final service = AlarmService(
       sensorService: sensorService,
       barkService: barkService,
+      backgroundService: backgroundService,
+      notificationService: notificationService,
+      persistenceService: persistenceService,
       guardDog: tempDog,
     );
 
@@ -211,6 +256,9 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
   final service = AlarmService(
     sensorService: sensorService,
     barkService: barkService,
+    backgroundService: backgroundService,
+    notificationService: notificationService,
+    persistenceService: persistenceService,
     guardDog: guardDog,
   );
 
