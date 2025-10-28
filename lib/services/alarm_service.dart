@@ -4,10 +4,12 @@ import '../models/alarm_state.dart';
 import '../models/sensor_data.dart';
 import '../models/dog.dart';
 import 'sensor_detection_service.dart';
+import 'bark_audio_service.dart';
 
 /// Service for managing the car alarm system
 class AlarmService {
   final SensorDetectionService sensorService;
+  final BarkAudioService barkService;
   final Dog guardDog;
 
   StreamSubscription<MotionEvent>? _motionSubscription;
@@ -23,6 +25,7 @@ class AlarmService {
 
   AlarmService({
     required this.sensorService,
+    required this.barkService,
     required this.guardDog,
   });
 
@@ -56,6 +59,9 @@ class AlarmService {
   Future<void> deactivate() async {
     if (!_currentState.isActive) return;
 
+    // Stop barking if active
+    await barkService.stopBarking();
+
     // Update state
     _currentState = _currentState.deactivate();
     _alarmStateController.add(_currentState);
@@ -70,8 +76,11 @@ class AlarmService {
   }
 
   /// Acknowledge and silence a triggered alarm
-  void acknowledge() {
+  Future<void> acknowledge() async {
     if (!_currentState.isTriggered) return;
+
+    // Stop barking
+    await barkService.stopBarking();
 
     _currentState = _currentState.acknowledge();
     _alarmStateController.add(_currentState);
@@ -139,7 +148,9 @@ class AlarmService {
     _currentState = _currentState.trigger();
     _alarmStateController.add(_currentState);
 
-    // TODO: Trigger bark sound system
+    // Start barking with current mode
+    barkService.startBarking(_currentState.mode);
+
     // TODO: Send notification
     // TODO: Log event
   }
@@ -177,8 +188,11 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
     lastInteraction: now,
   );
 
+  final barkService = ref.watch(barkAudioServiceProvider(guardDog));
+
   final service = AlarmService(
     sensorService: sensorService,
+    barkService: barkService,
     guardDog: guardDog,
   );
 
