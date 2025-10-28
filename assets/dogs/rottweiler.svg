@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Rottweiler in Japanese Manga Style -->
+
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="180" fill="#e8d5c4" opacity="0.3"/>
+
+  <!-- Body -->
+  <ellipse cx="200" cy="285" rx="95" ry="80" fill="#1a1a1a"/>
+  <ellipse cx="200" cy="285" rx="75" ry="65" fill="#2d2d2d"/>
+
+  <!-- Legs (stocky) -->
+  <rect x="160" y="335" width="30" height="50" rx="15" fill="#1a1a1a"/>
+  <rect x="210" y="335" width="30" height="50" rx="15" fill="#1a1a1a"/>
+  <rect x="165" y="360" width="20" height="15" fill="#b8865d"/>
+  <rect x="215" y="360" width="20" height="15" fill="#b8865d"/>
+
+  <!-- Chest marking (tan) -->
+  <ellipse cx="200" cy="260" rx="40" ry="30" fill="#b8865d"/>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="180" rx="90" ry="95" fill="#1a1a1a"/>
+
+  <!-- Ears (floppy) -->
+  <ellipse cx="135" cy="160" rx="28" ry="45" fill="#1a1a1a" transform="rotate(-20 135 160)"/>
+  <ellipse cx="265" cy="160" rx="28" ry="45" fill="#1a1a1a" transform="rotate(20 265 160)"/>
+  <ellipse cx="135" cy="165" rx="18" ry="30" fill="#2d2d2d" transform="rotate(-20 135 165)"/>
+  <ellipse cx="265" cy="165" rx="18" ry="30" fill="#2d2d2d" transform="rotate(20 265 165)"/>
+
+  <!-- Face markings (tan) -->
+  <!-- Eyebrow spots -->
+  <ellipse cx="165" cy="155" rx="22" ry="18" fill="#b8865d"/>
+  <ellipse cx="235" cy="155" rx="22" ry="18" fill="#b8865d"/>
+
+  <!-- Cheek spots -->
+  <ellipse cx="145" cy="195" rx="25" ry="20" fill="#b8865d"/>
+  <ellipse cx="255" cy="195" rx="25" ry="20" fill="#b8865d"/>
+
+  <!-- Snout -->
+  <ellipse cx="200" cy="210" rx="50" ry="40" fill="#2d2d2d"/>
+  <ellipse cx="200" cy="220" rx="38" ry="28" fill="#1a1a1a"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="220" rx="20" ry="16" fill="#0a0a0a"/>
+  <ellipse cx="194" cy="215" rx="6" ry="5" fill="#ffffff" opacity="0.5"/>
+
+  <!-- Mouth -->
+  <path d="M 200 228 Q 188 236 182 232" stroke="#0a0a0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 200 228 Q 212 236 218 232" stroke="#0a0a0a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Eyes (Big Manga Style - determined look) -->
+  <ellipse cx="165" cy="168" rx="24" ry="30" fill="#ffffff"/>
+  <ellipse cx="235" cy="168" rx="24" ry="30" fill="#ffffff"/>
+
+  <!-- Iris -->
+  <ellipse cx="167" cy="173" rx="18" ry="23" fill="#4a2f1a"/>
+  <ellipse cx="237" cy="173" rx="18" ry="23" fill="#4a2f1a"/>
+
+  <!-- Pupils -->
+  <ellipse cx="169" cy="176" rx="11" ry="15" fill="#000000"/>
+  <ellipse cx="239" cy="176" rx="11" ry="15" fill="#000000"/>
+
+  <!-- Eye shine (manga highlight) -->
+  <ellipse cx="163" cy="165" rx="7" ry="9" fill="#ffffff"/>
+  <ellipse cx="233" cy="165" rx="7" ry="9" fill="#ffffff"/>
+  <circle cx="171" cy="180" r="3.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="241" cy="180" r="3.5" fill="#ffffff" opacity="0.8"/>
+
+  <!-- Eyebrows (strong, protective look) -->
+  <path d="M 142 148 Q 155 143 172 147" stroke="#0a0a0a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 258 148 Q 245 143 228 147" stroke="#0a0a0a" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Tail (short) -->
+  <ellipse cx="145" cy="305" rx="18" ry="25" fill="#1a1a1a"/>
+
+  <!-- Muzzle marking detail -->
+  <circle cx="180" cy="205" r="3" fill="#b8865d"/>
+  <circle cx="220" cy="205" r="3" fill="#b8865d"/>
+</svg>

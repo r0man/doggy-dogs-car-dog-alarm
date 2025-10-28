@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Bulldog in Japanese Manga Style -->
+
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="180" fill="#f0e8db" opacity="0.3"/>
+
+  <!-- Body (stocky, wide) -->
+  <ellipse cx="200" cy="295" rx="100" ry="75" fill="#f5f5f0"/>
+  <ellipse cx="200" cy="295" rx="80" ry="60" fill="#ffffff"/>
+
+  <!-- Legs (short, stocky) -->
+  <rect x="160" y="345" width="32" height="40" rx="16" fill="#f5f5f0"/>
+  <rect x="208" y="345" width="32" height="40" rx="16" fill="#f5f5f0"/>
+  <ellipse cx="176" cy="380" rx="18" ry="10" fill="#e8d5c4"/>
+  <ellipse cx="224" cy="380" rx="18" ry="10" fill="#e8d5c4"/>
+
+  <!-- Chest wrinkles -->
+  <path d="M 170 280 Q 200 285 230 280" stroke="#d4c4b8" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M 175 290 Q 200 295 225 290" stroke="#d4c4b8" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- Head (large and round) -->
+  <ellipse cx="200" cy="190" rx="95" ry="85" fill="#f5f5f0"/>
+  <circle cx="200" cy="190" r="88" fill="#ffffff"/>
+
+  <!-- Ears (small, folded) -->
+  <ellipse cx="130" cy="175" rx="25" ry="30" fill="#e8d5c4" transform="rotate(-30 130 175)"/>
+  <ellipse cx="270" cy="175" rx="25" ry="30" fill="#e8d5c4" transform="rotate(30 270 175)"/>
+  <ellipse cx="132" cy="180" rx="18" ry="22" fill="#f5d5c4" transform="rotate(-30 132 180)"/>
+  <ellipse cx="268" cy="180" rx="18" ry="22" fill="#f5d5c4" transform="rotate(30 268 180)"/>
+
+  <!-- Face wrinkles -->
+  <path d="M 140 165 Q 150 170 160 165" stroke="#d4c4b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 260 165 Q 250 170 240 165" stroke="#d4c4b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 155 200 Q 165 205 175 200" stroke="#d4c4b8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 245 200 Q 235 205 225 200" stroke="#d4c4b8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Jowls -->
+  <ellipse cx="145" cy="220" rx="30" ry="25" fill="#f5f5f0"/>
+  <ellipse cx="255" cy="220" rx="30" ry="25" fill="#f5f5f0"/>
+
+  <!-- Snout (flat, wide) -->
+  <ellipse cx="200" cy="210" rx="50" ry="35" fill="#e8d5c4"/>
+  <rect x="175" y="205" width="50" height="25" fill="#d4c4b8"/>
+
+  <!-- Nose (flat) -->
+  <ellipse cx="200" cy="215" rx="22" ry="18" fill="#3d3d3d"/>
+  <ellipse cx="200" cy="212" rx="20" ry="15" fill="#2d2d2d"/>
+  <ellipse cx="193" cy="209" rx="5" ry="4" fill="#ffffff" opacity="0.4"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="190" cy="215" rx="5" ry="6" fill="#1a1a1a"/>
+  <ellipse cx="210" cy="215" rx="5" ry="6" fill="#1a1a1a"/>
+
+  <!-- Mouth (grumpy but cute) -->
+  <path d="M 200 225 L 200 235" stroke="#2d2d2d" stroke-width="2.5" fill="none"/>
+  <path d="M 170 232 Q 200 238 230 232" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Underbite -->
+  <rect x="185" y="235" width="10" height="8" rx="2" fill="#ffffff"/>
+  <rect x="205" y="235" width="10" height="8" rx="2" fill="#ffffff"/>
+
+  <!-- Eyes (Big Manga Style - grumpy look) -->
+  <ellipse cx="165" cy="180" rx="26" ry="30" fill="#ffffff"/>
+  <ellipse cx="235" cy="180" rx="26" ry="30" fill="#ffffff"/>
+
+  <!-- Iris -->
+  <ellipse cx="167" cy="185" rx="18" ry="22" fill="#6b5d4f"/>
+  <ellipse cx="237" cy="185" rx="18" ry="22" fill="#6b5d4f"/>
+
+  <!-- Pupils -->
+  <ellipse cx="169" cy="188" rx="11" ry="14" fill="#000000"/>
+  <ellipse cx="239" cy="188" rx="11" ry="14" fill="#000000"/>
+
+  <!-- Eye shine (manga highlight) -->
+  <ellipse cx="162" cy="176" rx="7" ry="9" fill="#ffffff"/>
+  <ellipse cx="232" cy="176" rx="7" ry="9" fill="#ffffff"/>
+  <circle cx="171" cy="192" r="3.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="241" cy="192" r="3.5" fill="#ffffff" opacity="0.8"/>
+
+  <!-- Eyebrows (grumpy) -->
+  <path d="M 140 165 Q 152 160 170 164" stroke="#b8a89d" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 260 165 Q 248 160 230 164" stroke="#b8a89d" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Wrinkle over nose -->
+  <path d="M 180 195 Q 200 190 220 195" stroke="#d4c4b8" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Tail (short, curly) -->
+  <circle cx="145" cy="310" r="12" fill="#f5f5f0"/>
+
+  <!-- Spots (optional brindle pattern) -->
+  <ellipse cx="220" cy="180" rx="15" ry="12" fill="#c4b4a8" opacity="0.3"/>
+  <ellipse cx="155" cy="295" rx="20" ry="15" fill="#c4b4a8" opacity="0.3"/>
+
+  <!-- Cute sweat drop (manga style for emphasis) -->
+  <path d="M 270 160 Q 272 168 268 172 Q 266 170 268 165 Z" fill="#6db8ff" opacity="0.7"/>
+</svg>

@@ -98,14 +98,23 @@ flutter run
 ## Customization Options
 
 ### Available Dog Breeds
-- German Shepherd
-- Rottweiler
-- Doberman
-- Bulldog
-- Pitbull
-- Husky
-- Beagle
-- And many more!
+
+All breeds feature custom Japanese manga-style artwork (SVG format):
+
+- **German Shepherd** - Loyal and alert with characteristic tan and black coloring
+- **Rottweiler** - Strong protector with distinctive markings
+- **Doberman** - Sleek and elegant with alert expression
+- **Bulldog** - Stocky and determined with adorable wrinkles
+- **Pitbull** - Muscular and friendly with a big smile
+- **Husky** - Striking blue eyes and fluffy appearance
+- **Beagle** - Sweet and curious with tri-color coat
+- And many more coming soon!
+
+All artwork is located in `assets/dogs/` and features:
+- Large expressive manga-style eyes
+- Characteristic breed features
+- Vibrant, scalable SVG format
+- Optimized for mobile displays
 
 ### Bark Styles
 - Single warning bark
@@ -174,8 +183,8 @@ For issues, questions, or suggestions:
 
 ## Acknowledgments
 
+- Custom Japanese manga-style dog artwork created in SVG format
 - Dog bark sound effects from [source]
-- Icon designs by [designer]
 - Inspired by the need for creative, accessible car security solutions
 
 ---

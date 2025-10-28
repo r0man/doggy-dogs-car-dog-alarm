@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Beagle in Japanese Manga Style -->
+
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="180" fill="#fff5e6" opacity="0.3"/>
+
+  <!-- Body -->
+  <ellipse cx="200" cy="290" rx="88" ry="72" fill="#8b6f47"/>
+  <ellipse cx="200" cy="290" rx="68" ry="57" fill="#a0824f"/>
+
+  <!-- White belly/chest -->
+  <ellipse cx="200" cy="275" rx="45" ry="38" fill="#ffffff"/>
+
+  <!-- Legs -->
+  <rect x="168" y="340" width="24" height="50" rx="12" fill="#a0824f"/>
+  <rect x="208" y="340" width="24" height="50" rx="12" fill="#a0824f"/>
+  <rect x="170" y="370" width="20" height="20" fill="#ffffff"/>
+  <rect x="210" y="370" width="20" height="20" fill="#ffffff"/>
+
+  <!-- Back saddle (darker) -->
+  <ellipse cx="200" cy="285" rx="50" ry="40" fill="#4a3621" opacity="0.6"/>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="185" rx="82" ry="85" fill="#a0824f"/>
+
+  <!-- White face -->
+  <ellipse cx="200" cy="195" rx="70" ry="68" fill="#ffffff"/>
+
+  <!-- Ears (long and floppy - iconic Beagle feature!) -->
+  <ellipse cx="125" cy="190" rx="32" ry="60" fill="#8b6f47" transform="rotate(-25 125 190)"/>
+  <ellipse cx="275" cy="190" rx="32" ry="60" fill="#8b6f47" transform="rotate(25 275 190)"/>
+  <ellipse cx="125" cy="195" rx="22" ry="48" fill="#a0824f" transform="rotate(-25 125 195)"/>
+  <ellipse cx="275" cy="195" rx="22" ry="48" fill="#a0824f" transform="rotate(25 275 195)"/>
+
+  <!-- Brown patches around eyes (Beagle marking) -->
+  <ellipse cx="162" cy="168" rx="32" ry="35" fill="#8b6f47"/>
+  <ellipse cx="238" cy="168" rx="32" ry="35" fill="#8b6f47"/>
+
+  <!-- Brown forehead spot -->
+  <ellipse cx="200" cy="145" rx="25" ry="28" fill="#a0824f"/>
+
+  <!-- Snout -->
+  <ellipse cx="200" cy="210" rx="45" ry="35" fill="#d4c4b8"/>
+  <ellipse cx="200" cy="218" rx="32" ry="25" fill="#e8d5c4"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="218" rx="17" ry="14" fill="#2d2d2d"/>
+  <ellipse cx="195" cy="214" rx="5" ry="4" fill="#ffffff" opacity="0.5"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="193" cy="219" rx="4" ry="5" fill="#1a1a1a"/>
+  <ellipse cx="207" cy="219" rx="4" ry="5" fill="#1a1a1a"/>
+
+  <!-- Mouth (sweet smile) -->
+  <path d="M 200 225 L 200 232" stroke="#2d2d2d" stroke-width="2" fill="none"/>
+  <path d="M 178 232 Q 200 240 222 232" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Eyes (Big Manga Style - sweet, curious) -->
+  <ellipse cx="162" cy="175" rx="24" ry="30" fill="#ffffff"/>
+  <ellipse cx="238" cy="175" rx="24" ry="30" fill="#ffffff"/>
+
+  <!-- Iris (warm brown) -->
+  <ellipse cx="164" cy="180" rx="17" ry="23" fill="#5c4033"/>
+  <ellipse cx="240" cy="180" rx="17" ry="23" fill="#5c4033"/>
+
+  <!-- Pupils -->
+  <ellipse cx="166" cy="183" rx="10" ry="14" fill="#000000"/>
+  <ellipse cx="242" cy="183" rx="10" ry="14" fill="#000000"/>
+
+  <!-- Eye shine (manga highlight) -->
+  <ellipse cx="159" cy="170" rx="7" ry="9" fill="#ffffff"/>
+  <ellipse cx="235" cy="170" rx="7" ry="9" fill="#ffffff"/>
+  <circle cx="168" cy="187" r="3.5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="244" cy="187" r="3.5" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Eyebrows (curious, gentle) -->
+  <path d="M 140 162 Q 152 158 168 162" stroke="#6d5a47" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 260 162 Q 248 158 232 162" stroke="#6d5a47" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Tail (up, white tip) -->
+  <path d="M 150 305 Q 135 290 130 265 Q 128 250 135 255 Q 140 270 148 290 Q 152 300 150 305 Z" fill="#4a3621"/>
+  <ellipse cx="132" cy="258" rx="10" ry="15" fill="#ffffff"/>
+
+  <!-- Cute cheek marks -->
+  <circle cx="130" cy="205" r="8" fill="#ffb3ba" opacity="0.5"/>
+  <circle cx="270" cy="205" r="8" fill="#ffb3ba" opacity="0.5"/>
+
+  <!-- White chest details -->
+  <path d="M 185 265 Q 200 270 215 265" stroke="#f5f5f5" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- Black back stripe -->
+  <ellipse cx="200" cy="280" rx="35" ry="25" fill="#2d2d2d" opacity="0.5"/>
+
+  <!-- Collar (optional cute detail) -->
+  <rect x="175" y="248" width="50" height="8" rx="4" fill="#ff6b6b"/>
+  <circle cx="200" cy="252" r="5" fill="#ffd700"/>
+
+  <!-- Musical note (beagles are vocal!) -->
+  <circle cx="285" cy="170" r="6" fill="#4a9eff" opacity="0.7"/>
+  <rect x="290" y="160" width="3" height="16" fill="#4a9eff" opacity="0.7"/>
+  <circle cx="297" cy="158" r="5" fill="#4a9eff" opacity="0.7"/>
+</svg>

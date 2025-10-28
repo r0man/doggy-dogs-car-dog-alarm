@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Pitbull in Japanese Manga Style -->
+
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="180" fill="#f5e0c3" opacity="0.3"/>
+
+  <!-- Body (muscular) -->
+  <ellipse cx="200" cy="290" rx="92" ry="75" fill="#b8865d"/>
+  <ellipse cx="200" cy="290" rx="72" ry="60" fill="#c9956b"/>
+
+  <!-- Chest (white) -->
+  <ellipse cx="200" cy="265" rx="50" ry="40" fill="#ffffff"/>
+  <ellipse cx="200" cy="285" rx="40" ry="35" fill="#f5f5f5"/>
+
+  <!-- Legs (muscular) -->
+  <rect x="165" y="340" width="28" height="50" rx="14" fill="#b8865d"/>
+  <rect x="207" y="340" width="28" height="50" rx="14" fill="#b8865d"/>
+  <ellipse cx="179" cy="385" rx="16" ry="10" fill="#8b6f47"/>
+  <ellipse cx="221" cy="385" rx="16" ry="10" fill="#8b6f47"/>
+
+  <!-- Shoulder muscles -->
+  <circle cx="160" cy="275" r="25" fill="#b8865d" opacity="0.6"/>
+  <circle cx="240" cy="275" r="25" fill="#b8865d" opacity="0.6"/>
+
+  <!-- Head (broad) -->
+  <ellipse cx="200" cy="185" rx="88" ry="90" fill="#c9956b"/>
+
+  <!-- Ears (floppy at tip) -->
+  <path d="M 140 165 Q 125 145 120 125 Q 118 130 125 140 Q 135 155 145 165 Z" fill="#b8865d"/>
+  <path d="M 260 165 Q 275 145 280 125 Q 282 130 275 140 Q 265 155 255 165 Z" fill="#b8865d"/>
+  <ellipse cx="128" cy="140" rx="12" ry="18" fill="#d4a574" transform="rotate(-15 128 140)"/>
+  <ellipse cx="272" cy="140" rx="12" ry="18" fill="#d4a574" transform="rotate(15 272 140)"/>
+
+  <!-- Cheeks/Jowls -->
+  <ellipse cx="150" cy="210" rx="28" ry="25" fill="#c9956b"/>
+  <ellipse cx="250" cy="210" rx="28" ry="25" fill="#c9956b"/>
+
+  <!-- Snout (broad, strong) -->
+  <ellipse cx="200" cy="215" rx="55" ry="42" fill="#d4a574"/>
+  <ellipse cx="200" cy="220" rx="45" ry="35" fill="#c9956b"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="220" rx="20" ry="17" fill="#3d3d3d"/>
+  <ellipse cx="194" cy="215" rx="6" ry="5" fill="#ffffff" opacity="0.5"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="192" cy="221" rx="5" ry="6" fill="#1a1a1a"/>
+  <ellipse cx="208" cy="221" rx="5" ry="6" fill="#1a1a1a"/>
+
+  <!-- Mouth (big smile!) -->
+  <path d="M 200 230 L 200 238" stroke="#2d2d2d" stroke-width="2.5" fill="none"/>
+  <path d="M 165 238 Q 200 252 235 238" stroke="#2d2d2d" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Tongue (happy) -->
+  <ellipse cx="200" cy="245" rx="18" ry="12" fill="#ff8fb3"/>
+  <path d="M 200 240 L 200 250" stroke="#e67a9e" stroke-width="1.5"/>
+
+  <!-- Eyes (Big Manga Style - happy, friendly) -->
+  <ellipse cx="168" cy="180" rx="25" ry="32" fill="#ffffff"/>
+  <ellipse cx="232" cy="180" rx="25" ry="32" fill="#ffffff"/>
+
+  <!-- Iris -->
+  <ellipse cx="170" cy="185" rx="18" ry="24" fill="#4a3621"/>
+  <ellipse cx="234" cy="185" rx="18" ry="24" fill="#4a3621"/>
+
+  <!-- Pupils -->
+  <ellipse cx="172" cy="188" rx="11" ry="15" fill="#000000"/>
+  <ellipse cx="236" cy="188" rx="11" ry="15" fill="#000000"/>
+
+  <!-- Eye shine (manga highlight - extra sparkly for happy) -->
+  <ellipse cx="165" cy="174" rx="8" ry="10" fill="#ffffff"/>
+  <ellipse cx="229" cy="174" rx="8" ry="10" fill="#ffffff"/>
+  <circle cx="174" cy="192" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="238" cy="192" r="4" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Happy eye shape -->
+  <path d="M 145 175 Q 168 172 188 177" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M 255 175 Q 232 172 212 177" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Eyebrows (friendly, raised) -->
+  <path d="M 145 165 Q 158 158 175 162" stroke="#8b6f47" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M 255 165 Q 242 158 225 162" stroke="#8b6f47" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Tail (wagging position) -->
+  <path d="M 148 305 Q 125 315 115 340 Q 112 348 120 350 Q 130 335 145 320" fill="#b8865d"/>
+
+  <!-- White chest marking details -->
+  <path d="M 185 260 Q 200 265 215 260" stroke="#e8e8e8" stroke-width="2" fill="none" opacity="0.5"/>
+
+  <!-- Happy marks (anime style) -->
+  <circle cx="280" cy="200" r="4" fill="#ff8fb3" opacity="0.7"/>
+  <circle cx="295" cy="195" r="3" fill="#ff8fb3" opacity="0.5"/>
+  <circle cx="120" cy="200" r="4" fill="#ff8fb3" opacity="0.7"/>
+  <circle cx="105" cy="195" r="3" fill="#ff8fb3" opacity="0.5"/>
+</svg>

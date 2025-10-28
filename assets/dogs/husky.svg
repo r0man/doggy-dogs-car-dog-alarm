@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Husky in Japanese Manga Style -->
+
+  <!-- Background Circle -->
+  <circle cx="200" cy="200" r="180" fill="#e0f0ff" opacity="0.3"/>
+
+  <!-- Body (fluffy) -->
+  <ellipse cx="200" cy="290" rx="95" ry="78" fill="#6d7a8c"/>
+  <ellipse cx="200" cy="290" rx="75" ry="62" fill="#8b99ac"/>
+
+  <!-- White belly -->
+  <ellipse cx="200" cy="285" rx="50" ry="45" fill="#ffffff"/>
+
+  <!-- Legs -->
+  <rect x="165" y="340" width="26" height="50" rx="13" fill="#6d7a8c"/>
+  <rect x="209" y="340" width="26" height="50" rx="13" fill="#6d7a8c"/>
+  <rect x="167" y="365" width="22" height="25" fill="#ffffff"/>
+  <rect x="211" y="365" width="22" height="25" fill="#ffffff"/>
+
+  <!-- Fluffy chest -->
+  <ellipse cx="200" cy="255" rx="55" ry="35" fill="#ffffff" opacity="0.9"/>
+  <path d="M 165 250 Q 175 245 185 250" stroke="#e8e8e8" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M 215 250 Q 205 245 195 250" stroke="#e8e8e8" stroke-width="2" fill="none" opacity="0.7"/>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="180" rx="90" ry="92" fill="#6d7a8c"/>
+
+  <!-- Facial mask pattern (white) -->
+  <ellipse cx="200" cy="190" rx="75" ry="70" fill="#ffffff"/>
+
+  <!-- Dark mask over eyes (iconic Husky pattern) -->
+  <ellipse cx="165" cy="165" rx="35" ry="32" fill="#4a5564"/>
+  <ellipse cx="235" cy="165" rx="35" ry="32" fill="#4a5564"/>
+  <path d="M 135 155 Q 150 145 165 150 Q 180 145 200 155 Q 220 145 235 150 Q 250 145 265 155" fill="#4a5564"/>
+
+  <!-- White markings between eyes -->
+  <ellipse cx="200" cy="150" rx="18" ry="30" fill="#ffffff"/>
+
+  <!-- Ears (pointed, triangular) -->
+  <path d="M 135 145 L 115 75 L 155 130 Z" fill="#6d7a8c" stroke="#4a5564" stroke-width="2"/>
+  <path d="M 265 145 L 285 75 L 245 130 Z" fill="#6d7a8c" stroke="#4a5564" stroke-width="2"/>
+  <path d="M 135 135 L 125 95 L 150 125 Z" fill="#d4dde6"/>
+  <path d="M 265 135 L 275 95 L 250 125 Z" fill="#d4dde6"/>
+
+  <!-- Snout -->
+  <ellipse cx="200" cy="210" rx="48" ry="38" fill="#e8e8e8"/>
+  <ellipse cx="200" cy="218" rx="35" ry="28" fill="#f5f5f5"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="218" rx="18" ry="15" fill="#2d2d2d"/>
+  <ellipse cx="195" cy="214" rx="5" ry="4" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="193" cy="219" rx="4" ry="5" fill="#1a1a1a"/>
+  <ellipse cx="207" cy="219" rx="4" ry="5" fill="#1a1a1a"/>
+
+  <!-- Mouth (playful expression) -->
+  <path d="M 200 225 L 200 232" stroke="#2d2d2d" stroke-width="2" fill="none"/>
+  <path d="M 175 232 Q 200 242 225 232" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Eyes (Big Manga Style - striking BLUE eyes!) -->
+  <ellipse cx="165" cy="175" rx="26" ry="33" fill="#ffffff"/>
+  <ellipse cx="235" cy="175" rx="26" ry="33" fill="#ffffff"/>
+
+  <!-- Iris (BLUE - iconic Husky feature) -->
+  <ellipse cx="167" cy="180" rx="19" ry="25" fill="#4a9eff"/>
+  <ellipse cx="237" cy="180" rx="19" ry="25" fill="#4a9eff"/>
+
+  <!-- Inner iris detail (lighter blue) -->
+  <ellipse cx="169" cy="182" rx="14" ry="19" fill="#6db8ff"/>
+  <ellipse cx="239" cy="182" rx="14" ry="19" fill="#6db8ff"/>
+
+  <!-- Pupils -->
+  <ellipse cx="170" cy="183" rx="9" ry="12" fill="#1a3d5c"/>
+  <ellipse cx="240" cy="183" rx="9" ry="12" fill="#1a3d5c"/>
+
+  <!-- Eye shine (manga highlight - extra bright for blue eyes) -->
+  <ellipse cx="161" cy="169" rx="8" ry="11" fill="#ffffff"/>
+  <ellipse cx="231" cy="169" rx="8" ry="11" fill="#ffffff"/>
+  <circle cx="172" cy="188" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="242" cy="188" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="165" cy="177" r="3" fill="#b8e0ff" opacity="0.7"/>
+  <circle cx="235" cy="177" r="3" fill="#b8e0ff" opacity="0.7"/>
+
+  <!-- Eyebrows (mischievous look) -->
+  <path d="M 140 158 Q 153 153 170 157" stroke="#4a5564" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M 260 158 Q 247 153 230 157" stroke="#4a5564" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Tail (fluffy, curved) -->
+  <path d="M 145 305 Q 100 310 75 335 Q 70 345 80 350 Q 100 340 125 325 Q 140 315 145 310 Z" fill="#6d7a8c"/>
+  <path d="M 140 310 Q 105 315 85 335 Q 95 340 120 328" fill="#8b99ac" opacity="0.7"/>
+
+  <!-- Fur texture details -->
+  <path d="M 180 270 L 185 280" stroke="#d4dde6" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+  <path d="M 220 270 L 215 280" stroke="#d4dde6" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+  <path d="M 200 275 L 200 285" stroke="#d4dde6" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Playful marks (anime style) -->
+  <path d="M 290 160 L 305 155 M 292 170 L 310 168" stroke="#4a9eff" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+</svg>
