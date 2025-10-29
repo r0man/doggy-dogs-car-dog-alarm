@@ -1,19 +1,18 @@
 #!/bin/bash
-set -e
 
 # Setup script for Claude Code Web environment
 # Installs: beads, Flutter, Android SDK and accepts licenses
 # Only runs in CLAUDE_CODE_REMOTE environment
 
-echo "🔧 Claude Code Web Setup Script"
-echo "================================"
-
-# Check if running in Claude Code Remote environment
-if [ -z "$CLAUDE_CODE_REMOTE" ]; then
-    echo "⚠️  Not running in CLAUDE_CODE_REMOTE environment. Skipping setup."
-    exit 0
+# Exit early if not in Claude Code Remote environment
+if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
+  exit 0
 fi
 
+set -e
+
+echo "🔧 Claude Code Web Setup Script"
+echo "================================"
 echo "✓ Running in Claude Code Remote environment"
 
 # Function to check if command exists
