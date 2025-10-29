@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_state.dart';
 import '../models/sensor_data.dart';
@@ -7,7 +7,6 @@ import '../services/alarm_service.dart';
 import '../services/sensor_detection_service.dart';
 import '../services/app_settings_service.dart';
 import '../providers/achievement_provider.dart';
-import '../providers/neighborhood_provider.dart';
 import '../widgets/unlock_dialog.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {

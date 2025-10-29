@@ -27,11 +27,9 @@ class UrbanTheme {
         onTertiary: UrbanColors.comicBlack,
         error: UrbanColors.dangerRed,
         onError: UrbanColors.comicWhite,
-        background: UrbanColors.nightSky,
-        onBackground: UrbanColors.moonlight,
         surface: UrbanColors.concreteGray,
         onSurface: UrbanColors.comicWhite,
-        surfaceVariant: UrbanColors.asphalt,
+        surfaceContainerHighest: UrbanColors.asphalt,
         onSurfaceVariant: UrbanColors.fog,
         outline: UrbanColors.graffiti,
         shadow: UrbanColors.shadow,
@@ -217,7 +215,7 @@ class UrbanTheme {
           ),
         ),
         labelStyle: UrbanTextStyles.urbanLabel,
-        hintStyle: TextStyle(
+        hintStyle: const TextStyle(
           fontFamily: 'Roboto Condensed',
           fontSize: 14,
           color: UrbanColors.fog,
@@ -300,14 +298,14 @@ class UrbanTheme {
 
       // Switch theme
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return UrbanColors.neonCyan;
           }
           return UrbanColors.fog;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return UrbanColors.neonCyan.withOpacity(0.5);
           }
           return UrbanColors.graffiti;

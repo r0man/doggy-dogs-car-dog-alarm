@@ -63,11 +63,6 @@ class UnlockCodeService {
   String getDefaultCode() => _defaultCode;
 }
 
-/// Provider for SharedPreferences
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('SharedPreferences must be overridden');
-});
-
 /// Provider for UnlockCodeService
 final unlockCodeServiceProvider = Provider<UnlockCodeService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);

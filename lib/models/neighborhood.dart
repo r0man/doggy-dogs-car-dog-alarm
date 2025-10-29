@@ -163,50 +163,50 @@ extension NeighborhoodExtension on Neighborhood {
       case Neighborhood.downtown:
         return [
           "Downtown. Everyone's in a hurry here.",
-          "Corporate district. So many suits.",
+          'Corporate district. So many suits.',
           "The business center. Hope you're not shopping.",
-          "Downtown parking? Bold. Expensive too, I bet.",
-          "Corporate jungle. Watch for briefcase bandits.",
+          'Downtown parking? Bold. Expensive too, I bet.',
+          'Corporate jungle. Watch for briefcase bandits.',
         ];
       case Neighborhood.artsQuarter:
         return [
-          "Arts Quarter. I appreciate the vibe.",
-          "Bohemian district. Very creative. Very... colorful.",
+          'Arts Quarter. I appreciate the vibe.',
+          'Bohemian district. Very creative. Very... colorful.',
           "Artsy neighborhood. Bet there's good coffee nearby.",
           "Arts Quarter. Everyone's very expressive here.",
-          "The creative district. Interesting crowd.",
+          'The creative district. Interesting crowd.',
         ];
       case Neighborhood.industrialZone:
         return [
-          "Industrial Zone. This is... gritty.",
-          "Warehouse district. Keep the doors locked.",
-          "Industrial area. Not exactly scenic.",
-          "Factory district. Definitely watch your back here.",
+          'Industrial Zone. This is... gritty.',
+          'Warehouse district. Keep the doors locked.',
+          'Industrial area. Not exactly scenic.',
+          'Factory district. Definitely watch your back here.',
           "Industrial Zone. At least it's authentic urban.",
         ];
       case Neighborhood.waterfront:
         return [
-          "Waterfront. I can smell the salt from here.",
-          "Docks. Seagulls and shipping containers.",
-          "Maritime district. Salty air, salty characters.",
-          "Waterfront parking. Hope you like seagull presents.",
-          "The docks. Rough but has character.",
+          'Waterfront. I can smell the salt from here.',
+          'Docks. Seagulls and shipping containers.',
+          'Maritime district. Salty air, salty characters.',
+          'Waterfront parking. Hope you like seagull presents.',
+          'The docks. Rough but has character.',
         ];
       case Neighborhood.uptown:
         return [
-          "Uptown. Fancy. Very fancy.",
-          "Rich people district. Try not to ding any Bentleys.",
-          "Uptown. Everything costs twice as much here.",
-          "Wealthy neighborhood. I feel underdressed.",
+          'Uptown. Fancy. Very fancy.',
+          'Rich people district. Try not to ding any Bentleys.',
+          'Uptown. Everything costs twice as much here.',
+          'Wealthy neighborhood. I feel underdressed.',
           "Uptown parking. At least it's clean.",
         ];
       case Neighborhood.outskirts:
         return [
-          "Outskirts. Suburban life in action.",
-          "Edge of town. Strip malls as far as the eye can see.",
+          'Outskirts. Suburban life in action.',
+          'Edge of town. Strip malls as far as the eye can see.',
           "Outskirts. It's... functional.",
-          "Suburban district. Very parking-lot-y.",
-          "The outskirts. Not exciting, but safe.",
+          'Suburban district. Very parking-lot-y.',
+          'The outskirts. Not exciting, but safe.',
         ];
     }
   }

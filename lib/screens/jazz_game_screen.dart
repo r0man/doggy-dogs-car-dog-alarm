@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/jazz_game_state.dart';
 import '../theme/urban_colors.dart';
-import '../theme/comic_decorations.dart';
 import '../providers/achievement_provider.dart';
 
 /// Jazz rhythm mini-game screen
@@ -427,8 +426,6 @@ class _NoteLanePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final targetY = size.height - 100.0;
-
     for (final note in notes) {
       final progress =
           (gameTime - note.spawnTime) / (note.targetTime - note.spawnTime);

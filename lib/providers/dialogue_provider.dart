@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/dog.dart';
 import '../models/dialogue_context.dart';
 import '../services/dialogue_service.dart';
 import 'dog_provider.dart';

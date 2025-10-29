@@ -7,6 +7,54 @@ enum AchievementCategory {
   reputation,
 }
 
+/// Achievement category extensions
+extension AchievementCategoryExtension on AchievementCategory {
+  String get displayName {
+    switch (this) {
+      case AchievementCategory.security:
+        return 'Security';
+      case AchievementCategory.social:
+        return 'Social';
+      case AchievementCategory.exploration:
+        return 'Exploration';
+      case AchievementCategory.personal:
+        return 'Personal';
+      case AchievementCategory.reputation:
+        return 'Reputation';
+    }
+  }
+
+  String get icon {
+    switch (this) {
+      case AchievementCategory.security:
+        return '🚨';
+      case AchievementCategory.social:
+        return '👥';
+      case AchievementCategory.exploration:
+        return '🗺️';
+      case AchievementCategory.personal:
+        return '⭐';
+      case AchievementCategory.reputation:
+        return '🏆';
+    }
+  }
+
+  int get color {
+    switch (this) {
+      case AchievementCategory.security:
+        return 0xFFFF6B35; // Orange
+      case AchievementCategory.social:
+        return 0xFF00F5FF; // Cyan
+      case AchievementCategory.exploration:
+        return 0xFF39FF14; // Green
+      case AchievementCategory.personal:
+        return 0xFFFFFF00; // Yellow
+      case AchievementCategory.reputation:
+        return 0xFF9D00FF; // Purple
+    }
+  }
+}
+
 /// Urban-themed achievement
 class Achievement {
   final String id;
@@ -45,6 +93,10 @@ class AchievementProgress {
   double getProgress(int requirement) {
     if (isUnlocked) return 1.0;
     return (currentProgress / requirement).clamp(0.0, 1.0);
+  }
+
+  double progressPercentage(int requirement) {
+    return getProgress(requirement);
   }
 
   AchievementProgress copyWith({

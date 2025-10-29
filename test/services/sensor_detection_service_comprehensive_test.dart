@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doggy_dogs_car_alarm/services/sensor_detection_service.dart';
 import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
 import 'package:doggy_dogs_car_alarm/services/app_settings_service.dart';
-import 'package:doggy_dogs_car_alarm/services/unlock_code_service.dart';
 import 'package:doggy_dogs_car_alarm/models/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

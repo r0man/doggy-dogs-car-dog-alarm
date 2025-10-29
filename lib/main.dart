@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/breed_selection_screen.dart';
 import 'providers/dog_provider.dart';
-import 'services/unlock_code_service.dart';
+import 'services/app_settings_service.dart';
 import 'theme/urban_theme.dart';
 
 void main() async {

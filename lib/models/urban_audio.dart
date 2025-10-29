@@ -1,5 +1,6 @@
-/// Urban soundscape and audio system models
 import 'neighborhood.dart';
+
+/// Urban soundscape and audio system models
 
 /// Audio track types
 enum AudioTrackType {

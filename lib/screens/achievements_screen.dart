@@ -114,7 +114,7 @@ class AchievementsScreen extends ConsumerWidget {
                   child: Container(
                     height: 24,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
                           UrbanColors.neonCyan,
                           UrbanColors.neonYellow,

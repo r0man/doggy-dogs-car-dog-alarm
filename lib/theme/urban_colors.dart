@@ -15,6 +15,7 @@ class UrbanColors {
   // Neon accents for high contrast
   static const neonCyan = Color(0xFF00F5FF); // Electric cyan
   static const neonPink = Color(0xFFFF10F0); // Hot pink
+  static const neonMagenta = Color(0xFF9D00FF); // Electric magenta
   static const neonGreen = Color(0xFF39FF14); // Toxic green
   static const neonYellow = Color(0xFFFFFF00); // Warning yellow
 

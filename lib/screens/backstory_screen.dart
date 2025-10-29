@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/dog_backstory.dart';
+import '../models/neighborhood.dart';
 import '../providers/backstory_provider.dart';
 import '../theme/urban_colors.dart';
 import '../theme/comic_decorations.dart';

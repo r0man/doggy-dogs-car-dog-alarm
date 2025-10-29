@@ -151,7 +151,7 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
               ),
               const SizedBox(width: 16),
               Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: UrbanColors.neonCyan,
                   boxShadow: [ComicDecorations.dropShadow],

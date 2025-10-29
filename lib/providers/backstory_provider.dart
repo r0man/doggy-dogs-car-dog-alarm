@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/dog.dart';
 import '../models/dog_backstory.dart';
 import '../services/app_settings_service.dart';
 import 'dog_provider.dart';
@@ -68,12 +69,10 @@ final backstoryProvider = FutureProvider<DogBackstory?>((ref) async {
   var backstory = service.getBackstory();
 
   // Generate if doesn't exist
-  if (backstory == null) {
-    backstory = await service.generateBackstory(
-      name: dog.name,
-      breed: dog.breed,
-    );
-  }
+  backstory ??= await service.generateBackstory(
+    name: dog.name,
+    breed: dog.breed,
+  );
 
   return backstory;
 });

@@ -5,6 +5,13 @@ import 'urban_colors.dart';
 /// Comic book and street art decorations
 /// Includes halftone patterns, speech bubbles, noir shadows, etc.
 class ComicDecorations {
+  // Standard drop shadow
+  static const BoxShadow dropShadow = BoxShadow(
+    color: UrbanColors.shadow,
+    offset: Offset(4, 4),
+    blurRadius: 0,
+  );
+
   // Speech bubble decoration
   static BoxDecoration speechBubble({
     Color backgroundColor = UrbanColors.comicWhite,

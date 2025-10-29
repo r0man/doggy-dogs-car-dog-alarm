@@ -116,8 +116,9 @@ class NeighborhoodService {
   /// Check if current neighborhood is a usual spot
   Future<bool> isUsualSpot(Neighborhood neighborhood) async {
     final visits = await getVisitHistory();
-    if (visits.length < 5)
+    if (visits.length < 5) {
       return false; // Need at least 5 visits to establish pattern
+    }
 
     final neighborhoodVisits =
         visits.where((v) => v.neighborhood == neighborhood).length;
@@ -165,7 +166,7 @@ class NeighborhoodService {
 
     if (isUsual) {
       // Add "usual spot" context
-      return "${commentaries[0]} Our usual spot, right?";
+      return '${commentaries[0]} Our usual spot, right?';
     }
 
     // Return random commentary
