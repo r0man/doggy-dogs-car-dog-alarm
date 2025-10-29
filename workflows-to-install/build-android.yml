@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: '3.35.7'
-  JAVA_VERSION: '17'
+  FLUTTER_VERSION: '3.35.4'
+  JAVA_VERSION: '21'
 
 jobs:
   build-apk:

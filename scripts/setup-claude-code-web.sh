@@ -47,7 +47,7 @@ if command_exists flutter || [ -d "/opt/flutter" ]; then
 else
     echo "  Downloading Flutter SDK..."
     cd /tmp
-    curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.7-stable.tar.xz
+    curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.4-stable.tar.xz
     echo "  Extracting Flutter..."
     cd /opt
     sudo tar xf /tmp/flutter.tar.xz
