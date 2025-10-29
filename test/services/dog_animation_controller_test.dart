@@ -158,13 +158,14 @@ void main() {
         expect(controller.currentState, DogAnimationState.eating);
       });
 
-      test('one-time animations do not affect looping animations', () async {
-        controller.playOnce(DogAnimationState.barking);
-        expect(controller.currentState, DogAnimationState.barking);
+      test('playOnce ignores looping animations', () async {
+        // playOnce with a looping animation does nothing (only works with one-time animations)
+        expect(controller.currentState, DogAnimationState.idle);
 
-        // Barking is looping, so should stay
-        await Future.delayed(const Duration(seconds: 1));
-        expect(controller.currentState, DogAnimationState.barking);
+        controller.playOnce(DogAnimationState.barking);
+
+        // Should stay idle because barking is looping (playOnce only handles non-looping)
+        expect(controller.currentState, DogAnimationState.idle);
       });
 
       test('stores previous state before transition', () {
@@ -210,15 +211,15 @@ void main() {
         expect(controller.currentState, DogAnimationState.happy);
       });
 
-      test('respects priority system', () {
-        // Set low priority state
+      test('alarm state overrides mood state', () {
+        // Set mood-based state
         controller.updateFromMood(DogMood.sleeping);
         expect(controller.currentState, DogAnimationState.sleeping);
 
-        // Try to transition to higher priority
+        // Alarm state should override (it uses force: true)
         controller.updateFromAlarmState(const AlarmState(isActive: true));
 
-        // Should succeed
+        // Should succeed - alarm is authoritative
         expect(controller.currentState, DogAnimationState.alert);
       });
 

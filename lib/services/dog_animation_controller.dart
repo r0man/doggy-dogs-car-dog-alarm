@@ -30,31 +30,40 @@ class DogAnimationController extends ChangeNotifier {
   }
 
   /// Update animation based on alarm state
+  /// Alarm state changes are authoritative and override mood-based animations
   void updateFromAlarmState(AlarmState alarmState) {
     if (alarmState.isTriggered) {
       // Alarm triggered - bark!
-      _transitionTo(DogAnimationState.barking);
+      _transitionTo(DogAnimationState.barking, force: true);
     } else if (alarmState.isCountingDown) {
       // Countdown active - be alert
-      _transitionTo(DogAnimationState.alert);
+      _transitionTo(DogAnimationState.alert, force: true);
     } else if (alarmState.isActive) {
       // Alarm active but not triggered - vigilant
-      _transitionTo(DogAnimationState.alert);
+      _transitionTo(DogAnimationState.alert, force: true);
     } else {
-      // No alarm - return to mood-based state
-      _transitionTo(DogAnimationState.idle);
+      // No alarm - return to idle (force to ensure transition)
+      _transitionTo(DogAnimationState.idle, force: true);
     }
   }
 
   /// Update animation based on dog mood
+  /// Only updates if not currently in alarm-related state
   void updateFromMood(DogMood mood) {
-    // Don't override higher priority states (barking, alert)
-    if (_currentState.priority >= DogAnimationState.alert.priority) {
+    // Don't override alarm-driven states (barking, alert)
+    // These should only be changed by updateFromAlarmState()
+    if (_currentState == DogAnimationState.barking ||
+        _currentState == DogAnimationState.alert) {
+      debugPrint(
+        'Animation: Ignoring mood update to ${mood.name} '
+        '(currently in alarm state: ${_currentState.displayName})',
+      );
       return;
     }
 
     final newState = _mapMoodToAnimation(mood);
-    _transitionTo(newState);
+    // Allow mood transitions without strict priority checking
+    _transitionTo(newState, force: true);
   }
 
   /// Trigger a one-time animation (eating, playing)
