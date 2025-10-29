@@ -31,9 +31,9 @@ This script automatically installs and configures the complete development envir
 
 ### When it runs
 
-- **Automatically**: When starting a Claude Code Web session (via `.claude/hooks/start-session.sh`)
+- **Automatically**: When starting a Claude Code Web session (via `.claude/settings.json` SessionStart hook)
 - **Manually**: Run `./scripts/setup-claude-code-web.sh` from project root
-- **Environment**: Only runs in `CLAUDE_CODE_REMOTE` environment
+- **Environment**: Only runs when `CLAUDE_CODE_REMOTE=true`
 
 ### Features
 
@@ -47,7 +47,29 @@ This script automatically installs and configures the complete development envir
 - Ubuntu/Debian Linux
 - sudo access
 - Internet connection
-- `CLAUDE_CODE_REMOTE` environment variable set
+- `CLAUDE_CODE_REMOTE=true` (automatically set in Claude Code Web)
+
+### Hook Configuration
+
+The script is automatically triggered by the SessionStart hook defined in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/setup-claude-code-web.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 ### Manual Installation
 
@@ -71,8 +93,9 @@ flutter doctor        # Should show Flutter and Android toolchain ready
 ### Troubleshooting
 
 **Script doesn't run:**
-- Ensure `CLAUDE_CODE_REMOTE` environment variable is set
+- Verify `.claude/settings.json` exists and is properly formatted
 - Check script has execute permissions: `chmod +x scripts/setup-claude-code-web.sh`
+- Ensure hook configuration points to correct script path
 
 **Flutter not in PATH:**
 - Restart your shell session: `exec bash`
