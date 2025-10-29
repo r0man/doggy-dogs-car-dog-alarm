@@ -23,7 +23,8 @@ void main() {
     test('should save and load alarm state', () async {
       // Create alarm state
       final state = const AlarmState(
-        status: AlarmStatus.active,
+        isActive: true,
+        isTriggered: false,
         mode: AlarmMode.standard,
       );
 
@@ -35,19 +36,21 @@ void main() {
 
       // Verify
       expect(loadedState, isNotNull);
-      expect(loadedState!.status, AlarmStatus.active);
+      expect(loadedState!.isActive, true);
+      expect(loadedState.isTriggered, false);
       expect(loadedState.mode, AlarmMode.standard);
-      expect(loadedState.isActive, true);
     });
 
     test('should save and load alarm state with timestamps', () async {
       // Create alarm state with timestamps
       final now = DateTime.now();
       final state = AlarmState(
-        status: AlarmStatus.triggered,
+        isActive: true,
+        isTriggered: true,
         mode: AlarmMode.aggressive,
         activatedAt: now,
-        triggeredAt: now.add(Duration(seconds: 30)),
+        lastTriggeredAt: now.add(const Duration(seconds: 30)),
+        triggerCount: 5,
       );
 
       // Save state
@@ -58,16 +61,37 @@ void main() {
 
       // Verify
       expect(loadedState, isNotNull);
-      expect(loadedState!.status, AlarmStatus.triggered);
+      expect(loadedState!.isActive, true);
+      expect(loadedState.isTriggered, true);
       expect(loadedState.mode, AlarmMode.aggressive);
       expect(loadedState.activatedAt, isNotNull);
-      expect(loadedState.triggeredAt, isNotNull);
+      expect(loadedState.lastTriggeredAt, isNotNull);
+      expect(loadedState.triggerCount, 5);
 
       // Times should be within 1 second (accounting for serialization)
       expect(
         loadedState.activatedAt!.difference(now).inSeconds.abs(),
         lessThan(2),
       );
+    });
+
+    test('should save and load countdown state', () async {
+      // Create alarm state with countdown
+      final state = const AlarmState(
+        isActive: false,
+        isCountingDown: true,
+        countdownSeconds: 25,
+        mode: AlarmMode.stealth,
+      );
+
+      // Save state
+      await service.saveAlarmState(state);
+
+      // Load state
+      final loadedState = await service.loadAlarmState();
+
+      // Verify - should return null because isActive is false
+      expect(loadedState, isNull);
     });
 
     test('should return null when loading non-existent alarm state', () async {
@@ -78,7 +102,7 @@ void main() {
     test('should clear alarm state', () async {
       // Save state
       final state = const AlarmState(
-        status: AlarmStatus.active,
+        isActive: true,
         mode: AlarmMode.standard,
       );
       await service.saveAlarmState(state);
@@ -128,7 +152,7 @@ void main() {
 
       // Save active alarm
       final state = const AlarmState(
-        status: AlarmStatus.active,
+        isActive: true,
         mode: AlarmMode.standard,
       );
       await service.saveAlarmState(state);
@@ -140,9 +164,9 @@ void main() {
 
     test('getActivationDuration should return correct duration', () async {
       // Save alarm state with activation time 1 minute ago
-      final activatedAt = DateTime.now().subtract(Duration(minutes: 1));
+      final activatedAt = DateTime.now().subtract(const Duration(minutes: 1));
       final state = AlarmState(
-        status: AlarmStatus.active,
+        isActive: true,
         mode: AlarmMode.standard,
         activatedAt: activatedAt,
       );
@@ -158,6 +182,9 @@ void main() {
     });
 
     test('getActivationDuration should return null when not activated', () async {
+      // Ensure no alarm state exists
+      await service.clearAlarmState();
+
       final duration = await service.getActivationDuration();
       expect(duration, isNull);
     });
@@ -165,7 +192,7 @@ void main() {
     test('clearAll should remove all persisted data', () async {
       // Save various data
       await service.saveAlarmState(const AlarmState(
-        status: AlarmStatus.active,
+        isActive: true,
         mode: AlarmMode.standard,
       ));
       await service.saveCurrentDogId('dog-123');
@@ -188,7 +215,7 @@ void main() {
     test('should handle different alarm modes', () async {
       for (final mode in AlarmMode.values) {
         final state = AlarmState(
-          status: AlarmStatus.active,
+          isActive: true,
           mode: mode,
         );
 
@@ -200,19 +227,48 @@ void main() {
       }
     });
 
-    test('should handle different alarm statuses', () async {
-      for (final status in AlarmStatus.values) {
-        final state = AlarmState(
-          status: status,
-          mode: AlarmMode.standard,
-        );
+    test('should handle triggered alarm state', () async {
+      final state = const AlarmState(
+        isActive: true,
+        isTriggered: true,
+        triggerCount: 3,
+        mode: AlarmMode.aggressive,
+      );
 
-        await service.saveAlarmState(state);
-        final loaded = await service.loadAlarmState();
+      await service.saveAlarmState(state);
+      final loaded = await service.loadAlarmState();
 
-        expect(loaded, isNotNull);
-        expect(loaded!.status, status);
-      }
+      expect(loaded, isNotNull);
+      expect(loaded!.isActive, true);
+      expect(loaded.isTriggered, true);
+      expect(loaded.triggerCount, 3);
+    });
+
+    test('should preserve all state fields on round-trip', () async {
+      final now = DateTime.now();
+      final state = AlarmState(
+        isActive: true,
+        isTriggered: true,
+        isCountingDown: false,
+        countdownSeconds: 0,
+        mode: AlarmMode.stealth,
+        activatedAt: now,
+        lastTriggeredAt: now.add(const Duration(minutes: 2)),
+        triggerCount: 7,
+      );
+
+      await service.saveAlarmState(state);
+      final loaded = await service.loadAlarmState();
+
+      expect(loaded, isNotNull);
+      expect(loaded!.isActive, state.isActive);
+      expect(loaded.isTriggered, state.isTriggered);
+      expect(loaded.isCountingDown, state.isCountingDown);
+      expect(loaded.countdownSeconds, state.countdownSeconds);
+      expect(loaded.mode, state.mode);
+      expect(loaded.triggerCount, state.triggerCount);
+      expect(loaded.activatedAt, isNotNull);
+      expect(loaded.lastTriggeredAt, isNotNull);
     });
   });
 }

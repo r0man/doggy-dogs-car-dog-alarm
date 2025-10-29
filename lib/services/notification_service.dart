@@ -71,7 +71,6 @@ class NotificationService {
       'Alarm Alerts',
       description: 'Notifications when your car alarm is triggered',
       importance: Importance.max,
-      priority: Priority.max,
       enableVibration: true,
       enableLights: true,
       playSound: true,
