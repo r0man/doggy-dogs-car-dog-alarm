@@ -4,7 +4,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../models/app_settings.dart';
 import '../services/app_settings_service.dart';
 import '../services/unlock_code_service.dart';
-import '../widgets/unlock_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

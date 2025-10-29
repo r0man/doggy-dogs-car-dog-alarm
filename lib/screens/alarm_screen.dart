@@ -4,6 +4,7 @@ import '../models/alarm_state.dart';
 import '../models/sensor_data.dart';
 import '../services/alarm_service.dart';
 import '../services/sensor_detection_service.dart';
+import '../services/app_settings_service.dart';
 import '../widgets/unlock_dialog.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
@@ -196,8 +197,9 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                   ],
                   selected: {currentSensitivity},
                   onSelectionChanged: (Set<AlarmSensitivity> selection) {
-                    ref.read(alarmSensitivityProvider.notifier).state =
-                        selection.first;
+                    final service = ref.read(appSettingsServiceProvider);
+                    final sensitivityName = service.getSensitivityName(selection.first);
+                    ref.read(appSettingsProvider.notifier).setSensitivityLevel(sensitivityName);
                   },
                 ),
                 const SizedBox(height: 16),
