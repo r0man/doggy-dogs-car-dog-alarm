@@ -22,7 +22,7 @@ void main() {
 
     test('should save and load alarm state', () async {
       // Create alarm state
-      final state = const AlarmState(
+      const state = AlarmState(
         isActive: true,
         isTriggered: false,
         mode: AlarmMode.standard,
@@ -77,7 +77,7 @@ void main() {
 
     test('should save and load countdown state', () async {
       // Create alarm state with countdown
-      final state = const AlarmState(
+      const state = AlarmState(
         isActive: false,
         isCountingDown: true,
         countdownSeconds: 25,
@@ -101,7 +101,7 @@ void main() {
 
     test('should clear alarm state', () async {
       // Save state
-      final state = const AlarmState(
+      const state = AlarmState(
         isActive: true,
         mode: AlarmMode.standard,
       );
@@ -151,7 +151,7 @@ void main() {
       expect(wasActive, false);
 
       // Save active alarm
-      final state = const AlarmState(
+      const state = AlarmState(
         isActive: true,
         mode: AlarmMode.standard,
       );
@@ -229,7 +229,7 @@ void main() {
     });
 
     test('should handle triggered alarm state', () async {
-      final state = const AlarmState(
+      const state = AlarmState(
         isActive: true,
         isTriggered: true,
         triggerCount: 3,

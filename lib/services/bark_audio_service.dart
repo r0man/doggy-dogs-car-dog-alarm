@@ -14,7 +14,6 @@ class BarkAudioService {
   Timer? _escalationTimer;
   Timer? _repeatTimer;
   bool _isPlaying = false;
-  int _currentRepeat = 0;
 
   BarkAudioService({required this.guardDog});
 
@@ -71,7 +70,6 @@ class BarkAudioService {
     final level = _currentEscalation!.current;
     final barkSound = level.toBarkSound(guardDog.breed);
 
-    _currentRepeat = 0;
     await _playLevelWithRepeats(barkSound, level.repeatCount);
 
     // Schedule escalation to next level
@@ -95,12 +93,11 @@ class BarkAudioService {
   /// Play a bark level with repeats
   Future<void> _playLevelWithRepeats(BarkSound sound, int repeats) async {
     for (int i = 0; i < repeats && _isPlaying; i++) {
-      _currentRepeat = i;
       await _playBarkSound(sound);
 
       // Wait a bit between repeats
       if (i < repeats - 1) {
-        await Future.delayed(Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 500));
       }
     }
   }

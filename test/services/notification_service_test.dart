@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:doggy_dogs_car_alarm/services/notification_service.dart';
 import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
-import 'package:doggy_dogs_car_alarm/models/alarm_state.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

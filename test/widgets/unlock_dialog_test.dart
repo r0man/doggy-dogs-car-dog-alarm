@@ -197,15 +197,13 @@ void main() {
 
   group('showUnlockDialog', () {
     testWidgets('shows dialog and returns result', (WidgetTester tester) async {
-      bool? result;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () async {
-                  result = await showUnlockDialog(
+                  await showUnlockDialog(
                     context,
                     onUnlockAttempt: (_) {},
                   );

@@ -228,7 +228,7 @@ class NotificationService {
       await initialize();
     }
 
-    final title = '✅ Alarm Activated';
+    const title = '✅ Alarm Activated';
     final body =
         '${dogName ?? 'Your guard dog'} is now watching your car in ${mode.name} mode';
 
@@ -283,7 +283,7 @@ class NotificationService {
     await _notifications.cancel(1); // Triggered notification
     await _notifications.cancel(2); // Status notification
 
-    final title = '⏹️  Alarm Deactivated';
+    const title = '⏹️  Alarm Deactivated';
     final body = '${dogName ?? 'Your guard dog'} is now resting';
 
     const androidDetails = AndroidNotificationDetails(

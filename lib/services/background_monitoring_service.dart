@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_state.dart';
 import 'alarm_persistence_service.dart';
-import 'notification_service.dart';
 
 /// Background task names
 class BackgroundTasks {

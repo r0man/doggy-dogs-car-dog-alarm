@@ -203,7 +203,6 @@ void main() {
     group('transition behavior', () {
       test('ignores transition to same state', () {
         controller.updateFromMood(DogMood.happy);
-        final previous = controller.previousState;
 
         controller.updateFromMood(DogMood.happy);
 
