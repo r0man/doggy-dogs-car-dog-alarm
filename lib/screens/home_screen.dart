@@ -5,6 +5,9 @@ import 'alarm_screen.dart';
 import 'breed_selection_screen.dart';
 import 'settings_screen.dart';
 import '../providers/dog_provider.dart';
+import '../providers/dog_animation_provider.dart';
+import '../widgets/animated_dog_widget.dart';
+import '../models/dog_animation_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -74,11 +77,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Dog breed image
+                        // Animated dog
                         Expanded(
-                          child: SvgPicture.asset(
-                            dog.breed.assetPath,
-                            fit: BoxFit.contain,
+                          child: Center(
+                            child: AnimatedDogWidget(
+                              breed: dog.breed,
+                              controller: ref.watch(dogAnimationControllerProvider),
+                              size: 200,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -142,6 +148,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () async {
+                        // Trigger eating animation
+                        playDogAnimation(ref, DogAnimationState.eating);
+
                         await ref.read(dogProvider.notifier).feed();
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -164,6 +173,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () async {
+                        // Trigger playing animation
+                        playDogAnimation(ref, DogAnimationState.playing);
+
                         await ref.read(dogProvider.notifier).play();
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
