@@ -80,12 +80,15 @@ class AlarmState {
 
   /// Create state for deactivated alarm
   AlarmState deactivate() {
-    return copyWith(
+    return AlarmState(
       isActive: false,
       isTriggered: false,
       isCountingDown: false,
       countdownSeconds: 0,
       activatedAt: null,
+      lastTriggeredAt: lastTriggeredAt,
+      triggerCount: triggerCount,
+      mode: mode,
     );
   }
 
