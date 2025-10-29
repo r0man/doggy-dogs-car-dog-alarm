@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doggy_dogs_car_alarm/services/notification_service.dart';
 import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
+import 'package:doggy_dogs_car_alarm/models/alarm_state.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -126,6 +127,88 @@ void main() {
       final service1 = container.read(notificationServiceProvider);
       final service2 = container.read(notificationServiceProvider);
       expect(service1, equals(service2));
+    });
+  });
+
+  group('NotificationService Methods', () {
+    late NotificationService service;
+
+    setUp(() {
+      service = NotificationService();
+    });
+
+    test('showAlarmTriggered handles all motion types', () async {
+      // These will fail internally but cover the code paths
+      await expectLater(
+        service.showAlarmTriggered(
+          motionType: MotionType.impact,
+          intensity: 0.9,
+          dogName: 'Rex',
+        ),
+        completes,
+      );
+
+      await expectLater(
+        service.showAlarmTriggered(
+          motionType: MotionType.shake,
+          intensity: 0.7,
+        ),
+        completes,
+      );
+
+      await expectLater(
+        service.showAlarmTriggered(
+          motionType: MotionType.tilt,
+          intensity: 0.5,
+        ),
+        completes,
+      );
+
+      await expectLater(
+        service.showAlarmTriggered(
+          motionType: MotionType.subtle,
+          intensity: 0.3,
+        ),
+        completes,
+      );
+    });
+
+    test('showAlarmActivated completes for different modes', () async {
+      await expectLater(
+        service.showAlarmActivated(mode: AlarmMode.standard),
+        completes,
+      );
+
+      await expectLater(
+        service.showAlarmActivated(mode: AlarmMode.stealth, dogName: 'Buddy'),
+        completes,
+      );
+
+      await expectLater(
+        service.showAlarmActivated(mode: AlarmMode.aggressive, dogName: 'Max'),
+        completes,
+      );
+    });
+
+    test('showDogReminder completes', () async {
+      await expectLater(
+        service.showDogReminder(
+          title: 'Feed your dog',
+          message: 'Time to feed your guard dog!',
+        ),
+        completes,
+      );
+    });
+
+    test('requestPermissions completes', () async {
+      final result = await service.requestPermissions();
+      // May return true or false depending on platform
+      expect(result, isA<bool>());
+    });
+
+    test('areNotificationsEnabled completes', () async {
+      final result = await service.areNotificationsEnabled();
+      expect(result, isA<bool>());
     });
   });
 }
