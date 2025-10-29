@@ -15,7 +15,7 @@ This script automatically installs and configures the complete development envir
    - Installs to `/usr/local/bin/bd`
 
 2. **Flutter SDK** - Mobile app development framework
-   - Downloads Flutter 3.24.5 stable
+   - Downloads Flutter 3.35.7 stable
    - Installs to `/opt/flutter`
    - Adds to PATH in `.bashrc` and `.profile`
 
@@ -88,7 +88,7 @@ After setup completes, verify installation:
 
 ```bash
 bd --version          # Should show: bd version 0.17.7
-flutter --version     # Should show: Flutter 3.24.5
+flutter --version     # Should show: Flutter 3.35.7
 flutter doctor        # Should show Flutter and Android toolchain ready
 ```
 

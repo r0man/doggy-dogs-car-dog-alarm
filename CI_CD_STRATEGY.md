@@ -100,7 +100,7 @@ on:
   # Triggers
 
 env:
-  FLUTTER_VERSION: '3.24.5'
+  FLUTTER_VERSION: '3.35.7'
   JAVA_VERSION: '17'
 
 jobs:
@@ -310,7 +310,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.35.7'
 
       - name: Install dependencies
         run: flutter pub get
@@ -357,7 +357,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.35.7'
           channel: 'stable'
           cache: true
 
@@ -574,7 +574,7 @@ Configure in GitHub Settings → Secrets → Actions:
 ```yaml
 - uses: subosito/flutter-action@v2
   with:
-    flutter-version: '3.24.5'
+    flutter-version: '3.35.7'
     cache: true  # Enables built-in caching
 ```
 
