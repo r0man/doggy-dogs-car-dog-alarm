@@ -2,6 +2,8 @@
 class AlarmState {
   final bool isActive;
   final bool isTriggered;
+  final bool isCountingDown;
+  final int countdownSeconds;
   final DateTime? activatedAt;
   final DateTime? lastTriggeredAt;
   final int triggerCount;
@@ -10,6 +12,8 @@ class AlarmState {
   const AlarmState({
     this.isActive = false,
     this.isTriggered = false,
+    this.isCountingDown = false,
+    this.countdownSeconds = 0,
     this.activatedAt,
     this.lastTriggeredAt,
     this.triggerCount = 0,
@@ -19,6 +23,8 @@ class AlarmState {
   AlarmState copyWith({
     bool? isActive,
     bool? isTriggered,
+    bool? isCountingDown,
+    int? countdownSeconds,
     DateTime? activatedAt,
     DateTime? lastTriggeredAt,
     int? triggerCount,
@@ -27,6 +33,8 @@ class AlarmState {
     return AlarmState(
       isActive: isActive ?? this.isActive,
       isTriggered: isTriggered ?? this.isTriggered,
+      isCountingDown: isCountingDown ?? this.isCountingDown,
+      countdownSeconds: countdownSeconds ?? this.countdownSeconds,
       activatedAt: activatedAt ?? this.activatedAt,
       lastTriggeredAt: lastTriggeredAt ?? this.lastTriggeredAt,
       triggerCount: triggerCount ?? this.triggerCount,
@@ -34,11 +42,37 @@ class AlarmState {
     );
   }
 
-  /// Create state for activated alarm
+  /// Start countdown before activation
+  AlarmState startCountdown(AlarmMode alarmMode, int seconds) {
+    return copyWith(
+      isCountingDown: true,
+      countdownSeconds: seconds,
+      mode: alarmMode,
+    );
+  }
+
+  /// Update countdown timer
+  AlarmState updateCountdown(int seconds) {
+    return copyWith(
+      countdownSeconds: seconds,
+    );
+  }
+
+  /// Cancel countdown
+  AlarmState cancelCountdown() {
+    return copyWith(
+      isCountingDown: false,
+      countdownSeconds: 0,
+    );
+  }
+
+  /// Create state for activated alarm (after countdown completes)
   AlarmState activate(AlarmMode alarmMode) {
     return copyWith(
       isActive: true,
       isTriggered: false,
+      isCountingDown: false,
+      countdownSeconds: 0,
       activatedAt: DateTime.now(),
       mode: alarmMode,
     );
@@ -49,6 +83,8 @@ class AlarmState {
     return copyWith(
       isActive: false,
       isTriggered: false,
+      isCountingDown: false,
+      countdownSeconds: 0,
       activatedAt: null,
     );
   }
@@ -82,6 +118,7 @@ class AlarmState {
   @override
   String toString() {
     return 'AlarmState(isActive: $isActive, isTriggered: $isTriggered, '
+        'isCountingDown: $isCountingDown, countdownSeconds: $countdownSeconds, '
         'triggerCount: $triggerCount, mode: $mode)';
   }
 }

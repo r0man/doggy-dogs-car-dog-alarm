@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/breed_selection_screen.dart';
 import 'providers/dog_provider.dart';
+import 'services/unlock_code_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize SharedPreferences
+  final sharedPreferences = await SharedPreferences.getInstance();
+
   runApp(
-    const ProviderScope(
-      child: DoggyDogsCarAlarmApp(),
+    ProviderScope(
+      overrides: [
+        // Override SharedPreferences provider with initialized instance
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const DoggyDogsCarAlarmApp(),
     ),
   );
 }
