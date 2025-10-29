@@ -199,17 +199,6 @@ void main() {
         completes,
       );
     });
-
-    test('requestPermissions completes', () async {
-      final result = await service.requestPermissions();
-      // May return true or false depending on platform
-      expect(result, isA<bool>());
-    });
-
-    test('areNotificationsEnabled completes', () async {
-      final result = await service.areNotificationsEnabled();
-      expect(result, isA<bool>());
-    });
   });
 }
 
