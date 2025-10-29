@@ -6,10 +6,13 @@ import '../models/alarm_state.dart';
 /// Keys for shared preferences
 class PersistenceKeys {
   static const alarmIsActive = 'alarm_is_active';
+  static const alarmIsTriggered = 'alarm_is_triggered';
+  static const alarmIsCountingDown = 'alarm_is_counting_down';
+  static const alarmCountdownSeconds = 'alarm_countdown_seconds';
   static const alarmMode = 'alarm_mode';
-  static const alarmStatus = 'alarm_status';
   static const alarmActivatedAt = 'alarm_activated_at';
-  static const alarmTriggeredAt = 'alarm_triggered_at';
+  static const alarmLastTriggeredAt = 'alarm_last_triggered_at';
+  static const alarmTriggerCount = 'alarm_trigger_count';
   static const dogId = 'current_dog_id';
   static const lastKnownSensitivity = 'last_known_sensitivity';
 }
@@ -44,12 +47,15 @@ class AlarmPersistenceService {
   Future<void> saveAlarmState(AlarmState state) async {
     await _ensureInitialized();
 
-    debugPrint('💾 Saving alarm state: ${state.status}');
+    debugPrint('💾 Saving alarm state: active=${state.isActive}, triggered=${state.isTriggered}');
 
     try {
       await _prefs!.setBool(PersistenceKeys.alarmIsActive, state.isActive);
+      await _prefs!.setBool(PersistenceKeys.alarmIsTriggered, state.isTriggered);
+      await _prefs!.setBool(PersistenceKeys.alarmIsCountingDown, state.isCountingDown);
+      await _prefs!.setInt(PersistenceKeys.alarmCountdownSeconds, state.countdownSeconds);
       await _prefs!.setString(PersistenceKeys.alarmMode, state.mode.name);
-      await _prefs!.setString(PersistenceKeys.alarmStatus, state.status.name);
+      await _prefs!.setInt(PersistenceKeys.alarmTriggerCount, state.triggerCount);
 
       if (state.activatedAt != null) {
         await _prefs!.setString(
@@ -60,13 +66,13 @@ class AlarmPersistenceService {
         await _prefs!.remove(PersistenceKeys.alarmActivatedAt);
       }
 
-      if (state.triggeredAt != null) {
+      if (state.lastTriggeredAt != null) {
         await _prefs!.setString(
-          PersistenceKeys.alarmTriggeredAt,
-          state.triggeredAt!.toIso8601String(),
+          PersistenceKeys.alarmLastTriggeredAt,
+          state.lastTriggeredAt!.toIso8601String(),
         );
       } else {
-        await _prefs!.remove(PersistenceKeys.alarmTriggeredAt);
+        await _prefs!.remove(PersistenceKeys.alarmLastTriggeredAt);
       }
 
       debugPrint('✅ Alarm state saved');
@@ -88,37 +94,39 @@ class AlarmPersistenceService {
         return null;
       }
 
+      final isTriggered = _prefs!.getBool(PersistenceKeys.alarmIsTriggered) ?? false;
+      final isCountingDown = _prefs!.getBool(PersistenceKeys.alarmIsCountingDown) ?? false;
+      final countdownSeconds = _prefs!.getInt(PersistenceKeys.alarmCountdownSeconds) ?? 0;
+      final triggerCount = _prefs!.getInt(PersistenceKeys.alarmTriggerCount) ?? 0;
       final modeStr = _prefs!.getString(PersistenceKeys.alarmMode);
-      final statusStr = _prefs!.getString(PersistenceKeys.alarmStatus);
       final activatedAtStr = _prefs!.getString(PersistenceKeys.alarmActivatedAt);
-      final triggeredAtStr = _prefs!.getString(PersistenceKeys.alarmTriggeredAt);
+      final lastTriggeredAtStr = _prefs!.getString(PersistenceKeys.alarmLastTriggeredAt);
 
       final mode = AlarmMode.values.firstWhere(
         (m) => m.name == modeStr,
         orElse: () => AlarmMode.standard,
       );
 
-      final status = AlarmStatus.values.firstWhere(
-        (s) => s.name == statusStr,
-        orElse: () => AlarmStatus.inactive,
-      );
-
       final activatedAt = activatedAtStr != null
           ? DateTime.tryParse(activatedAtStr)
           : null;
 
-      final triggeredAt = triggeredAtStr != null
-          ? DateTime.tryParse(triggeredAtStr)
+      final lastTriggeredAt = lastTriggeredAtStr != null
+          ? DateTime.tryParse(lastTriggeredAtStr)
           : null;
 
       final state = AlarmState(
-        status: status,
+        isActive: isActive,
+        isTriggered: isTriggered,
+        isCountingDown: isCountingDown,
+        countdownSeconds: countdownSeconds,
         mode: mode,
         activatedAt: activatedAt,
-        triggeredAt: triggeredAt,
+        lastTriggeredAt: lastTriggeredAt,
+        triggerCount: triggerCount,
       );
 
-      debugPrint('✅ Alarm state loaded: ${state.status}');
+      debugPrint('✅ Alarm state loaded: active=$isActive, triggered=$isTriggered');
       return state;
     } catch (e) {
       debugPrint('❌ Failed to load alarm state: $e');
@@ -134,10 +142,13 @@ class AlarmPersistenceService {
 
     try {
       await _prefs!.remove(PersistenceKeys.alarmIsActive);
+      await _prefs!.remove(PersistenceKeys.alarmIsTriggered);
+      await _prefs!.remove(PersistenceKeys.alarmIsCountingDown);
+      await _prefs!.remove(PersistenceKeys.alarmCountdownSeconds);
       await _prefs!.remove(PersistenceKeys.alarmMode);
-      await _prefs!.remove(PersistenceKeys.alarmStatus);
       await _prefs!.remove(PersistenceKeys.alarmActivatedAt);
-      await _prefs!.remove(PersistenceKeys.alarmTriggeredAt);
+      await _prefs!.remove(PersistenceKeys.alarmLastTriggeredAt);
+      await _prefs!.remove(PersistenceKeys.alarmTriggerCount);
 
       debugPrint('✅ Alarm state cleared');
     } catch (e) {
