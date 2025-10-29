@@ -3,6 +3,8 @@ import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
 import 'package:doggy_dogs_car_alarm/services/sensor_detection_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('SensorDetectionService', () {
     late SensorDetectionService service;
 
@@ -101,6 +103,35 @@ void main() {
       // Cleanup
       service1.dispose();
       service2.dispose();
+    });
+
+    // Note: The following tests require platform channels and sensors which are not available
+    // in the test environment without extensive mocking. These would be better as integration tests.
+
+    // test('startMonitoring changes monitoring state', () async {
+    //   final service = SensorDetectionService(sensitivity: AlarmSensitivity.medium);
+    //   expect(service.isMonitoring, false);
+    //   await service.startMonitoring();
+    //   expect(service.isMonitoring, true);
+    //   await service.stopMonitoring();
+    //   service.dispose();
+    // });
+
+    test('motionEvents stream broadcasts events', () async {
+      // Arrange
+      final service = SensorDetectionService(
+        sensitivity: AlarmSensitivity.medium,
+      );
+
+      // Act
+      final stream = service.motionEvents;
+
+      // Assert
+      expect(stream, isA<Stream<MotionEvent>>());
+      expect(stream.isBroadcast, true);
+
+      // Cleanup
+      service.dispose();
     });
   });
 
