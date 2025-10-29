@@ -5,7 +5,9 @@ import 'breed_selection_screen.dart';
 import 'settings_screen.dart';
 import '../providers/dog_provider.dart';
 import '../providers/dog_animation_provider.dart';
+import '../providers/dialogue_provider.dart';
 import '../widgets/animated_dog_widget.dart';
+import '../widgets/dialogue_bubble_widget.dart';
 import '../models/dog_animation_state.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -16,6 +18,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger check-in dialogue when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dialogueProvider.notifier).onCheckIn();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final dog = ref.watch(dogProvider);
@@ -77,15 +88,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Animated dog
+                        // Animated dog with dialogue
                         Expanded(
-                          child: Center(
-                            child: AnimatedDogWidget(
-                              breed: dog.breed,
-                              controller:
-                                  ref.watch(dogAnimationControllerProvider),
-                              size: 200,
-                            ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: AnimatedDogWidget(
+                                  breed: dog.breed,
+                                  controller: ref.watch(dogAnimationControllerProvider),
+                                  size: 200,
+                                ),
+                              ),
+                              // Dialogue bubble above dog
+                              const PositionedDialogueBubble(
+                                alignment: Alignment.topCenter,
+                                margin: EdgeInsets.all(8),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -155,6 +174,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         final messenger = ScaffoldMessenger.of(context);
 
                         await ref.read(dogProvider.notifier).feed();
+
+                        // Trigger feeding dialogue
+                        ref.read(dialogueProvider.notifier).onFeeding();
+
                         if (mounted) {
                           messenger.showSnackBar(
                             SnackBar(
@@ -181,6 +204,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         final messenger = ScaffoldMessenger.of(context);
 
                         await ref.read(dogProvider.notifier).play();
+
+                        // Trigger playing dialogue
+                        ref.read(dialogueProvider.notifier).onPlaying();
+
                         if (mounted) {
                           messenger.showSnackBar(
                             SnackBar(
@@ -205,6 +232,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // Main Action Button - Alarm
               ElevatedButton(
                 onPressed: () {
+                  // Trigger alarm activation dialogue
+                  ref.read(dialogueProvider.notifier).onAlarmActivated();
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
