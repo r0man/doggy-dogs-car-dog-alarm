@@ -66,6 +66,49 @@ void main() {
       expect(copy.type, SensorType.accelerometer); // Unchanged
     });
 
+    test('copyWith can update z and timestamp', () {
+      // Arrange
+      final original = SensorReading(
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+        timestamp: DateTime(2024, 1, 1),
+        type: SensorType.accelerometer,
+      );
+
+      final newTimestamp = DateTime(2024, 12, 31);
+
+      // Act
+      final copy = original.copyWith(z: 30.0, timestamp: newTimestamp);
+
+      // Assert
+      expect(copy.x, 1.0); // Unchanged
+      expect(copy.y, 2.0); // Unchanged
+      expect(copy.z, 30.0);
+      expect(copy.timestamp, newTimestamp);
+      expect(copy.type, SensorType.accelerometer); // Unchanged
+    });
+
+    test('copyWith can update type', () {
+      // Arrange
+      final original = SensorReading(
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+        timestamp: DateTime.now(),
+        type: SensorType.accelerometer,
+      );
+
+      // Act
+      final copy = original.copyWith(type: SensorType.gyroscope);
+
+      // Assert
+      expect(copy.x, 1.0);
+      expect(copy.y, 2.0);
+      expect(copy.z, 3.0);
+      expect(copy.type, SensorType.gyroscope);
+    });
+
     test('toString returns readable representation', () {
       // Arrange
       final reading = SensorReading(
@@ -220,6 +263,25 @@ void main() {
       expect(copy.threshold, 0.6);
       expect(copy.accelerometerThreshold, original.accelerometerThreshold);
       expect(copy.gyroscopeThreshold, original.gyroscopeThreshold);
+    });
+
+    test('copyWith can update all parameters', () {
+      // Arrange
+      const original = AlarmSensitivity.medium;
+
+      // Act
+      final copy = original.copyWith(
+        name: 'Super Sensitive',
+        threshold: 0.1,
+        accelerometerThreshold: 0.5,
+        gyroscopeThreshold: 0.3,
+      );
+
+      // Assert
+      expect(copy.name, 'Super Sensitive');
+      expect(copy.threshold, 0.1);
+      expect(copy.accelerometerThreshold, 0.5);
+      expect(copy.gyroscopeThreshold, 0.3);
     });
   });
 
