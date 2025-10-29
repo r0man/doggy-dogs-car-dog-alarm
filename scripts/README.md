@@ -62,7 +62,7 @@ The script is automatically triggered by the SessionStart hook defined in `.clau
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/setup-claude-code-web.sh"
+            "command": "./scripts/setup-claude-code-web.sh"
           }
         ]
       }
@@ -70,6 +70,8 @@ The script is automatically triggered by the SessionStart hook defined in `.clau
   }
 }
 ```
+
+**Note:** The hook runs from the project root directory, so the path is relative to where `.claude/settings.json` is located.
 
 ### Manual Installation
 
