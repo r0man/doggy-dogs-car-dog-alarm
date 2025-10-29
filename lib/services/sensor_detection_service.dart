@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../models/sensor_data.dart';
+import 'app_settings_service.dart';
 
 /// Service for detecting motion events using device sensors
 class SensorDetectionService {
@@ -255,9 +256,11 @@ final sensorDetectionServiceProvider = Provider.family<SensorDetectionService, A
 );
 
 /// Provider for current alarm sensitivity
-final alarmSensitivityProvider = StateProvider<AlarmSensitivity>(
-  (ref) => AlarmSensitivity.medium,
-);
+final alarmSensitivityProvider = Provider<AlarmSensitivity>((ref) {
+  final settings = ref.watch(appSettingsProvider);
+  final service = ref.watch(appSettingsServiceProvider);
+  return service.getAlarmSensitivity(settings);
+});
 
 /// Provider for monitoring state
 final sensorMonitoringProvider = StateProvider<bool>((ref) => false);
