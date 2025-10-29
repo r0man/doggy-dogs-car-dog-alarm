@@ -15,12 +15,12 @@ env:
   FLUTTER_VERSION: '3.24.5'
 
 jobs:
-  create-release:
-    name: Create GitHub Release
+  prepare-release:
+    name: Prepare Release Info
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       version: ${{ steps.get_version.outputs.version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
 
     steps:
       - name: Checkout repository
@@ -88,21 +88,9 @@ jobs:
             echo 'EOF'
           } >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          release_name: Release v${{ steps.get_version.outputs.version }}
-          body: ${{ steps.changelog.outputs.changelog }}
-          draft: false
-          prerelease: ${{ contains(steps.get_version.outputs.version, 'alpha') || contains(steps.get_version.outputs.version, 'beta') || contains(steps.get_version.outputs.version, 'rc') }}
-
   build-android:
     name: Build Android Artifacts
-    needs: create-release
+    needs: prepare-release
     runs-on: ubuntu-latest
 
     steps:
@@ -124,7 +112,7 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.pub-cache
@@ -137,16 +125,24 @@ jobs:
         run: flutter pub get
 
       - name: Decode keystore
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/keystore.jks
 
-          cat > android/key.properties <<EOF
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
+            cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
           storeFile=keystore.jks
           EOF
+          else
+            echo "⚠️ Keystore secrets not configured, will build unsigned"
+          fi
 
       - name: Build APK
         run: |
@@ -167,43 +163,31 @@ jobs:
 
       - name: Rename artifacts
         run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION="${{ needs.prepare-release.outputs.version }}"
 
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
             mv build/app/outputs/flutter-apk/app-release.apk \
-               build/app/outputs/flutter-apk/doggy-dogs-v${VERSION}.apk
+               build/app/outputs/flutter-apk/doggy-dogs-android-v${VERSION}.apk
           fi
 
           if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
             mv build/app/outputs/bundle/release/app-release.aab \
-               build/app/outputs/bundle/release/doggy-dogs-v${VERSION}.aab
+               build/app/outputs/bundle/release/doggy-dogs-android-v${VERSION}.aab
           fi
 
-      - name: Upload APK to Release
-        if: hashFiles('build/app/outputs/flutter-apk/*.apk') != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: build/app/outputs/flutter-apk/doggy-dogs-v${{ needs.create-release.outputs.version }}.apk
-          asset_name: doggy-dogs-android-v${{ needs.create-release.outputs.version }}.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload AAB to Release
-        if: hashFiles('build/app/outputs/bundle/release/*.aab') != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: build/app/outputs/bundle/release/doggy-dogs-v${{ needs.create-release.outputs.version }}.aab
-          asset_name: doggy-dogs-android-v${{ needs.create-release.outputs.version }}.aab
-          asset_content_type: application/octet-stream
+          name: android-release-${{ needs.prepare-release.outputs.version }}
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/release/*.aab
+          if-no-files-found: warn
+          retention-days: 90
 
   build-ios:
     name: Build iOS Artifact
-    needs: create-release
+    needs: prepare-release
     runs-on: macos-latest
 
     steps:
@@ -232,38 +216,49 @@ jobs:
           fastlane --version
 
       - name: Set up SSH for Match
-        if: secrets.MATCH_GIT_PRIVATE_KEY != ''
+        env:
+          MATCH_GIT_PRIVATE_KEY: ${{ secrets.MATCH_GIT_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.MATCH_GIT_PRIVATE_KEY }}" > ~/.ssh/match_deploy_key
-          chmod 600 ~/.ssh/match_deploy_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          if [ -n "$MATCH_GIT_PRIVATE_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$MATCH_GIT_PRIVATE_KEY" > ~/.ssh/match_deploy_key
+            chmod 600 ~/.ssh/match_deploy_key
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-          cat > ~/.ssh/config <<EOF
+            cat > ~/.ssh/config <<EOF
           Host github.com
             HostName github.com
             User git
             IdentityFile ~/.ssh/match_deploy_key
             StrictHostKeyChecking no
           EOF
+            echo "✅ SSH configured"
+          else
+            echo "⚠️ MATCH_GIT_PRIVATE_KEY not configured"
+          fi
 
       - name: Set up provisioning profiles
-        if: secrets.MATCH_PASSWORD != ''
         env:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
         run: |
-          cd ios
-          fastlane match appstore --readonly || {
-            echo "⚠️  Match failed, will build unsigned"
-            exit 0
-          }
+          if [ -n "$MATCH_PASSWORD" ] && [ -n "$MATCH_GIT_URL" ]; then
+            cd ios
+            fastlane match appstore --readonly || {
+              echo "⚠️  Match failed, will build unsigned"
+              exit 0
+            }
+          else
+            echo "⚠️ Match secrets not configured"
+          fi
 
       - name: Build IPA
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.MATCH_PASSWORD }}" ]; then
+          if [ -n "$MATCH_PASSWORD" ]; then
             flutter build ipa --release --export-options-plist=ios/ExportOptions.plist || {
               echo "⚠️  Signed build failed, skipping iOS"
               exit 0
@@ -274,29 +269,62 @@ jobs:
           fi
 
       - name: Rename IPA
-        if: hashFiles('build/ios/ipa/*.ipa') != ''
         run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          IPA_FILE=$(find build/ios/ipa -name "*.ipa" | head -1)
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          IPA_FILE=$(find build/ios/ipa -name "*.ipa" -type f 2>/dev/null | head -1)
 
-          if [ -f "$IPA_FILE" ]; then
-            mv "$IPA_FILE" "build/ios/ipa/doggy-dogs-v${VERSION}.ipa"
+          if [ -n "$IPA_FILE" ] && [ -f "$IPA_FILE" ]; then
+            mv "$IPA_FILE" "build/ios/ipa/doggy-dogs-ios-v${VERSION}.ipa"
+            echo "✅ IPA renamed"
+          else
+            echo "⚠️  No IPA file found"
           fi
 
-      - name: Upload IPA to Release
-        if: hashFiles('build/ios/ipa/*.ipa') != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: build/ios/ipa/doggy-dogs-v${{ needs.create-release.outputs.version }}.ipa
-          asset_name: doggy-dogs-ios-v${{ needs.create-release.outputs.version }}.ipa
-          asset_content_type: application/octet-stream
+          name: ios-release-${{ needs.prepare-release.outputs.version }}
+          path: build/ios/ipa/*.ipa
+          if-no-files-found: warn
+          retention-days: 90
+
+  create-release:
+    name: Create GitHub Release
+    needs: [prepare-release, build-android, build-ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-${{ needs.prepare-release.outputs.version }}
+          path: ./artifacts/android
+        continue-on-error: true
+
+      - name: Download iOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-${{ needs.prepare-release.outputs.version }}
+          path: ./artifacts/ios
+        continue-on-error: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.prepare-release.outputs.version }}
+          name: Release v${{ needs.prepare-release.outputs.version }}
+          body: ${{ needs.prepare-release.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(needs.prepare-release.outputs.version, 'alpha') || contains(needs.prepare-release.outputs.version, 'beta') || contains(needs.prepare-release.outputs.version, 'rc') }}
+          files: |
+            ./artifacts/**/*
+          fail_on_unmatched_files: false
 
   update-changelog:
     name: Update CHANGELOG.md
-    needs: [create-release, build-android, build-ios]
+    needs: [prepare-release, create-release]
     runs-on: ubuntu-latest
 
     steps:
@@ -308,7 +336,7 @@ jobs:
 
       - name: Generate full changelog
         run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION="${{ needs.prepare-release.outputs.version }}"
           DATE=$(date +%Y-%m-%d)
 
           # Get the previous tag
@@ -349,19 +377,19 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG for v${{ needs.create-release.outputs.version }}" || echo "No changes to commit"
+          git commit -m "Update CHANGELOG for v${{ needs.prepare-release.outputs.version }}" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
   release-summary:
     name: Release Summary
-    needs: [create-release, build-android, build-ios, update-changelog]
+    needs: [prepare-release, create-release, build-android, build-ios, update-changelog]
     runs-on: ubuntu-latest
     if: always()
 
     steps:
       - name: Summary
         run: |
-          echo "## 🎉 Release v${{ needs.create-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Release v${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Artifacts Built" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -382,8 +410,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- [Release Page](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Download Artifacts](https://github.com/${{ github.repository }}/releases/download/v${{ needs.create-release.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Release Page](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.prepare-release.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Download Artifacts](https://github.com/${{ github.repository }}/releases/download/v${{ needs.prepare-release.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

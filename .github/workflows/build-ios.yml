@@ -136,18 +136,20 @@ jobs:
           if-no-files-found: warn
 
       - name: Deploy to TestFlight (optional)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}
         run: |
-          if [ -f "build/ios/ipa/*.ipa" ]; then
+          IPA_FILE=$(find build/ios/ipa -name "*.ipa" -type f 2>/dev/null | head -1)
+
+          if [ -n "$IPA_FILE" ] && [ -f "$IPA_FILE" ] && [ -n "$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" ]; then
             cd ios
-            fastlane pilot upload --ipa ../build/ios/ipa/*.ipa --skip_waiting_for_build_processing || {
-              echo "⚠️  TestFlight upload failed or not configured"
+            fastlane pilot upload --ipa "../$IPA_FILE" --skip_waiting_for_build_processing || {
+              echo "⚠️  TestFlight upload failed"
             }
           else
-            echo "ℹ️  No signed IPA found, skipping TestFlight upload"
+            echo "ℹ️  Skipping TestFlight upload (no signed IPA or credentials not configured)"
           fi
 
       - name: Build summary
