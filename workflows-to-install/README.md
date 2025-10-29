@@ -2,6 +2,19 @@
 
 This directory contains the complete GitHub Actions CI/CD workflow files for Issues 31, 32, 33, and 34.
 
+## Recent Updates
+
+**Latest**: Workflows have been updated with the following fixes:
+- Updated `actions/cache` from v3 to v4 (deprecated action fix)
+- Fixed cache path syntax (`${{ env.HOME }}` → `~`)
+- Replaced deprecated `actions/create-release@v1` and `actions/upload-release-asset@v1` with modern `softprops/action-gh-release@v1`
+- Fixed incorrect secret checking syntax (moved to env vars)
+- Fixed wildcard path issues in iOS TestFlight deployment
+- Improved error handling with proper continue-on-error flags
+- Added proper permissions declarations for release creation
+
+These changes modernize the workflows, fix deprecation warnings, and improve build reliability.
+
 ## Why are they here?
 
 Due to GitHub App permissions, Claude Code cannot directly push files to `.github/workflows/`.
