@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doggy_dogs_car_alarm/services/notification_service.dart';
 import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
 
@@ -14,6 +15,12 @@ void main() {
 
     test('should create instance successfully', () {
       expect(service, isNotNull);
+    });
+
+    test('should return same instance (singleton pattern)', () {
+      final service1 = NotificationService();
+      final service2 = NotificationService();
+      expect(service1, equals(service2));
     });
 
     test('should have correct notification channels defined', () {
@@ -99,6 +106,26 @@ void main() {
         );
         expect(message, contains('LIGHT'));
       });
+    });
+  });
+
+  group('NotificationService Provider', () {
+    test('notificationServiceProvider returns NotificationService instance',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final service = container.read(notificationServiceProvider);
+      expect(service, isA<NotificationService>());
+    });
+
+    test('notificationServiceProvider returns singleton instance', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final service1 = container.read(notificationServiceProvider);
+      final service2 = container.read(notificationServiceProvider);
+      expect(service1, equals(service2));
     });
   });
 }
