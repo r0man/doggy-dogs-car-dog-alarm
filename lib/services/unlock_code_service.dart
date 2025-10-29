@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app_settings_service.dart';
 
 /// Service for managing alarm unlock codes with secure storage
 class UnlockCodeService {
@@ -73,5 +74,8 @@ final unlockCodeServiceProvider = Provider<UnlockCodeService>((ref) {
   return UnlockCodeService(prefs);
 });
 
-/// Provider for countdown duration in seconds (configurable)
-final countdownDurationProvider = StateProvider<int>((ref) => 30); // Default 30 seconds
+/// Provider for countdown duration in seconds (from app settings)
+final countdownDurationProvider = Provider<int>((ref) {
+  final settings = ref.watch(appSettingsProvider);
+  return settings.countdownDuration;
+});

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'alarm_screen.dart';
 import 'breed_selection_screen.dart';
+import 'settings_screen.dart';
 import '../providers/dog_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -39,6 +40,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const BreedSelectionScreen(isOnboarding: false),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
                 ),
               );
             },
