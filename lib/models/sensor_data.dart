@@ -44,8 +44,7 @@ class SensorReading {
   }
 
   @override
-  String toString() =>
-      'SensorReading($type: x=$x, y=$y, z=$z, magnitude=$magnitude)';
+  String toString() => 'SensorReading($type: x=$x, y=$y, z=$z, magnitude=$magnitude)';
 }
 
 enum SensorType {
@@ -137,8 +136,7 @@ class AlarmSensitivity {
     return AlarmSensitivity(
       name: name ?? this.name,
       threshold: threshold ?? this.threshold,
-      accelerometerThreshold:
-          accelerometerThreshold ?? this.accelerometerThreshold,
+      accelerometerThreshold: accelerometerThreshold ?? this.accelerometerThreshold,
       gyroscopeThreshold: gyroscopeThreshold ?? this.gyroscopeThreshold,
     );
   }

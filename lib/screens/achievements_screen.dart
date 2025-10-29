@@ -272,9 +272,7 @@ class _AchievementTile extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isUnlocked
-                        ? Color(achievement.category.color)
-                        : UrbanColors.asphalt,
+                    color: isUnlocked ? Color(achievement.category.color) : UrbanColors.asphalt,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: UrbanColors.comicBlack, width: 2),
                   ),

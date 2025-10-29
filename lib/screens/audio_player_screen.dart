@@ -251,9 +251,7 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
-            color: isPlaying
-                ? UrbanColors.neonCyan.withOpacity(0.2)
-                : null,
+            color: isPlaying ? UrbanColors.neonCyan.withOpacity(0.2) : null,
             child: ListTile(
               leading: Container(
                 width: 48,

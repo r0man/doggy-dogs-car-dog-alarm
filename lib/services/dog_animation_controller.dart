@@ -52,8 +52,7 @@ class DogAnimationController extends ChangeNotifier {
   void updateFromMood(DogMood mood) {
     // Don't override alarm-driven states (barking, alert)
     // These should only be changed by updateFromAlarmState()
-    if (_currentState == DogAnimationState.barking ||
-        _currentState == DogAnimationState.alert) {
+    if (_currentState == DogAnimationState.barking || _currentState == DogAnimationState.alert) {
       debugPrint(
         'Animation: Ignoring mood update to ${mood.name} '
         '(currently in alarm state: ${_currentState.displayName})',

@@ -66,9 +66,7 @@ class AchievementService {
   /// Get unlocked achievements
   List<Achievement> getUnlockedAchievements() {
     final allProgress = getAllProgress();
-    return Achievements.all
-        .where((a) => allProgress[a.id]?.isUnlocked ?? false)
-        .toList();
+    return Achievements.all.where((a) => allProgress[a.id]?.isUnlocked ?? false).toList();
   }
 
   /// Get achievement count by category

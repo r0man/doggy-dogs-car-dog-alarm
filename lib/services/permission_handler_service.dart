@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service for handling app permissions
 class PermissionHandlerService {
-  static final PermissionHandlerService _instance =
-      PermissionHandlerService._internal();
+  static final PermissionHandlerService _instance = PermissionHandlerService._internal();
 
   factory PermissionHandlerService() => _instance;
 
@@ -139,8 +138,7 @@ class PermissionHandlerService {
   Future<PermissionStatusSummary> getPermissionSummary() async {
     final sensors = await Permission.sensors.status;
     final notifications = await Permission.notification.status;
-    final batteryOptimization =
-        await Permission.ignoreBatteryOptimizations.status;
+    final batteryOptimization = await Permission.ignoreBatteryOptimizations.status;
     final location = await Permission.location.status;
 
     return PermissionStatusSummary(
@@ -228,8 +226,7 @@ final permissionHandlerServiceProvider = Provider<PermissionHandlerService>(
 );
 
 /// Provider for permission summary
-final permissionSummaryProvider =
-    FutureProvider<PermissionStatusSummary>((ref) async {
+final permissionSummaryProvider = FutureProvider<PermissionStatusSummary>((ref) async {
   final service = ref.watch(permissionHandlerServiceProvider);
   return await service.getPermissionSummary();
 });

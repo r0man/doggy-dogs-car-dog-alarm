@@ -34,8 +34,7 @@ class AppSettings {
       sensitivityLevel: sensitivityLevel ?? this.sensitivityLevel,
       barkVolume: barkVolume ?? this.barkVolume,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
-      batteryOptimizationEnabled:
-          batteryOptimizationEnabled ?? this.batteryOptimizationEnabled,
+      batteryOptimizationEnabled: batteryOptimizationEnabled ?? this.batteryOptimizationEnabled,
     );
   }
 
@@ -57,8 +56,7 @@ class AppSettings {
       sensitivityLevel: json['sensitivityLevel'] as String? ?? 'medium',
       barkVolume: (json['barkVolume'] as num?)?.toDouble() ?? 0.8,
       notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
-      batteryOptimizationEnabled:
-          json['batteryOptimizationEnabled'] as bool? ?? true,
+      batteryOptimizationEnabled: json['batteryOptimizationEnabled'] as bool? ?? true,
     );
   }
 
@@ -79,9 +77,7 @@ class AppSettings {
 
   /// Validate all settings
   bool isValid() {
-    return isValidCountdownDuration() &&
-        isValidBarkVolume() &&
-        isValidSensitivityLevel();
+    return isValidCountdownDuration() && isValidBarkVolume() && isValidSensitivityLevel();
   }
 
   @override

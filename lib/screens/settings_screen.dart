@@ -76,9 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     divisions: 21, // 5-second increments
                     label: '${settings.countdownDuration}s',
                     onChanged: (value) {
-                      ref
-                          .read(appSettingsProvider.notifier)
-                          .setCountdownDuration(value.toInt());
+                      ref.read(appSettingsProvider.notifier).setCountdownDuration(value.toInt());
                     },
                   ),
                 ),
@@ -115,9 +113,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
               selected: {settings.sensitivityLevel},
               onSelectionChanged: (Set<String> selection) {
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setSensitivityLevel(selection.first);
+                ref.read(appSettingsProvider.notifier).setSensitivityLevel(selection.first);
               },
             ),
             const SizedBox(height: 8),
@@ -146,9 +142,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     divisions: 20,
                     label: '${(settings.barkVolume * 100).toInt()}%',
                     onChanged: (value) {
-                      ref
-                          .read(appSettingsProvider.notifier)
-                          .setBarkVolume(value);
+                      ref.read(appSettingsProvider.notifier).setBarkVolume(value);
                     },
                   ),
                 ),
@@ -192,9 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               subtitle: const Text('Receive alerts when alarm is triggered'),
               value: settings.notificationsEnabled,
               onChanged: (value) {
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setNotificationsEnabled(value);
+                ref.read(appSettingsProvider.notifier).setNotificationsEnabled(value);
               },
             ),
           ],
@@ -228,9 +220,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               value: settings.batteryOptimizationEnabled,
               onChanged: (value) {
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setBatteryOptimizationEnabled(value);
+                ref.read(appSettingsProvider.notifier).setBatteryOptimizationEnabled(value);
               },
             ),
           ],
@@ -301,8 +291,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ListTile(
                       leading: const Icon(Icons.pets),
                       title: const Text('Doggy Dogs Car Dog Alarm'),
-                      subtitle:
-                          Text('Version ${info.version} (${info.buildNumber})'),
+                      subtitle: Text('Version ${info.version} (${info.buildNumber})'),
                     ),
                     ListTile(
                       leading: const Icon(Icons.code),

@@ -45,8 +45,7 @@ class NeighborhoodSelectionScreen extends ConsumerWidget {
                         Text(
                           currentState.currentNeighborhood!.displayName,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Color(currentState
-                                    .currentNeighborhood!.style.primaryColor),
+                                color: Color(currentState.currentNeighborhood!.style.primaryColor),
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
@@ -113,17 +112,14 @@ class NeighborhoodSelectionScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final neighborhood = Neighborhood.values[index];
                   final style = neighborhood.style;
-                  final isSelected =
-                      currentState.currentNeighborhood == neighborhood;
+                  final isSelected = currentState.currentNeighborhood == neighborhood;
 
                   return _NeighborhoodTile(
                     neighborhood: neighborhood,
                     style: style,
                     isSelected: isSelected,
                     onTap: () async {
-                      await ref
-                          .read(neighborhoodProvider.notifier)
-                          .setNeighborhood(neighborhood);
+                      await ref.read(neighborhoodProvider.notifier).setNeighborhood(neighborhood);
 
                       // Trigger parking location dialogue
                       ref.read(dialogueProvider.notifier).showDialogue(

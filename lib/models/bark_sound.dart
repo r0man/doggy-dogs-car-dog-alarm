@@ -152,22 +152,17 @@ class BarkEscalation {
   static BarkEscalation get standard => BarkEscalation(
         levels: [
           const BarkLevel(type: BarkType.warning, intensity: BarkIntensity.low),
-          const BarkLevel(
-              type: BarkType.alert, intensity: BarkIntensity.medium),
-          const BarkLevel(
-              type: BarkType.aggressive, intensity: BarkIntensity.high),
-          const BarkLevel(
-              type: BarkType.threat, intensity: BarkIntensity.maximum),
+          const BarkLevel(type: BarkType.alert, intensity: BarkIntensity.medium),
+          const BarkLevel(type: BarkType.aggressive, intensity: BarkIntensity.high),
+          const BarkLevel(type: BarkType.threat, intensity: BarkIntensity.maximum),
         ],
       );
 
   static BarkEscalation get aggressive => BarkEscalation(
         levels: [
           const BarkLevel(type: BarkType.alert, intensity: BarkIntensity.high),
-          const BarkLevel(
-              type: BarkType.aggressive, intensity: BarkIntensity.maximum),
-          const BarkLevel(
-              type: BarkType.threat, intensity: BarkIntensity.maximum),
+          const BarkLevel(type: BarkType.aggressive, intensity: BarkIntensity.maximum),
+          const BarkLevel(type: BarkType.threat, intensity: BarkIntensity.maximum),
         ],
         timeBetweenLevels: const Duration(seconds: 3),
       );

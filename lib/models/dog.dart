@@ -60,11 +60,8 @@ class Dog {
 
   /// Check if dog is neglected
   bool get isNeglected {
-    final hoursSinceInteraction =
-        DateTime.now().difference(lastInteraction).inHours;
-    return hoursSinceInteraction > 24 ||
-        stats.hunger < 30 ||
-        stats.happiness < 30;
+    final hoursSinceInteraction = DateTime.now().difference(lastInteraction).inHours;
+    return hoursSinceInteraction > 24 || stats.hunger < 30 || stats.happiness < 30;
   }
 
   /// Get effectiveness rating (0-100) based on stats
@@ -98,10 +95,8 @@ class Dog {
       level: json['level'] as int,
       experience: json['experience'] as int,
       stats: DogStats.fromJson(json['stats'] as Map<String, dynamic>),
-      personality:
-          DogPersonality.fromJson(json['personality'] as Map<String, dynamic>),
-      currentMood:
-          DogMood.values.firstWhere((e) => e.name == json['currentMood']),
+      personality: DogPersonality.fromJson(json['personality'] as Map<String, dynamic>),
+      currentMood: DogMood.values.firstWhere((e) => e.name == json['currentMood']),
       createdAt: DateTime.parse(json['createdAt'] as String),
       lastInteraction: DateTime.parse(json['lastInteraction'] as String),
     );
@@ -216,8 +211,7 @@ class DogStats {
   }
 
   /// Decrease stats over time
-  DogStats decay(
-      {int hungerDecay = 5, int energyDecay = 3, int happinessDecay = 2}) {
+  DogStats decay({int hungerDecay = 5, int energyDecay = 3, int happinessDecay = 2}) {
     return DogStats(
       hunger: (hunger - hungerDecay).clamp(0, 100),
       happiness: (happiness - happinessDecay).clamp(0, 100),

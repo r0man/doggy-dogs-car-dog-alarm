@@ -140,7 +140,7 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
   String _getPerformanceMessage() {
     if (_state.score >= 800) return 'Master street artist! Legendary work!';
     if (_state.score >= 600) return 'Impressive! Gallery-worthy pieces!';
-    if (_state.score >= 400) return 'Nice! You've got style!';
+    if (_state.score >= 400) return 'Nice! You have got style!';
     if (_state.score >= 200) return 'Good start! Keep practicing!';
     return 'Art is about expression! Try again!';
   }
@@ -315,9 +315,7 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                 value: _state.timeRemaining / challenge.timeLimit,
                 backgroundColor: UrbanColors.asphalt,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  _state.timeRemaining < 10
-                      ? UrbanColors.dangerRed
-                      : UrbanColors.neonCyan,
+                  _state.timeRemaining < 10 ? UrbanColors.dangerRed : UrbanColors.neonCyan,
                 ),
               ),
             ],
@@ -391,9 +389,7 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected
-                              ? UrbanColors.comicWhite
-                              : UrbanColors.comicBlack,
+                          color: isSelected ? UrbanColors.comicWhite : UrbanColors.comicBlack,
                           width: isSelected ? 4 : 2,
                         ),
                         boxShadow: isSelected

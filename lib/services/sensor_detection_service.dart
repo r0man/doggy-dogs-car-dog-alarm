@@ -120,8 +120,7 @@ class SensorDetectionService {
 
     // Detect motion
     if (_lastAccelerometerReading != null) {
-      _detectMotion(
-          reading, _lastAccelerometerReading!, _accelerometerBaseline!);
+      _detectMotion(reading, _lastAccelerometerReading!, _accelerometerBaseline!);
     }
 
     _lastAccelerometerReading = reading;
@@ -164,12 +163,9 @@ class SensorDetectionService {
     List<SensorReading> readings,
     SensorType type,
   ) {
-    final avgX =
-        readings.map((r) => r.x).reduce((a, b) => a + b) / readings.length;
-    final avgY =
-        readings.map((r) => r.y).reduce((a, b) => a + b) / readings.length;
-    final avgZ =
-        readings.map((r) => r.z).reduce((a, b) => a + b) / readings.length;
+    final avgX = readings.map((r) => r.x).reduce((a, b) => a + b) / readings.length;
+    final avgY = readings.map((r) => r.y).reduce((a, b) => a + b) / readings.length;
+    final avgZ = readings.map((r) => r.z).reduce((a, b) => a + b) / readings.length;
 
     return SensorReading(
       x: avgX,
@@ -255,8 +251,7 @@ class SensorDetectionService {
 }
 
 /// Provider for sensor detection service
-final sensorDetectionServiceProvider =
-    Provider.family<SensorDetectionService, AlarmSensitivity>(
+final sensorDetectionServiceProvider = Provider.family<SensorDetectionService, AlarmSensitivity>(
   (ref, sensitivity) => SensorDetectionService(sensitivity: sensitivity),
 );
 

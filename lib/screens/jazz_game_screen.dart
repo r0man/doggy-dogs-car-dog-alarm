@@ -191,9 +191,9 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
   }
 
   String _getPerformanceMessage() {
-    if (_state.score >= 2000) return 'Legendary! You're a jazz master!';
+    if (_state.score >= 2000) return 'Legendary! You are a jazz master!';
     if (_state.score >= 1500) return 'Excellent! Smooth as bebop!';
-    if (_state.score >= 1000) return 'Great! You've got rhythm!';
+    if (_state.score >= 1000) return 'Great! You have got rhythm!';
     if (_state.score >= 500) return 'Not bad! Keep practicing!';
     return 'Keep trying! Everyone starts somewhere!';
   }

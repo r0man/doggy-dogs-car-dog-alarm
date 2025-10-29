@@ -118,13 +118,11 @@ class BarkAudioService {
       await _player.resume();
 
       // Wait for the bark to finish
-      await Future.delayed(
-          Duration(milliseconds: (sound.type.duration * 1000).toInt()));
+      await Future.delayed(Duration(milliseconds: (sound.type.duration * 1000).toInt()));
     } catch (e) {
       // If audio file doesn't exist, continue silently
       // In production, you'd want to log this or have fallback sounds
-      await Future.delayed(
-          Duration(milliseconds: (sound.type.duration * 1000).toInt()));
+      await Future.delayed(Duration(milliseconds: (sound.type.duration * 1000).toInt()));
     }
   }
 

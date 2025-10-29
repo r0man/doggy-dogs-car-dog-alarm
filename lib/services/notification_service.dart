@@ -19,8 +19,7 @@ class NotificationService {
 
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
 
@@ -31,8 +30,7 @@ class NotificationService {
     debugPrint('🔔 Initializing notification service...');
 
     // Android initialization settings
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -95,8 +93,8 @@ class NotificationService {
       importance: Importance.low,
     );
 
-    final plugin = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final plugin = _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
     if (plugin != null) {
       await plugin.createNotificationChannel(alarmChannel);
@@ -119,11 +117,11 @@ class NotificationService {
       await initialize();
     }
 
-    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-    final iosPlugin = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final iosPlugin =
+        _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
 
     // Request Android 13+ notification permissions
     if (androidPlugin != null) {
@@ -229,8 +227,7 @@ class NotificationService {
     }
 
     const title = '✅ Alarm Activated';
-    final body =
-        '${dogName ?? 'Your guard dog'} is now watching your car in ${mode.name} mode';
+    final body = '${dogName ?? 'Your guard dog'} is now watching your car in ${mode.name} mode';
 
     const androidDetails = AndroidNotificationDetails(
       NotificationChannels.alarmStatus,
@@ -397,8 +394,8 @@ class NotificationService {
     }
 
     // Check Android
-    final androidPlugin = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
       final enabled = await androidPlugin.areNotificationsEnabled();

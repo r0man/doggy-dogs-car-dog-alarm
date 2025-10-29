@@ -92,8 +92,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
   /// Update countdown duration
   Future<void> setCountdownDuration(int duration) async {
     if (duration < 15 || duration > 120) {
-      throw ArgumentError(
-          'Countdown duration must be between 15 and 120 seconds');
+      throw ArgumentError('Countdown duration must be between 15 and 120 seconds');
     }
 
     final newSettings = state.copyWith(countdownDuration: duration);
@@ -145,8 +144,7 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 }
 
 /// Provider for app settings state
-final appSettingsProvider =
-    StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
+final appSettingsProvider = StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
   final service = ref.watch(appSettingsServiceProvider);
   return AppSettingsNotifier(service);
 });

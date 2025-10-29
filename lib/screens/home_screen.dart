@@ -68,8 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const BreedSelectionScreen(isOnboarding: false),
+                  builder: (context) => const BreedSelectionScreen(isOnboarding: false),
                 ),
               );
             },
@@ -131,10 +130,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Tap to meet your companion!',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey,
-                                  ),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.grey,
+                              ),
                         ),
                       ],
                     ),

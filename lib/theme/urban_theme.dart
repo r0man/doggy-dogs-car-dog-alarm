@@ -19,27 +19,20 @@ class UrbanTheme {
         onPrimary: UrbanColors.comicWhite,
         primaryContainer: UrbanColors.rustDark,
         onPrimaryContainer: UrbanColors.comicWhite,
-
         secondary: UrbanColors.neonCyan,
         onSecondary: UrbanColors.comicBlack,
         secondaryContainer: UrbanColors.concreteLight,
         onSecondaryContainer: UrbanColors.neonCyan,
-
         tertiary: UrbanColors.neonPink,
         onTertiary: UrbanColors.comicBlack,
-
         error: UrbanColors.dangerRed,
         onError: UrbanColors.comicWhite,
-
         background: UrbanColors.nightSky,
         onBackground: UrbanColors.moonlight,
-
         surface: UrbanColors.concreteGray,
         onSurface: UrbanColors.comicWhite,
-
         surfaceVariant: UrbanColors.asphalt,
         onSurfaceVariant: UrbanColors.fog,
-
         outline: UrbanColors.graffiti,
         shadow: UrbanColors.shadow,
       ),
@@ -146,7 +139,6 @@ class UrbanTheme {
           color: UrbanColors.comicWhite,
         ),
         displaySmall: UrbanTextStyles.streetHeadline,
-
         headlineLarge: UrbanTextStyles.streetHeadline,
         headlineMedium: UrbanTextStyles.comicTitle,
         headlineSmall: GoogleFonts.permanentMarker(
@@ -155,7 +147,6 @@ class UrbanTheme {
           letterSpacing: 0.8,
           color: UrbanColors.rustOrange,
         ),
-
         titleLarge: UrbanTextStyles.comicTitle,
         titleMedium: GoogleFonts.permanentMarker(
           fontSize: 18,
@@ -164,7 +155,6 @@ class UrbanTheme {
           color: UrbanColors.comicWhite,
         ),
         titleSmall: UrbanTextStyles.stencilText,
-
         bodyLarge: UrbanTextStyles.urbanBody,
         bodyMedium: GoogleFonts.robotoCondensed(
           fontSize: 14,
@@ -178,7 +168,6 @@ class UrbanTheme {
           letterSpacing: 0.4,
           color: UrbanColors.fog,
         ),
-
         labelLarge: UrbanTextStyles.urbanLabel,
         labelMedium: GoogleFonts.robotoCondensed(
           fontSize: 11,

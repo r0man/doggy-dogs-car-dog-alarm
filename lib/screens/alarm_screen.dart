@@ -55,10 +55,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                         if (alarmService.currentState.isCountingDown) ...[
                           Text(
                             'ACTIVATING IN',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   color: Colors.orange,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -66,10 +63,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                           const SizedBox(height: 16),
                           Text(
                             '${alarmService.currentState.countdownSeconds}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .displayLarge
-                                ?.copyWith(
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
                                   color: Colors.orange,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 80,
@@ -78,10 +72,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                           const SizedBox(height: 16),
                           Text(
                             'seconds',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   color: Colors.orange.shade700,
                                 ),
                           ),
@@ -109,10 +100,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                                 : alarmService.currentState.isActive
                                     ? 'GUARD DOG ACTIVE'
                                     : 'GUARD DOG SLEEPING',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: alarmService.currentState.isTriggered
                                       ? Colors.red
@@ -135,15 +123,11 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                               'Sensitivity: ${currentSensitivity.name}',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
-                            if (alarmService.currentState.activeDuration !=
-                                null) ...[
+                            if (alarmService.currentState.activeDuration != null) ...[
                               const SizedBox(height: 8),
                               Text(
                                 'Active for: ${_formatDuration(alarmService.currentState.activeDuration!)}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Colors.grey.shade600,
                                     ),
                               ),
@@ -154,10 +138,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                             const SizedBox(height: 16),
                             Text(
                               'Triggers: ${alarmService.currentState.triggerCount}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -221,11 +202,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                   selected: {currentSensitivity},
                   onSelectionChanged: (Set<AlarmSensitivity> selection) {
                     final service = ref.read(appSettingsServiceProvider);
-                    final sensitivityName =
-                        service.getSensitivityName(selection.first);
-                    ref
-                        .read(appSettingsProvider.notifier)
-                        .setSensitivityLevel(sensitivityName);
+                    final sensitivityName = service.getSensitivityName(selection.first);
+                    ref.read(appSettingsProvider.notifier).setSensitivityLevel(sensitivityName);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -349,8 +327,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     );
   }
 
-  Future<void> _handleDeactivate(
-      BuildContext context, AlarmService alarmService) async {
+  Future<void> _handleDeactivate(BuildContext context, AlarmService alarmService) async {
     // Show unlock dialog
     await showDialog(
       context: context,

@@ -70,9 +70,7 @@ class AchievementProgress {
     return AchievementProgress(
       achievementId: json['achievementId'] as String,
       currentProgress: json['currentProgress'] as int,
-      unlockedAt: json['unlockedAt'] != null
-          ? DateTime.parse(json['unlockedAt'] as String)
-          : null,
+      unlockedAt: json['unlockedAt'] != null ? DateTime.parse(json['unlockedAt'] as String) : null,
     );
   }
 }

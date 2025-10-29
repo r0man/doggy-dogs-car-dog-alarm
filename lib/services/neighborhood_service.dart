@@ -75,9 +75,7 @@ class NeighborhoodService {
 
     try {
       final List<dynamic> visitsList = jsonDecode(visitsJson);
-      return visitsList
-          .map((v) => LocationVisit.fromJson(v as Map<String, dynamic>))
-          .toList();
+      return visitsList.map((v) => LocationVisit.fromJson(v as Map<String, dynamic>)).toList();
     } catch (e) {
       return [];
     }
@@ -118,9 +116,7 @@ class NeighborhoodService {
     final visits = await getVisitHistory();
     if (visits.length < 5) return false; // Need at least 5 visits to establish pattern
 
-    final neighborhoodVisits = visits
-        .where((v) => v.neighborhood == neighborhood)
-        .length;
+    final neighborhoodVisits = visits.where((v) => v.neighborhood == neighborhood).length;
 
     // Consider it "usual" if visited 3+ times and represents at least 20% of visits
     return neighborhoodVisits >= 3 && (neighborhoodVisits / visits.length) >= 0.2;
@@ -130,9 +126,7 @@ class NeighborhoodService {
   Future<NeighborhoodStats> getNeighborhoodStats(Neighborhood neighborhood) async {
     final visits = await getVisitHistory();
 
-    final neighborhoodVisits = visits
-        .where((v) => v.neighborhood == neighborhood)
-        .toList();
+    final neighborhoodVisits = visits.where((v) => v.neighborhood == neighborhood).toList();
 
     if (neighborhoodVisits.isEmpty) {
       return NeighborhoodStats(
@@ -143,11 +137,10 @@ class NeighborhoodService {
       );
     }
 
-    final totalDuration = neighborhoodVisits
-        .fold<Duration>(Duration.zero, (sum, visit) => sum + visit.duration);
+    final totalDuration =
+        neighborhoodVisits.fold<Duration>(Duration.zero, (sum, visit) => sum + visit.duration);
 
-    final lastVisit = neighborhoodVisits
-        .reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
+    final lastVisit = neighborhoodVisits.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
 
     return NeighborhoodStats(
       neighborhood: neighborhood,

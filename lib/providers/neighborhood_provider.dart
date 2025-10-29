@@ -134,8 +134,7 @@ class NeighborhoodNotifier extends StateNotifier<NeighborhoodState> {
 }
 
 /// Neighborhood state provider
-final neighborhoodProvider =
-    StateNotifierProvider<NeighborhoodNotifier, NeighborhoodState>((ref) {
+final neighborhoodProvider = StateNotifierProvider<NeighborhoodNotifier, NeighborhoodState>((ref) {
   return NeighborhoodNotifier(ref);
 });
 
