@@ -15,8 +15,8 @@ linter:
     sort_child_properties_last: true
     use_key_in_widget_constructors: true
 
-    # Pub rules - disabled due to false positives with SDK dependencies
-    # sort_pub_dependencies: true
+    # Pub rules
+    sort_pub_dependencies: true
 
 analyzer:
   exclude:
