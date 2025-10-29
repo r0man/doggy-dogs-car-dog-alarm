@@ -10,6 +10,7 @@ This directory contains the complete GitHub Actions CI/CD workflow files for Iss
 - Replaced deprecated `actions/create-release@v1` and `actions/upload-release-asset@v1` with modern `softprops/action-gh-release@v1`
 - Fixed incorrect secret checking syntax (moved to env vars)
 - Fixed wildcard path issues in iOS TestFlight deployment
+- Fixed deprecated `flutter format` command → now using `dart format`
 - Improved error handling with proper continue-on-error flags
 - Added proper permissions declarations for release creation
 
@@ -42,7 +43,7 @@ git push
 
 ### `test.yml` - Automated Testing Workflow (Issue-33)
 - Runs on every PR and push to main/develop
-- Code formatting check (`flutter format`)
+- Code formatting check (`dart format`)
 - Static analysis (`flutter analyze`)
 - Test execution with coverage
 - Enforces 80% coverage threshold

@@ -50,7 +50,7 @@ jobs:
       - name: Check formatting
         run: |
           echo "Checking code formatting..."
-          flutter format --set-exit-if-changed .
+          dart format --set-exit-if-changed .
 
       - name: Analyze project source
         run: |
