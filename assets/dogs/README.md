@@ -1,10 +1,12 @@
-# Dog Sprite Assets - Urban Comic Style
+# Dog Sprite Assets - Manga + Fritz the Cat Hybrid Style
 
 ## Overview
-This directory contains all dog breed sprite assets in urban underground comic aesthetic. Each breed has multiple animation states to create an engaging, personality-rich experience.
+This directory contains all dog breed sprite assets blending **friendly Japanese manga aesthetic** with **Fritz the Cat's streetwise personality**. Each breed has multiple animation states to create an engaging, personality-rich experience.
 
 ## Style Guide
-See `URBAN_COMIC_STYLE_GUIDE.md` for comprehensive visual design specifications.
+See `MANGA_FRITZ_STYLE_GUIDE.md` for comprehensive visual design specifications.
+
+**Style Philosophy**: "Friendly street-smart" - Big manga eyes meet urban cool. These are approachable manga dogs with attitude, confidence, and personality.
 
 ## File Structure
 
@@ -48,10 +50,18 @@ Each breed needs 8 animation states:
 ## Current Status
 
 ### Completed
-- ✅ Style Guide (`URBAN_COMIC_STYLE_GUIDE.md`)
-- ✅ German Shepherd idle state (REFERENCE IMPLEMENTATION)
-- ✅ German Shepherd barking state
-- ✅ German Shepherd happy state
+- ✅ Style Guide (`MANGA_FRITZ_STYLE_GUIDE.md` v2.0 - Hybrid approach)
+- ✅ German Shepherd idle state (REFERENCE IMPLEMENTATION - Manga + Fritz)
+- ✅ German Shepherd barking state (Manga + Fritz)
+- ✅ German Shepherd happy state (Manga + Fritz)
+
+**Style Features:**
+- Big manga eyes with Fritz hooded/knowing looks
+- Bold outlines (3-5px) added to manga shapes
+- Expressive eyebrows showing personality
+- Slight smirks and attitude in expressions
+- Natural asymmetric poses
+- Keeps friendly, approachable manga charm
 
 ### In Progress
 - ⏳ German Shepherd remaining states (alert, sad, sleeping, eating, playing)
@@ -76,12 +86,14 @@ These will be used as fallbacks until all urban comic sprites are complete.
 - **ViewBox**: `0 0 400 400`
 - **Format**: SVG (vector)
 
-### Key Features
-- **Bold outlines**: 4-6px black strokes
-- **High contrast**: Solid blacks, bright highlights
-- **Expressive faces**: Real emotion, attitude
-- **Variable line weight**: Emphasis and depth
-- **Urban colors**: Desaturated, night-time palette
+### Key Features (Manga + Fritz Hybrid)
+- **Big manga eyes**: Expressive with multiple highlights + hooded/knowing looks
+- **Bold outlines**: 3-5px dark brown/black strokes added to manga shapes
+- **Soft rounded shapes**: Manga ellipses and curves (KEPT)
+- **Expressive faces**: Real emotion, personality, attitude
+- **Friendly colors**: Warm manga browns with subtle urban touches
+- **Fritz personality**: Smirks, raised eyebrows, confident stances
+- **Anthropomorphic expressions**: Street-smart without losing cuteness
 
 ### Performance Considerations
 - Keep file size under 50KB per sprite

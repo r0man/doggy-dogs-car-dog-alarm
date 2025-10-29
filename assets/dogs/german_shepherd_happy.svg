@@ -1,131 +1,117 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-  <!-- German Shepherd - Urban Comic Style - Happy State -->
-  <!-- Relaxed, tongue out, playful energy -->
+  <!-- German Shepherd - Manga + Fritz Style - Happy State -->
+  <!-- Genuine joy with cool confidence -->
 
-  <!-- Shadow (solid black) -->
-  <ellipse cx="200" cy="370" rx="105" ry="16" fill="#000000" opacity="0.4"/>
+  <!-- Background Circle (manga style) -->
+  <circle cx="200" cy="200" r="180" fill="#f5e6d3" opacity="0.4"/>
 
   <!-- Motion blur on tail (wagging) -->
-  <path d="M 260 270 Q 310 260 330 240"
-        fill="none" stroke="#8B6914" stroke-width="8" opacity="0.2" stroke-linecap="round"/>
-  <path d="M 255 275 Q 300 270 320 250"
-        fill="none" stroke="#8B6914" stroke-width="8" opacity="0.3" stroke-linecap="round"/>
+  <path d="M 140 305 Q 95 325 85 365"
+        stroke="#c8956f" stroke-width="6" opacity="0.2" stroke-linecap="round"/>
+  <path d="M 145 300 Q 100 320 90 360"
+        stroke="#c8956f" stroke-width="6" opacity="0.3" stroke-linecap="round"/>
 
-  <!-- Back leg -->
-  <path d="M 245 285 L 258 352 L 278 362"
-        fill="none" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
-  <ellipse cx="278" cy="365" rx="15" ry="8" fill="#3A2B1F"/>
+  <!-- Body (manga rounded + Fritz outline) -->
+  <ellipse cx="198" cy="285" rx="88" ry="73" fill="#c8956f" stroke="#2d2d2d" stroke-width="4"/>
+  <ellipse cx="198" cy="285" rx="68" ry="58" fill="#d4a574"/>
 
-  <!-- Body (relaxed, happy posture) -->
-  <path d="M 145 205 Q 135 255 145 305 L 175 345 Q 195 325 215 345 L 245 305 Q 255 255 245 205 Z"
-        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
-
-  <!-- Body highlights -->
-  <path d="M 165 220 Q 180 230 195 235"
-        fill="none" stroke="#8B6914" stroke-width="3"/>
-
-  <!-- Chest/Neck -->
-  <path d="M 165 205 Q 180 185 195 175 Q 210 185 225 205"
-        fill="#8B6914" stroke="#000000" stroke-width="5"/>
-
-  <!-- Front legs (bouncy stance) -->
-  <path d="M 175 305 L 168 362"
-        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
-  <ellipse cx="168" cy="367" rx="13" ry="7" fill="#1A1A1A"/>
-
-  <path d="M 215 305 L 205 362"
-        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
-  <ellipse cx="205" cy="367" rx="13" ry="7" fill="#1A1A1A"/>
-
-  <!-- Shoulder -->
-  <ellipse cx="170" cy="225" rx="24" ry="28" fill="#8B6914" stroke="#000000" stroke-width="4"/>
+  <!-- Legs (bouncy, energetic) -->
+  <rect x="163" y="335" width="24" height="48" rx="12" fill="#c8956f" stroke="#2d2d2d" stroke-width="3"/>
+  <rect x="208" y="335" width="24" height="48" rx="12" fill="#c8956f" stroke="#2d2d2d" stroke-width="3"/>
 
   <!-- Head (slight tilt, happy angle) -->
-  <ellipse cx="190" cy="145" rx="58" ry="62" fill="#8B6914" stroke="#000000" stroke-width="5"
-           transform="rotate(-8 190 145)"/>
+  <ellipse cx="195" cy="172" rx="84" ry="89" fill="#d4a574" stroke="#2d2d2d" stroke-width="4"
+           transform="rotate(-5 195 172)"/>
+
+  <!-- Ears (perked up, alert and happy) -->
+  <path d="M 138 142 L 120 82 L 158 122 Z"
+        fill="#c8956f" stroke="#2d2d2d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 133 127 L 125 92 L 153 117 Z" fill="#f0d5a8"/>
+
+  <path d="M 252 140 L 270 80 L 237 118 Z"
+        fill="#c8956f" stroke="#2d2d2d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 257 125 L 265 90 L 242 113 Z" fill="#f0d5a8"/>
+
+  <!-- Black saddle marking -->
+  <path d="M 168 255 Q 198 235 228 255 L 228 305 Q 198 315 168 305 Z"
+        fill="#2d2d2d" opacity="0.7"/>
 
   <!-- Snout -->
-  <path d="M 190 155 Q 215 160 225 170 L 223 185 Q 215 190 205 185 Z"
-        fill="#A68B5B" stroke="#000000" stroke-width="5"/>
+  <ellipse cx="200" cy="202" rx="54" ry="44" fill="#b89968" stroke="#2d2d2d" stroke-width="3"/>
 
-  <!-- Nose -->
-  <ellipse cx="223" cy="170" rx="10" ry="8" fill="#000000"/>
-  <ellipse cx="219" cy="167" rx="3" ry="2" fill="#555555"/>
+  <!-- BIG HAPPY SMILE (manga joy + Fritz personality) -->
+  <path d="M 200 210 Q 200 225 200 230"
+        fill="#3d3d3d" stroke="#2d2d2d" stroke-width="3"/>
 
-  <!-- BIG HAPPY SMILE (panting, tongue out) -->
-  <path d="M 225 177 Q 215 188 195 190 Q 175 188 165 182"
-        fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+  <!-- Wide smile -->
+  <path d="M 175 225 Q 200 240 225 225"
+        stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
 
-  <!-- Mouth open -->
-  <path d="M 220 180 Q 210 195 195 197 Q 180 195 170 185"
-        fill="#4A0000" stroke="#000000" stroke-width="3"/>
+  <!-- Open mouth showing happiness -->
+  <ellipse cx="200" cy="228" rx="22" ry="15" fill="#4d3333"/>
 
   <!-- Tongue (lolling out, happy pant) -->
-  <ellipse cx="195" cy="205" rx="18" ry="25" fill="#E85D75" stroke="#000000" stroke-width="3"
-           transform="rotate(10 195 205)"/>
-  <path d="M 195 195 Q 190 210 195 220"
-        fill="none" stroke="#C14545" stroke-width="2"/>
+  <ellipse cx="200" cy="242" rx="16" ry="20" fill="#ff8b9a" stroke="#2d2d2d" stroke-width="2"/>
+  <path d="M 200 235 Q 196 245 200 252"
+        stroke="#e67182" stroke-width="2" fill="none"/>
 
-  <!-- Ears (one perked, one relaxed - personality) -->
-  <path d="M 155 100 L 145 55 L 170 95 Z"
-        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
-  <path d="M 160 95 L 152 65 L 167 92 Z"
-        fill="#8B6914"/>
+  <!-- Nose -->
+  <ellipse cx="200" cy="210" rx="16" ry="14" fill="#1a1a1a"/>
+  <ellipse cx="196" cy="207" rx="4" ry="3" fill="#666666"/>
 
-  <path d="M 215 105 L 235 65 L 220 100 Z"
-        fill="#3A2B1F" stroke="#000000" stroke-width="5" transform="rotate(15 225 85)"/>
-  <path d="M 218 100 L 230 72 L 220 98 Z"
-        fill="#8B6914"/>
+  <!-- Eyes (BIG BRIGHT MANGA STYLE - genuine happiness) -->
+  <ellipse cx="170" cy="172" rx="24" ry="30" fill="#ffffff" stroke="#2d2d2d" stroke-width="2"/>
+  <ellipse cx="228" cy="172" rx="24" ry="30" fill="#ffffff" stroke="#2d2d2d" stroke-width="2"/>
 
-  <!-- Eyes (bright, wide, happy) -->
-  <ellipse cx="170" cy="135" rx="14" ry="18" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
-  <ellipse cx="172" cy="140" rx="9" ry="12" fill="#2d1810"/>
-  <ellipse cx="174" cy="137" rx="4" ry="6" fill="#000000"/>
+  <!-- Iris -->
+  <ellipse cx="172" cy="178" rx="17" ry="23" fill="#3d2817"/>
+  <ellipse cx="230" cy="178" rx="17" ry="23" fill="#3d2817"/>
 
-  <ellipse cx="205" cy="133" rx="14" ry="18" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
-  <ellipse cx="207" cy="138" rx="9" ry="12" fill="#2d1810"/>
-  <ellipse cx="209" cy="135" rx="4" ry="6" fill="#000000"/>
+  <!-- Pupils -->
+  <ellipse cx="174" cy="182" rx="11" ry="15" fill="#000000"/>
+  <ellipse cx="232" cy="182" rx="11" ry="15" fill="#000000"/>
 
-  <!-- Big eye highlights (bright, joyful) -->
-  <ellipse cx="176" cy="135" rx="4" ry="6" fill="#FFFFFF"/>
-  <ellipse cx="211" cy="133" rx="4" ry="6" fill="#FFFFFF"/>
+  <!-- EXTRA Eye shine (big manga sparkle for happiness) -->
+  <ellipse cx="166" cy="168" rx="8" ry="11" fill="#ffffff"/>
+  <ellipse cx="224" cy="168" rx="8" ry="11" fill="#ffffff"/>
+  <circle cx="176" cy="186" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="234" cy="186" r="4" fill="#ffffff" opacity="0.9"/>
+  <circle cx="169" cy="180" r="3" fill="#ffffff" opacity="0.7"/>
+  <circle cx="227" cy="180" r="3" fill="#ffffff" opacity="0.7"/>
 
-  <!-- Happy eyebrows (raised, relaxed) -->
-  <path d="M 160 125 Q 170 122 180 126"
-        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 195 123 Q 205 120 215 124"
-        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <!-- Eyebrows (raised, happy and expressive) -->
+  <path d="M 148 155 Q 162 150 178 154"
+        stroke="#8b6f47" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M 250 154 Q 236 149 220 153"
+        stroke="#8b6f47" stroke-width="3.5" fill="none" stroke-linecap="round"/>
 
-  <!-- Collar with neon glow -->
-  <ellipse cx="195" cy="190" rx="48" ry="13" fill="none" stroke="#5C5C5C" stroke-width="4"/>
-  <rect x="190" y="195" width="10" height="15" fill="#00F5FF" stroke="#000000" stroke-width="2" rx="1"/>
-  <!-- Neon glow effect -->
-  <ellipse cx="195" cy="202" rx="6" ry="8" fill="#00F5FF" opacity="0.4"/>
+  <!-- Happy expression lines -->
+  <path d="M 148 163 Q 150 167 152 171"
+        stroke="#8b6f47" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 252 163 Q 250 167 248 171"
+        stroke="#8b6f47" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
 
   <!-- TAIL (wagging - main position) -->
-  <path d="M 245 285 Q 285 275 305 255"
-        fill="none" stroke="#3A2B1F" stroke-width="7" stroke-linecap="round"/>
-  <path d="M 305 255 Q 315 240 310 225"
-        fill="none" stroke="#1A1A1A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 143 303 Q 98 323 88 363 Q 83 373 93 378 Q 108 353 128 333"
+        fill="#c8956f" stroke="#2d2d2d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 93 363 Q 88 373 98 376" fill="#2d2d2d" opacity="0.6"/>
 
   <!-- Tail motion lines -->
-  <path d="M 310 230 Q 325 225 330 220"
-        fill="none" stroke="#000000" stroke-width="2" opacity="0.3"/>
-  <path d="M 308 245 Q 320 242 325 238"
-        fill="none" stroke="#000000" stroke-width="2" opacity="0.3"/>
+  <path d="M 90 360 Q 85 365 80 370"
+        stroke="#2d2d2d" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+  <path d="M 95 350 Q 90 355 85 360"
+        stroke="#2d2d2d" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
 
-  <!-- Energy lines (bouncy, happy vibe) -->
-  <path d="M 140 180 Q 135 175 130 170"
-        fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
-  <path d="M 145 165 Q 140 160 135 155"
-        fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
+  <!-- Chest fur -->
+  <ellipse cx="198" cy="260" rx="34" ry="24" fill="#f0d5a8" opacity="0.7"/>
 
-  <!-- Sparkle effects (minimal, just for happy emphasis) -->
-  <path d="M 250 140 L 254 145 L 250 150 L 246 145 Z"
-        fill="#00F5FF" stroke="#000000" stroke-width="1" opacity="0.6"/>
-  <circle cx="265" cy="165" r="3" fill="#00F5FF" opacity="0.5"/>
+  <!-- Collar with tag -->
+  <ellipse cx="195" cy="250" rx="48" ry="10"
+           fill="none" stroke="#4a9eff" stroke-width="4"/>
+  <circle cx="195" cy="257" r="6" fill="#ffd700" stroke="#2d2d2d" stroke-width="2"/>
 
-  <!-- Fur texture -->
-  <path d="M 155 215 L 152 225" fill="none" stroke="#000000" stroke-width="2"/>
-  <path d="M 165 220 L 163 232" fill="none" stroke="#000000" stroke-width="2"/>
+  <!-- Small sparkle (manga happiness, minimal) -->
+  <path d="M 265 145 L 268 148 L 265 151 L 262 148 Z"
+        fill="#4a9eff" opacity="0.6"/>
+  <circle cx="275" cy="160" r="2.5" fill="#4a9eff" opacity="0.5"/>
 </svg>
