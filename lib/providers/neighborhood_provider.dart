@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/neighborhood.dart';
 import '../services/neighborhood_service.dart';
 import '../services/app_settings_service.dart';
+import 'achievement_provider.dart';
 
 /// Provider for neighborhood service
 final neighborhoodServiceProvider = Provider<NeighborhoodService>((ref) {
@@ -69,6 +70,25 @@ class NeighborhoodNotifier extends StateNotifier<NeighborhoodState> {
 
     if (updateService) {
       await service.setCurrentNeighborhood(neighborhood);
+
+      // Track neighborhood achievements
+      final achievementService = ref.read(achievementServiceProvider);
+
+      // Track visit to any neighborhood
+      await achievementService.incrementProgress('neighborhood_watch');
+      await achievementService.incrementProgress('concrete_jungle_survivor');
+
+      // Track night parking
+      final timeOfDay = TimeOfDayExtension.fromDateTime(DateTime.now());
+      if (timeOfDay == TimeOfDay.lateNight) {
+        await achievementService.incrementProgress('night_owl');
+      }
+
+      // Track repeat visits to same spot
+      final stats = await service.getNeighborhoodStats(neighborhood);
+      if (stats.visitCount >= 1) {
+        await achievementService.incrementProgress('the_regular');
+      }
     }
 
     final isUsual = await service.isUsualSpot(neighborhood);

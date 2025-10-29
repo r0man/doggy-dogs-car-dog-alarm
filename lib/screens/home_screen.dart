@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'alarm_screen.dart';
 import 'breed_selection_screen.dart';
 import 'settings_screen.dart';
+import 'achievements_screen.dart';
 import '../providers/dog_provider.dart';
 import '../providers/dog_animation_provider.dart';
 import '../providers/dialogue_provider.dart';
+import '../providers/achievement_provider.dart';
 import '../widgets/animated_dog_widget.dart';
 import '../widgets/dialogue_bubble_widget.dart';
 import '../models/dog_animation_state.dart';
@@ -22,8 +24,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     // Trigger check-in dialogue when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(dialogueProvider.notifier).onCheckIn();
+      // Track check-in achievement
+      await incrementAchievement(ref, 'social_butterfly');
     });
   }
 
@@ -45,6 +49,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         centerTitle: true,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.emoji_events),
+            tooltip: 'Achievements',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AchievementsScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.pets),
             tooltip: 'Change Breed',
@@ -174,6 +190,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         final messenger = ScaffoldMessenger.of(context);
 
                         await ref.read(dogProvider.notifier).feed();
+
+                        // Track feeding achievement
+                        await incrementAchievement(ref, 'well_fed');
 
                         // Trigger feeding dialogue
                         ref.read(dialogueProvider.notifier).onFeeding();

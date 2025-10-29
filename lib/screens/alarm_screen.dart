@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/alarm_state.dart';
 import '../models/sensor_data.dart';
+import '../models/neighborhood.dart';
 import '../services/alarm_service.dart';
 import '../services/sensor_detection_service.dart';
 import '../services/app_settings_service.dart';
+import '../providers/achievement_provider.dart';
+import '../providers/neighborhood_provider.dart';
 import '../widgets/unlock_dialog.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
@@ -306,8 +309,19 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
                 ),
               ] else
                 ElevatedButton(
-                  onPressed: () =>
-                      alarmService.startActivation(mode: _selectedMode),
+                  onPressed: () async {
+                    // Track alarm activation achievements
+                    await incrementAchievement(ref, 'first_timer');
+                    await incrementAchievement(ref, 'bark_and_disorderly');
+
+                    // Track night shift achievement if it's late night
+                    final timeOfDay = TimeOfDayExtension.fromDateTime(DateTime.now());
+                    if (timeOfDay == TimeOfDay.lateNight) {
+                      await incrementAchievement(ref, 'night_shift');
+                    }
+
+                    alarmService.startActivation(mode: _selectedMode);
+                  },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     backgroundColor: Colors.green,
