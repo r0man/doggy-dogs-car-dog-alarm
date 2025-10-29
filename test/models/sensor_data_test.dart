@@ -89,7 +89,8 @@ void main() {
   });
 
   group('MotionEvent', () {
-    test('shouldTriggerAlarm returns true when intensity exceeds threshold', () {
+    test('shouldTriggerAlarm returns true when intensity exceeds threshold',
+        () {
       // Arrange
       final event = MotionEvent(
         intensity: 0.6,

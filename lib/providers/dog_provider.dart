@@ -115,8 +115,7 @@ class DogNotifier extends StateNotifier<Dog?> {
 
     final now = DateTime.now();
     final lastInteraction = state!.lastInteraction;
-    final hoursSinceInteraction =
-        now.difference(lastInteraction).inHours;
+    final hoursSinceInteraction = now.difference(lastInteraction).inHours;
 
     if (hoursSinceInteraction > 0) {
       final decayAmount = hoursSinceInteraction * 2;

@@ -34,10 +34,12 @@ void main() {
 
       // Should have a SizedBox with default size
       final sizedBox = tester.widget<SizedBox>(
-        find.descendant(
-          of: find.byType(AnimatedDogWidget),
-          matching: find.byType(SizedBox),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(AnimatedDogWidget),
+              matching: find.byType(SizedBox),
+            )
+            .first,
       );
       expect(sizedBox.width, 200.0);
       expect(sizedBox.height, 200.0);
@@ -57,10 +59,12 @@ void main() {
       );
 
       final sizedBox = tester.widget<SizedBox>(
-        find.descendant(
-          of: find.byType(AnimatedDogWidget),
-          matching: find.byType(SizedBox),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(AnimatedDogWidget),
+              matching: find.byType(SizedBox),
+            )
+            .first,
       );
       expect(sizedBox.width, 150.0);
       expect(sizedBox.height, 150.0);
@@ -82,7 +86,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - idle', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - idle',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -105,7 +110,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - alert', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - alert',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -131,7 +137,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - barking', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - barking',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -157,7 +164,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - happy', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - happy',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -183,7 +191,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - sad', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - sad',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -209,7 +218,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - sleeping', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - sleeping',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -235,7 +245,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - eating', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - eating',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -261,7 +272,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('responds to controller state changes - playing', (WidgetTester tester) async {
+    testWidgets('responds to controller state changes - playing',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -287,7 +299,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('handles multiple rapid state changes', (WidgetTester tester) async {
+    testWidgets('handles multiple rapid state changes',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -302,19 +315,23 @@ void main() {
       // Rapidly change states
       controller.forceState(DogAnimationState.alert);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300)); // Let timer complete
+      await tester
+          .pump(const Duration(milliseconds: 300)); // Let timer complete
 
       controller.forceState(DogAnimationState.barking);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300)); // Let timer complete
+      await tester
+          .pump(const Duration(milliseconds: 300)); // Let timer complete
 
       controller.forceState(DogAnimationState.happy);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300)); // Let timer complete
+      await tester
+          .pump(const Duration(milliseconds: 300)); // Let timer complete
 
       controller.forceState(DogAnimationState.idle);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300)); // Let timer complete
+      await tester
+          .pump(const Duration(milliseconds: 300)); // Let timer complete
 
       // Final state should be idle
       expect(controller.currentState, DogAnimationState.idle);
@@ -323,7 +340,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('properly disposes animation controller', (WidgetTester tester) async {
+    testWidgets('properly disposes animation controller',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -351,7 +369,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsNothing);
     });
 
-    testWidgets('displays all dog breeds correctly', (WidgetTester tester) async {
+    testWidgets('displays all dog breeds correctly',
+        (WidgetTester tester) async {
       for (final breed in DogBreed.values) {
         await tester.pumpWidget(
           MaterialApp(
@@ -372,7 +391,8 @@ void main() {
       }
     });
 
-    testWidgets('uses Transform.scale for animations', (WidgetTester tester) async {
+    testWidgets('uses Transform.scale for animations',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -404,7 +424,8 @@ void main() {
       expect(find.byType(Opacity), findsOneWidget);
     });
 
-    testWidgets('animation updates when state changes', (WidgetTester tester) async {
+    testWidgets('animation updates when state changes',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -423,7 +444,8 @@ void main() {
       // Change state and pump to trigger animation update
       controller.forceState(DogAnimationState.barking);
       await tester.pump(); // Triggers setState in listener
-      await tester.pump(const Duration(milliseconds: 300)); // Let timer complete
+      await tester
+          .pump(const Duration(milliseconds: 300)); // Let timer complete
       await tester.pump(const Duration(milliseconds: 100)); // Advance animation
 
       // State should have changed
@@ -433,7 +455,8 @@ void main() {
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
 
-    testWidgets('widget updates when breed changes', (WidgetTester tester) async {
+    testWidgets('widget updates when breed changes',
+        (WidgetTester tester) async {
       // Render with first breed
       await tester.pumpWidget(
         MaterialApp(
