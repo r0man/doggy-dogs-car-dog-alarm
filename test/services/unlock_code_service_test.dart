@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:doggy_dogs_car_alarm/services/unlock_code_service.dart';
+import 'package:doggy_dogs_car_alarm/services/app_settings_service.dart';
+import 'package:doggy_dogs_car_alarm/models/app_settings.dart';
 
 void main() {
   group('UnlockCodeService', () {
@@ -119,6 +122,130 @@ void main() {
 
       final isInvalid = await service.validateUnlockCode('654321');
       expect(isInvalid, isFalse);
+    });
+  });
+
+  group('UnlockCodeService Providers', () {
+    late SharedPreferences prefs;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+    });
+
+    test('sharedPreferencesProvider throws UnimplementedError by default', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(
+        () => container.read(sharedPreferencesProvider),
+        throwsUnimplementedError,
+      );
+    });
+
+    test('sharedPreferencesProvider can be overridden', () {
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final result = container.read(sharedPreferencesProvider);
+      expect(result, equals(prefs));
+    });
+
+    test('unlockCodeServiceProvider returns UnlockCodeService instance', () {
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final service = container.read(unlockCodeServiceProvider);
+      expect(service, isA<UnlockCodeService>());
+    });
+
+    test('unlockCodeServiceProvider uses shared preferences from provider',
+        () async {
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final service = container.read(unlockCodeServiceProvider);
+
+      // Verify the service can interact with the provided SharedPreferences
+      await service.setUnlockCode('9876');
+      final hasCode = await service.hasUnlockCode();
+      expect(hasCode, isTrue);
+
+      // Verify it's using the same SharedPreferences instance
+      expect(prefs.containsKey('unlock_code_hash'), isTrue);
+    });
+
+    test('countdownDurationProvider returns countdown from app settings', () {
+      const testSettings = AppSettings(countdownDuration: 45);
+
+      final container = ProviderContainer(
+        overrides: [
+          appSettingsProvider.overrideWith(
+            (ref) => AppSettingsNotifier(
+              AppSettingsService(prefs),
+            )..state = testSettings,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final duration = container.read(countdownDurationProvider);
+      expect(duration, 45);
+    });
+
+    test('countdownDurationProvider returns default when not set', () {
+      const defaultSettings = AppSettings(); // Default is 30 seconds
+
+      final container = ProviderContainer(
+        overrides: [
+          appSettingsProvider.overrideWith(
+            (ref) => AppSettingsNotifier(
+              AppSettingsService(prefs),
+            )..state = defaultSettings,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final duration = container.read(countdownDurationProvider);
+      expect(duration, 30); // Default countdown duration
+    });
+
+    test('countdownDurationProvider reacts to settings changes', () {
+      const initialSettings = AppSettings(countdownDuration: 30);
+      const updatedSettings = AppSettings(countdownDuration: 60);
+
+      final container = ProviderContainer(
+        overrides: [
+          appSettingsProvider.overrideWith(
+            (ref) => AppSettingsNotifier(
+              AppSettingsService(prefs),
+            )..state = initialSettings,
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Initial value
+      expect(container.read(countdownDurationProvider), 30);
+
+      // Update settings
+      container.read(appSettingsProvider.notifier).state = updatedSettings;
+
+      // Verify the provider returns updated value
+      expect(container.read(countdownDurationProvider), 60);
     });
   });
 }
