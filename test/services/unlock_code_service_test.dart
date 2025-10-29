@@ -167,8 +167,7 @@ void main() {
       expect(service, isA<UnlockCodeService>());
     });
 
-    test('unlockCodeServiceProvider uses shared preferences from provider',
-        () async {
+    test('unlockCodeServiceProvider uses shared preferences from provider', () async {
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),

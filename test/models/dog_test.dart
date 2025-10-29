@@ -119,8 +119,7 @@ void main() {
       );
 
       expect(wellCaredDog.effectiveness, greaterThan(80));
-      expect(
-          neglectedDog.effectiveness, 30); // Fixed effectiveness when neglected
+      expect(neglectedDog.effectiveness, 30); // Fixed effectiveness when neglected
     });
 
     test('Stats decay over time', () {
@@ -162,8 +161,7 @@ void main() {
     });
 
     test('Asset paths are correct', () {
-      expect(
-          DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd.svg');
+      expect(DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd.svg');
       expect(DogBreed.husky.assetPath, 'assets/dogs/husky.svg');
     });
   });
@@ -350,18 +348,12 @@ void main() {
     test('All breeds have descriptions', () {
       expect(DogBreed.germanShepherd.description,
           'Loyal and alert with characteristic tan and black coloring');
-      expect(DogBreed.rottweiler.description,
-          'Strong protector with distinctive markings');
-      expect(DogBreed.doberman.description,
-          'Sleek and elegant with alert expression');
-      expect(DogBreed.bulldog.description,
-          'Stocky and determined with adorable wrinkles');
-      expect(DogBreed.pitbull.description,
-          'Muscular and friendly with a big smile');
-      expect(DogBreed.husky.description,
-          'Striking blue eyes and fluffy appearance');
-      expect(
-          DogBreed.beagle.description, 'Sweet and curious with tri-color coat');
+      expect(DogBreed.rottweiler.description, 'Strong protector with distinctive markings');
+      expect(DogBreed.doberman.description, 'Sleek and elegant with alert expression');
+      expect(DogBreed.bulldog.description, 'Stocky and determined with adorable wrinkles');
+      expect(DogBreed.pitbull.description, 'Muscular and friendly with a big smile');
+      expect(DogBreed.husky.description, 'Striking blue eyes and fluffy appearance');
+      expect(DogBreed.beagle.description, 'Sweet and curious with tri-color coat');
     });
   });
 

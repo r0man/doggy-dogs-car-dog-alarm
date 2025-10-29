@@ -16,15 +16,13 @@ void main() {
       );
 
       expect(find.text('Enter Unlock Code'), findsOneWidget);
-      expect(find.text('Enter your 4-digit PIN to deactivate the alarm.'),
-          findsOneWidget);
+      expect(find.text('Enter your 4-digit PIN to deactivate the alarm.'), findsOneWidget);
       expect(find.text('Default code: 1234'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('UNLOCK'), findsOneWidget);
     });
 
-    testWidgets('shows cancel button when provided',
-        (WidgetTester tester) async {
+    testWidgets('shows cancel button when provided', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -39,8 +37,7 @@ void main() {
       expect(find.text('CANCEL'), findsOneWidget);
     });
 
-    testWidgets('hides cancel button when not provided',
-        (WidgetTester tester) async {
+    testWidgets('hides cancel button when not provided', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -85,8 +82,7 @@ void main() {
       expect(textField.inputFormatters, isNotEmpty);
     });
 
-    testWidgets('calls onUnlockAttempt when unlock button pressed',
-        (WidgetTester tester) async {
+    testWidgets('calls onUnlockAttempt when unlock button pressed', (WidgetTester tester) async {
       String? capturedCode;
 
       await tester.pumpWidget(
@@ -108,8 +104,7 @@ void main() {
       expect(capturedCode, '1234');
     });
 
-    testWidgets('shows error when empty code submitted',
-        (WidgetTester tester) async {
+    testWidgets('shows error when empty code submitted', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -148,8 +143,7 @@ void main() {
       expect(find.text('Invalid code'), findsNothing);
     });
 
-    testWidgets('calls onUnlockAttempt when Enter key pressed',
-        (WidgetTester tester) async {
+    testWidgets('calls onUnlockAttempt when Enter key pressed', (WidgetTester tester) async {
       String? capturedCode;
 
       await tester.pumpWidget(
@@ -171,8 +165,7 @@ void main() {
       expect(capturedCode, '5678');
     });
 
-    testWidgets('calls onCancel when cancel button pressed',
-        (WidgetTester tester) async {
+    testWidgets('calls onCancel when cancel button pressed', (WidgetTester tester) async {
       bool cancelled = false;
 
       await tester.pumpWidget(
@@ -221,8 +214,7 @@ void main() {
       expect(find.byType(UnlockDialog), findsOneWidget);
     });
 
-    testWidgets('dialog is dismissible when dismissible=true',
-        (WidgetTester tester) async {
+    testWidgets('dialog is dismissible when dismissible=true', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

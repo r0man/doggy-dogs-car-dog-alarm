@@ -77,18 +77,15 @@ void main() {
       const veryHighSettings = AppSettings(sensitivityLevel: 'veryHigh');
 
       expect(service.getAlarmSensitivity(lowSettings), AlarmSensitivity.low);
-      expect(
-          service.getAlarmSensitivity(mediumSettings), AlarmSensitivity.medium);
+      expect(service.getAlarmSensitivity(mediumSettings), AlarmSensitivity.medium);
       expect(service.getAlarmSensitivity(highSettings), AlarmSensitivity.high);
-      expect(service.getAlarmSensitivity(veryHighSettings),
-          AlarmSensitivity.veryHigh);
+      expect(service.getAlarmSensitivity(veryHighSettings), AlarmSensitivity.veryHigh);
     });
 
     test('getAlarmSensitivity defaults to medium for unknown value', () {
       const unknownSettings = AppSettings(sensitivityLevel: 'unknown');
 
-      expect(service.getAlarmSensitivity(unknownSettings),
-          AlarmSensitivity.medium);
+      expect(service.getAlarmSensitivity(unknownSettings), AlarmSensitivity.medium);
     });
 
     test('getSensitivityName converts correctly', () {
