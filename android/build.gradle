@@ -8,18 +8,15 @@ allprojects {
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-
-    // Configure Android projects to have default SDK versions
-    project.plugins.whenPluginAdded { plugin ->
-        if (plugin.class.name == 'com.android.build.gradle.LibraryPlugin') {
-            project.android {
-                if (!project.android.hasProperty('compileSdkVersion') || project.android.compileSdkVersion == null) {
-                    compileSdkVersion 34
-                }
-                if (!project.android.defaultConfig.minSdkVersion) {
-                    defaultConfig {
-                        minSdkVersion 21
-                    }
+}
+subprojects {
+    project.evaluationDependsOnChildren()
+    afterEvaluate {
+        if (project.plugins.hasPlugin('com.android.library')) {
+            android {
+                compileSdkVersion 35
+                defaultConfig {
+                    minSdkVersion 21
                 }
             }
         }
