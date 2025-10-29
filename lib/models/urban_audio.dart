@@ -69,7 +69,8 @@ class UrbanSoundscape {
     );
   }
 
-  static AudioTrack _getAmbientTrack(Neighborhood neighborhood, TimeOfDay timeOfDay) {
+  static AudioTrack _getAmbientTrack(
+      Neighborhood neighborhood, TimeOfDay timeOfDay) {
     String description;
 
     switch (neighborhood) {
@@ -108,7 +109,8 @@ class UrbanSoundscape {
     );
   }
 
-  static AudioTrack _getJazzTrack(Neighborhood neighborhood, TimeOfDay timeOfDay) {
+  static AudioTrack _getJazzTrack(
+      Neighborhood neighborhood, TimeOfDay timeOfDay) {
     String name;
     String description;
 

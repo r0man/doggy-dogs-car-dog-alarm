@@ -31,7 +31,8 @@ class StreetArtGameState {
       score: score ?? this.score,
       strokes: strokes ?? this.strokes,
       challenges: challenges ?? this.challenges,
-      currentChallengeIndex: currentChallengeIndex ?? this.currentChallengeIndex,
+      currentChallengeIndex:
+          currentChallengeIndex ?? this.currentChallengeIndex,
       timeRemaining: timeRemaining ?? this.timeRemaining,
     );
   }

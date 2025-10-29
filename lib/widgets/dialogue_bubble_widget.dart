@@ -17,7 +17,8 @@ class DialogueBubbleWidget extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<DialogueBubbleWidget> createState() => _DialogueBubbleWidgetState();
+  ConsumerState<DialogueBubbleWidget> createState() =>
+      _DialogueBubbleWidgetState();
 }
 
 class _DialogueBubbleWidgetState extends ConsumerState<DialogueBubbleWidget>

@@ -73,7 +73,8 @@ class UrbanTheme {
         shadowColor: UrbanColors.shadow,
         elevation: 12,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4), // Sharp corners for comic feel
+          borderRadius:
+              BorderRadius.circular(4), // Sharp corners for comic feel
           side: const BorderSide(
             color: UrbanColors.comicBlack,
             width: 3, // Thick border like comic panels

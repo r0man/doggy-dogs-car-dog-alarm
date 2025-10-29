@@ -101,6 +101,7 @@ class DialogueNotifier extends StateNotifier<DialogueState> {
   }
 }
 
-final dialogueProvider = StateNotifierProvider<DialogueNotifier, DialogueState>((ref) {
+final dialogueProvider =
+    StateNotifierProvider<DialogueNotifier, DialogueState>((ref) {
   return DialogueNotifier(ref);
 });

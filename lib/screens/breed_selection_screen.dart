@@ -13,7 +13,8 @@ class BreedSelectionScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<BreedSelectionScreen> createState() => _BreedSelectionScreenState();
+  ConsumerState<BreedSelectionScreen> createState() =>
+      _BreedSelectionScreenState();
 }
 
 class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
@@ -30,7 +31,8 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isOnboarding ? 'Choose Your Guard Dog' : 'Change Breed'),
+        title: Text(
+            widget.isOnboarding ? 'Choose Your Guard Dog' : 'Change Breed'),
         centerTitle: true,
         automaticallyImplyLeading: !widget.isOnboarding,
       ),
@@ -81,7 +83,9 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
                       },
                       child: Card(
                         elevation: isSelected ? 8 : 2,
-                        color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : null,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
@@ -107,8 +111,13 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
                               // Breed Name
                               Text(
                                 breed.displayName,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
                                     ),
                                 textAlign: TextAlign.center,
                               ),
@@ -116,7 +125,10 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
                               // Breed Traits
                               Text(
                                 _getBreedTraits(breed),
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
                                       color: Colors.grey.shade600,
                                     ),
                                 textAlign: TextAlign.center,
@@ -165,7 +177,9 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
                       const Icon(Icons.check_circle),
                       const SizedBox(width: 8),
                       Text(
-                        widget.isOnboarding ? 'Start Protecting' : 'Confirm Change',
+                        widget.isOnboarding
+                            ? 'Start Protecting'
+                            : 'Confirm Change',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -261,7 +275,8 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Your guard dog is now a ${_selectedBreed!.displayName}!'),
+          content:
+              Text('Your guard dog is now a ${_selectedBreed!.displayName}!'),
           backgroundColor: Colors.green,
         ),
       );

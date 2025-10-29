@@ -134,12 +134,14 @@ class NeighborhoodNotifier extends StateNotifier<NeighborhoodState> {
 }
 
 /// Neighborhood state provider
-final neighborhoodProvider = StateNotifierProvider<NeighborhoodNotifier, NeighborhoodState>((ref) {
+final neighborhoodProvider =
+    StateNotifierProvider<NeighborhoodNotifier, NeighborhoodState>((ref) {
   return NeighborhoodNotifier(ref);
 });
 
 /// Neighborhood stats provider
-final neighborhoodStatsProvider = FutureProvider.family<NeighborhoodStats, Neighborhood>(
+final neighborhoodStatsProvider =
+    FutureProvider.family<NeighborhoodStats, Neighborhood>(
   (ref, neighborhood) async {
     final service = ref.watch(neighborhoodServiceProvider);
     return service.getNeighborhoodStats(neighborhood);
@@ -147,7 +149,8 @@ final neighborhoodStatsProvider = FutureProvider.family<NeighborhoodStats, Neigh
 );
 
 /// Most frequent neighborhood provider
-final mostFrequentNeighborhoodProvider = FutureProvider<Neighborhood?>((ref) async {
+final mostFrequentNeighborhoodProvider =
+    FutureProvider<Neighborhood?>((ref) async {
   final service = ref.watch(neighborhoodServiceProvider);
   return service.getMostFrequentNeighborhood();
 });

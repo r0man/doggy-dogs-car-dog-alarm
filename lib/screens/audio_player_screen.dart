@@ -157,8 +157,10 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
                   boxShadow: [ComicDecorations.dropShadow],
                 ),
                 child: IconButton(
-                  onPressed: _playerState.isPlaying ? _pauseTrack : _resumeTrack,
-                  icon: Icon(_playerState.isPlaying ? Icons.pause : Icons.play_arrow),
+                  onPressed:
+                      _playerState.isPlaying ? _pauseTrack : _resumeTrack,
+                  icon: Icon(
+                      _playerState.isPlaying ? Icons.pause : Icons.play_arrow),
                   iconSize: 48,
                   color: UrbanColors.comicBlack,
                 ),
@@ -167,7 +169,8 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
               IconButton(
                 onPressed: () {
                   // Next track
-                  final nextIndex = (_selectedTrackIndex + 1) % JazzAlbums.allTracks.length;
+                  final nextIndex =
+                      (_selectedTrackIndex + 1) % JazzAlbums.allTracks.length;
                   _playTrack(JazzAlbums.allTracks[nextIndex]);
                   setState(() {
                     _selectedTrackIndex = nextIndex;
@@ -247,7 +250,8 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
         ...JazzAlbums.allTracks.asMap().entries.map((entry) {
           final index = entry.key;
           final track = entry.value;
-          final isPlaying = _playerState.currentTrack?.id == track.id && _playerState.isPlaying;
+          final isPlaying = _playerState.currentTrack?.id == track.id &&
+              _playerState.isPlaying;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -289,7 +293,8 @@ class _AudioPlayerScreenState extends ConsumerState<AudioPlayerScreen> {
                 icon: Icon(
                   isPlaying ? Icons.pause_circle : Icons.play_circle,
                   size: 40,
-                  color: isPlaying ? UrbanColors.neonCyan : UrbanColors.neonYellow,
+                  color:
+                      isPlaying ? UrbanColors.neonCyan : UrbanColors.neonYellow,
                 ),
                 onPressed: () {
                   if (isPlaying) {

@@ -132,7 +132,8 @@ void main() {
   });
 
   group('MotionEvent', () {
-    test('shouldTriggerAlarm returns true when intensity exceeds threshold', () {
+    test('shouldTriggerAlarm returns true when intensity exceeds threshold',
+        () {
       // Arrange
       final event = MotionEvent(
         intensity: 0.6,
@@ -218,7 +219,8 @@ void main() {
         true,
       );
       expect(
-        AlarmSensitivity.low.gyroscopeThreshold > AlarmSensitivity.medium.gyroscopeThreshold,
+        AlarmSensitivity.low.gyroscopeThreshold >
+            AlarmSensitivity.medium.gyroscopeThreshold,
         true,
       );
     });
@@ -231,7 +233,8 @@ void main() {
         true,
       );
       expect(
-        AlarmSensitivity.veryHigh.gyroscopeThreshold < AlarmSensitivity.high.gyroscopeThreshold,
+        AlarmSensitivity.veryHigh.gyroscopeThreshold <
+            AlarmSensitivity.high.gyroscopeThreshold,
         true,
       );
     });

@@ -17,8 +17,8 @@ class AchievementService {
 
     try {
       final Map<String, dynamic> json = jsonDecode(progressJson);
-      return json.map((key, value) =>
-          MapEntry(key, AchievementProgress.fromJson(value as Map<String, dynamic>)));
+      return json.map((key, value) => MapEntry(
+          key, AchievementProgress.fromJson(value as Map<String, dynamic>)));
     } catch (e) {
       return {};
     }
@@ -66,7 +66,9 @@ class AchievementService {
   /// Get unlocked achievements
   List<Achievement> getUnlockedAchievements() {
     final allProgress = getAllProgress();
-    return Achievements.all.where((a) => allProgress[a.id]?.isUnlocked ?? false).toList();
+    return Achievements.all
+        .where((a) => allProgress[a.id]?.isUnlocked ?? false)
+        .toList();
   }
 
   /// Get achievement count by category

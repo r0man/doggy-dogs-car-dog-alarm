@@ -19,13 +19,16 @@ void main() {
     });
 
     test('creates instance with custom sensitivity', () {
-      final serviceLow = SensorDetectionService(sensitivity: AlarmSensitivity.low);
+      final serviceLow =
+          SensorDetectionService(sensitivity: AlarmSensitivity.low);
       expect(serviceLow.sensitivity, AlarmSensitivity.low);
 
-      final serviceHigh = SensorDetectionService(sensitivity: AlarmSensitivity.high);
+      final serviceHigh =
+          SensorDetectionService(sensitivity: AlarmSensitivity.high);
       expect(serviceHigh.sensitivity, AlarmSensitivity.high);
 
-      final serviceVeryHigh = SensorDetectionService(sensitivity: AlarmSensitivity.veryHigh);
+      final serviceVeryHigh =
+          SensorDetectionService(sensitivity: AlarmSensitivity.veryHigh);
       expect(serviceVeryHigh.sensitivity, AlarmSensitivity.veryHigh);
     });
 
@@ -71,7 +74,9 @@ void main() {
       prefs = await SharedPreferences.getInstance();
     });
 
-    test('sensorDetectionServiceProvider creates service with given sensitivity', () {
+    test(
+        'sensorDetectionServiceProvider creates service with given sensitivity',
+        () {
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
@@ -86,7 +91,8 @@ void main() {
       expect(service.sensitivity, AlarmSensitivity.high);
     });
 
-    test('sensorDetectionServiceProvider creates different instances for different sensitivities',
+    test(
+        'sensorDetectionServiceProvider creates different instances for different sensitivities',
         () {
       final container = ProviderContainer(
         overrides: [
@@ -108,7 +114,8 @@ void main() {
       expect(serviceHigh.sensitivity, AlarmSensitivity.high);
     });
 
-    test('alarmSensitivityProvider returns correct sensitivity from settings', () {
+    test('alarmSensitivityProvider returns correct sensitivity from settings',
+        () {
       const testSettings = AppSettings(sensitivityLevel: 'high');
 
       final container = ProviderContainer(
@@ -165,7 +172,8 @@ void main() {
       expect(sensitivity, AlarmSensitivity.veryHigh);
     });
 
-    test('alarmSensitivityProvider defaults to medium for unknown sensitivity', () {
+    test('alarmSensitivityProvider defaults to medium for unknown sensitivity',
+        () {
       const testSettings = AppSettings(sensitivityLevel: 'invalid');
 
       final container = ProviderContainer(
@@ -220,8 +228,10 @@ void main() {
     });
 
     test('high sensitivity has lower threshold', () {
-      final serviceMedium = SensorDetectionService(sensitivity: AlarmSensitivity.medium);
-      final serviceHigh = SensorDetectionService(sensitivity: AlarmSensitivity.high);
+      final serviceMedium =
+          SensorDetectionService(sensitivity: AlarmSensitivity.medium);
+      final serviceHigh =
+          SensorDetectionService(sensitivity: AlarmSensitivity.high);
 
       expect(
           serviceHigh.sensitivity.accelerometerThreshold,
@@ -234,8 +244,10 @@ void main() {
     });
 
     test('veryHigh sensitivity has lowest threshold', () {
-      final serviceHigh = SensorDetectionService(sensitivity: AlarmSensitivity.high);
-      final serviceVeryHigh = SensorDetectionService(sensitivity: AlarmSensitivity.veryHigh);
+      final serviceHigh =
+          SensorDetectionService(sensitivity: AlarmSensitivity.high);
+      final serviceVeryHigh =
+          SensorDetectionService(sensitivity: AlarmSensitivity.veryHigh);
 
       expect(
           serviceVeryHigh.sensitivity.accelerometerThreshold,

@@ -21,7 +21,8 @@ final unlockedAchievementsProvider = Provider<List<Achievement>>((ref) {
 });
 
 /// Achievement progress provider for specific achievement
-final achievementProgressProvider = Provider.family<AchievementProgress, String>(
+final achievementProgressProvider =
+    Provider.family<AchievementProgress, String>(
   (ref, achievementId) {
     final service = ref.watch(achievementServiceProvider);
     return service.getProgress(achievementId);
@@ -29,19 +30,22 @@ final achievementProgressProvider = Provider.family<AchievementProgress, String>
 );
 
 /// Achievements by category provider
-final achievementsByCategoryProvider = Provider<Map<AchievementCategory, List<Achievement>>>((ref) {
+final achievementsByCategoryProvider =
+    Provider<Map<AchievementCategory, List<Achievement>>>((ref) {
   final achievements = ref.watch(achievementsProvider);
   final Map<AchievementCategory, List<Achievement>> byCategory = {};
 
   for (final category in AchievementCategory.values) {
-    byCategory[category] = achievements.where((a) => a.category == category).toList();
+    byCategory[category] =
+        achievements.where((a) => a.category == category).toList();
   }
 
   return byCategory;
 });
 
 /// Unlocked count by category provider
-final unlockedCountByCategoryProvider = Provider<Map<AchievementCategory, int>>((ref) {
+final unlockedCountByCategoryProvider =
+    Provider<Map<AchievementCategory, int>>((ref) {
   final service = ref.watch(achievementServiceProvider);
   return service.getUnlockedCountByCategory();
 });
@@ -107,12 +111,15 @@ Future<void> incrementAchievement(
   int amount = 1,
 }) async {
   final service = ref.read(achievementServiceProvider);
-  final unlocked = await service.incrementProgress(achievementId, amount: amount);
+  final unlocked =
+      await service.incrementProgress(achievementId, amount: amount);
 
   if (unlocked) {
     final achievement = Achievements.getById(achievementId);
     if (achievement != null) {
-      ref.read(achievementNotificationProvider.notifier).showUnlock(achievement);
+      ref
+          .read(achievementNotificationProvider.notifier)
+          .showUnlock(achievement);
     }
   }
 }

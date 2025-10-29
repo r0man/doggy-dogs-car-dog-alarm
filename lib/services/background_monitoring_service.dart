@@ -85,7 +85,8 @@ Future<void> _checkAlarmStateTask(Map<String, dynamic>? inputData) async {
 
 /// Service for managing background monitoring
 class BackgroundMonitoringService {
-  static final BackgroundMonitoringService _instance = BackgroundMonitoringService._internal();
+  static final BackgroundMonitoringService _instance =
+      BackgroundMonitoringService._internal();
 
   factory BackgroundMonitoringService() => _instance;
 
@@ -205,7 +206,8 @@ class BackgroundMonitoringService {
 }
 
 /// Provider for background monitoring service
-final backgroundMonitoringServiceProvider = Provider<BackgroundMonitoringService>(
+final backgroundMonitoringServiceProvider =
+    Provider<BackgroundMonitoringService>(
   (ref) => BackgroundMonitoringService(),
 );
 

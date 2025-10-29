@@ -66,7 +66,8 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
 
     // Spawn notes based on difficulty
     final spawnInterval = 60.0 / widget.difficulty.bpm; // Seconds per beat
-    _noteSpawner = Timer.periodic(Duration(milliseconds: (spawnInterval * 1000).toInt()), (timer) {
+    _noteSpawner = Timer.periodic(
+        Duration(milliseconds: (spawnInterval * 1000).toInt()), (timer) {
       if (!mounted || !_state.isPlaying) {
         timer.cancel();
         return;
@@ -78,7 +79,8 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
 
   void _spawnNote() {
     final lane = _random.nextInt(_numLanes);
-    final instrument = JazzInstrument.values[_random.nextInt(JazzInstrument.values.length)];
+    final instrument =
+        JazzInstrument.values[_random.nextInt(JazzInstrument.values.length)];
     final note = JazzNote(
       lane: lane,
       spawnTime: _state.gameTime,
@@ -163,7 +165,8 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Score: ${_state.score}', style: const TextStyle(fontSize: 24)),
+            Text('Score: ${_state.score}',
+                style: const TextStyle(fontSize: 24)),
             const SizedBox(height: 8),
             Text('Max Combo: ${_state.maxCombo}x'),
             const SizedBox(height: 8),
@@ -271,7 +274,8 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
             ElevatedButton(
               onPressed: _startGame,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                 backgroundColor: UrbanColors.neonCyan,
                 foregroundColor: UrbanColors.comicBlack,
               ),
@@ -314,9 +318,12 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
               ),
               if (_state.combo > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _state.combo > 10 ? UrbanColors.neonCyan : UrbanColors.warningOrange,
+                    color: _state.combo > 10
+                        ? UrbanColors.neonCyan
+                        : UrbanColors.warningOrange,
                     border: Border.all(color: UrbanColors.comicBlack, width: 2),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -372,7 +379,9 @@ class _JazzGameScreenState extends ConsumerState<JazzGameScreen> {
                         ),
                         child: CustomPaint(
                           painter: _NoteLanePainter(
-                            notes: _state.notes.where((n) => n.lane == lane && !n.hit).toList(),
+                            notes: _state.notes
+                                .where((n) => n.lane == lane && !n.hit)
+                                .toList(),
                             gameTime: _state.gameTime,
                           ),
                         ),
@@ -421,7 +430,8 @@ class _NoteLanePainter extends CustomPainter {
     final targetY = size.height - 100.0;
 
     for (final note in notes) {
-      final progress = (gameTime - note.spawnTime) / (note.targetTime - note.spawnTime);
+      final progress =
+          (gameTime - note.spawnTime) / (note.targetTime - note.spawnTime);
       final y = progress * size.height;
 
       if (y >= 0 && y <= size.height) {

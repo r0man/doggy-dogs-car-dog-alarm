@@ -111,7 +111,8 @@ void main() {
   });
 
   group('NotificationService Provider', () {
-    test('notificationServiceProvider returns NotificationService instance', () {
+    test('notificationServiceProvider returns NotificationService instance',
+        () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 

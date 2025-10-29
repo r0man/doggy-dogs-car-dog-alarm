@@ -141,10 +141,12 @@ class DogBackstory {
   }) {
     final random = seed != null ? Random(seed) : Random();
 
-    final origin = Neighborhood.values[random.nextInt(Neighborhood.values.length)];
-    final archetype =
-        PersonalityArchetype.values[random.nextInt(PersonalityArchetype.values.length)];
-    final occupation = FormerOccupation.values[random.nextInt(FormerOccupation.values.length)];
+    final origin =
+        Neighborhood.values[random.nextInt(Neighborhood.values.length)];
+    final archetype = PersonalityArchetype
+        .values[random.nextInt(PersonalityArchetype.values.length)];
+    final occupation =
+        FormerOccupation.values[random.nextInt(FormerOccupation.values.length)];
 
     final definingMoments = [
       'Once caught a car thief red-handed. Changed everything.',
@@ -175,7 +177,8 @@ class DogBackstory {
       'Dreams of a world with no car crime. Idealistic, maybe.',
     ];
 
-    final definingMoment = definingMoments[random.nextInt(definingMoments.length)];
+    final definingMoment =
+        definingMoments[random.nextInt(definingMoments.length)];
     final vendetta = vendettas[random.nextInt(vendettas.length)];
     final dream = dreams[random.nextInt(dreams.length)];
 

@@ -36,9 +36,10 @@ class BackstoryScreen extends ConsumerWidget {
                     children: [
                       Text(
                         backstory.name,
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                              color: UrbanColors.rustOrange,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  color: UrbanColors.rustOrange,
+                                ),
                       ),
                       const SizedBox(height: 8),
                       Text(

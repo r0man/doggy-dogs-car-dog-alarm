@@ -44,10 +44,14 @@ class NeighborhoodSelectionScreen extends ConsumerWidget {
                         ),
                         Text(
                           currentState.currentNeighborhood!.displayName,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Color(currentState.currentNeighborhood!.style.primaryColor),
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Color(currentState
+                                        .currentNeighborhood!
+                                        .style
+                                        .primaryColor),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ],
                     ),
@@ -61,11 +65,13 @@ class NeighborhoodSelectionScreen extends ConsumerWidget {
                   ],
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _getThreatColor(currentState.threatLevel),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: UrbanColors.comicBlack, width: 2),
+                      border:
+                          Border.all(color: UrbanColors.comicBlack, width: 2),
                     ),
                     child: Text(
                       'Threat Level: ${currentState.threatLevel}/10 (${currentState.timeOfDay.displayName})',
@@ -112,14 +118,17 @@ class NeighborhoodSelectionScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final neighborhood = Neighborhood.values[index];
                   final style = neighborhood.style;
-                  final isSelected = currentState.currentNeighborhood == neighborhood;
+                  final isSelected =
+                      currentState.currentNeighborhood == neighborhood;
 
                   return _NeighborhoodTile(
                     neighborhood: neighborhood,
                     style: style,
                     isSelected: isSelected,
                     onTap: () async {
-                      await ref.read(neighborhoodProvider.notifier).setNeighborhood(neighborhood);
+                      await ref
+                          .read(neighborhoodProvider.notifier)
+                          .setNeighborhood(neighborhood);
 
                       // Trigger parking location dialogue
                       ref.read(dialogueProvider.notifier).showDialogue(
@@ -197,7 +206,10 @@ class _NeighborhoodTile extends ConsumerWidget {
                           children: [
                             Text(
                               neighborhood.displayName,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
                                     color: Color(style.primaryColor),
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -219,7 +231,10 @@ class _NeighborhoodTile extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   'HERE',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
                                         color: UrbanColors.comicBlack,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -236,10 +251,11 @@ class _NeighborhoodTile extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           '${style.atmosphere} • ${neighborhood.security.description}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: UrbanColors.fog,
-                                fontStyle: FontStyle.italic,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: UrbanColors.fog,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                         ),
                       ],
                     ),

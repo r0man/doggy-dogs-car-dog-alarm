@@ -52,7 +52,8 @@ void main() {
           expect(
             DogAnimationState.barking.priority,
             greaterThan(state.priority),
-            reason: 'Barking should have higher priority than ${state.displayName}',
+            reason:
+                'Barking should have higher priority than ${state.displayName}',
           );
         }
       }
@@ -60,7 +61,8 @@ void main() {
 
     test('alert has second highest priority', () {
       final nonAlertStates = DogAnimationState.values
-          .where((s) => s != DogAnimationState.barking && s != DogAnimationState.alert)
+          .where((s) =>
+              s != DogAnimationState.barking && s != DogAnimationState.alert)
           .toList();
 
       for (final state in nonAlertStates) {
@@ -83,7 +85,8 @@ void main() {
     test('priority system allows interruptions', () {
       // Higher priority should be able to interrupt lower priority
       expect(
-        DogAnimationState.barking.priority > DogAnimationState.sleeping.priority,
+        DogAnimationState.barking.priority >
+            DogAnimationState.sleeping.priority,
         isTrue,
         reason: 'Barking should interrupt sleeping',
       );
@@ -102,7 +105,8 @@ void main() {
     });
 
     test('all states have unique display names', () {
-      final displayNames = DogAnimationState.values.map((s) => s.displayName).toSet();
+      final displayNames =
+          DogAnimationState.values.map((s) => s.displayName).toSet();
       expect(displayNames.length, equals(DogAnimationState.values.length),
           reason: 'Each state should have a unique display name');
     });

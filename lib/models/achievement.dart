@@ -70,7 +70,9 @@ class AchievementProgress {
     return AchievementProgress(
       achievementId: json['achievementId'] as String,
       currentProgress: json['currentProgress'] as int,
-      unlockedAt: json['unlockedAt'] != null ? DateTime.parse(json['unlockedAt'] as String) : null,
+      unlockedAt: json['unlockedAt'] != null
+          ? DateTime.parse(json['unlockedAt'] as String)
+          : null,
     );
   }
 }
@@ -91,7 +93,8 @@ class Achievements {
     Achievement(
       id: 'first_watch',
       name: 'First Watch',
-      description: 'Successfully scare off your first threat. Welcome to the job.',
+      description:
+          'Successfully scare off your first threat. Welcome to the job.',
       category: AchievementCategory.security,
       requirement: 1,
       icon: '👀',
@@ -109,7 +112,8 @@ class Achievements {
     Achievement(
       id: 'meter_maids_nightmare',
       name: "Meter Maid's Worst Nightmare",
-      description: 'Save owner from 10 parking tickets. Doing the lord\'s work.',
+      description:
+          'Save owner from 10 parking tickets. Doing the lord\'s work.',
       category: AchievementCategory.security,
       requirement: 10,
       icon: '🎫',
@@ -234,7 +238,8 @@ class Achievements {
     Achievement(
       id: 'gentrification_witness',
       name: 'Gentrification Witness',
-      description: 'See all neighborhoods in different times of day. You\'ve seen changes.',
+      description:
+          'See all neighborhoods in different times of day. You\'ve seen changes.',
       category: AchievementCategory.reputation,
       requirement: 18,
       icon: '🏙️',

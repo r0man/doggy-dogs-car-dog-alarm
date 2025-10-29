@@ -11,7 +11,8 @@ class StreetArtGameScreen extends ConsumerStatefulWidget {
   const StreetArtGameScreen({super.key});
 
   @override
-  ConsumerState<StreetArtGameScreen> createState() => _StreetArtGameScreenState();
+  ConsumerState<StreetArtGameScreen> createState() =>
+      _StreetArtGameScreenState();
 }
 
 class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
@@ -229,7 +230,8 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
             ElevatedButton(
               onPressed: _startGame,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
                 backgroundColor: UrbanColors.neonCyan,
                 foregroundColor: UrbanColors.comicBlack,
               ),
@@ -274,7 +276,10 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                             Expanded(
                               child: Text(
                                 challenge.prompt,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -284,9 +289,10 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                         const SizedBox(height: 4),
                         Text(
                           challenge.style.displayName,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: UrbanColors.fog,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: UrbanColors.fog,
+                                  ),
                         ),
                       ],
                     ),
@@ -295,12 +301,13 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                     children: [
                       Text(
                         '${_state.timeRemaining.toStringAsFixed(1)}s',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: _state.timeRemaining < 10
-                                  ? UrbanColors.dangerRed
-                                  : UrbanColors.neonYellow,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: _state.timeRemaining < 10
+                                      ? UrbanColors.dangerRed
+                                      : UrbanColors.neonYellow,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       Text(
                         'Score: ${_state.score}',
@@ -315,7 +322,9 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                 value: _state.timeRemaining / challenge.timeLimit,
                 backgroundColor: UrbanColors.asphalt,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  _state.timeRemaining < 10 ? UrbanColors.dangerRed : UrbanColors.neonCyan,
+                  _state.timeRemaining < 10
+                      ? UrbanColors.dangerRed
+                      : UrbanColors.neonCyan,
                 ),
               ),
             ],
@@ -338,7 +347,8 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                 });
               },
               onPanEnd: (details) {
-                if (_currentStrokePoints != null && _currentStrokePoints!.isNotEmpty) {
+                if (_currentStrokePoints != null &&
+                    _currentStrokePoints!.isNotEmpty) {
                   setState(() {
                     _currentStrokes.add(ArtStroke(
                       points: List.from(_currentStrokePoints!),
@@ -389,7 +399,9 @@ class _StreetArtGameScreenState extends ConsumerState<StreetArtGameScreen> {
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? UrbanColors.comicWhite : UrbanColors.comicBlack,
+                          color: isSelected
+                              ? UrbanColors.comicWhite
+                              : UrbanColors.comicBlack,
                           width: isSelected ? 4 : 2,
                         ),
                         boxShadow: isSelected

@@ -25,7 +25,8 @@ class AchievementsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(8.0),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: UrbanColors.neonCyan,
                   borderRadius: BorderRadius.circular(16),
@@ -119,7 +120,8 @@ class AchievementsScreen extends ConsumerWidget {
                           UrbanColors.neonYellow,
                         ],
                       ),
-                      border: Border.all(color: UrbanColors.comicBlack, width: 2),
+                      border:
+                          Border.all(color: UrbanColors.comicBlack, width: 2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -148,10 +150,11 @@ class AchievementsScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Recently Earned',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: UrbanColors.neonYellow,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: UrbanColors.neonYellow,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         Text(
                           recentlyUnlocked.map((a) => a.name).join(', '),
@@ -226,7 +229,8 @@ class AchievementsScreen extends ConsumerWidget {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final achievement = achievements[index];
-            final progress = ref.watch(achievementProgressProvider(achievement.id));
+            final progress =
+                ref.watch(achievementProgressProvider(achievement.id));
 
             return _AchievementTile(
               achievement: achievement,
@@ -253,7 +257,8 @@ class _AchievementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUnlocked = progress.isUnlocked;
-    final progressPercent = progress.progressPercentage(achievement.requirement);
+    final progressPercent =
+        progress.progressPercentage(achievement.requirement);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -272,7 +277,9 @@ class _AchievementTile extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isUnlocked ? Color(achievement.category.color) : UrbanColors.asphalt,
+                    color: isUnlocked
+                        ? Color(achievement.category.color)
+                        : UrbanColors.asphalt,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: UrbanColors.comicBlack, width: 2),
                   ),
@@ -298,7 +305,10 @@ class _AchievementTile extends StatelessWidget {
                           Expanded(
                             child: Text(
                               achievement.name,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
                                     color: isUnlocked
                                         ? Color(achievement.category.color)
                                         : UrbanColors.fog,
@@ -322,7 +332,10 @@ class _AchievementTile extends StatelessWidget {
                               ),
                               child: Text(
                                 'UNLOCKED',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
                                       color: UrbanColors.comicBlack,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -376,7 +389,8 @@ class _AchievementTile extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             color: UrbanColors.asphalt,
-                            border: Border.all(color: UrbanColors.comicBlack, width: 1),
+                            border: Border.all(
+                                color: UrbanColors.comicBlack, width: 1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -386,7 +400,8 @@ class _AchievementTile extends StatelessWidget {
                             height: 8,
                             decoration: BoxDecoration(
                               color: Color(achievement.category.color),
-                              border: Border.all(color: UrbanColors.comicBlack, width: 1),
+                              border: Border.all(
+                                  color: UrbanColors.comicBlack, width: 1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -406,11 +421,13 @@ class _AchievementTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Color(achievement.category.color).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Color(achievement.category.color), width: 1),
+                  border: Border.all(
+                      color: Color(achievement.category.color), width: 1),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.stars, size: 16, color: UrbanColors.neonYellow),
+                    const Icon(Icons.stars,
+                        size: 16, color: UrbanColors.neonYellow),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

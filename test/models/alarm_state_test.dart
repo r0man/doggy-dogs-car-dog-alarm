@@ -117,7 +117,8 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 100));
 
       expect(activeState.activeDuration, isNotNull);
-      expect(activeState.activeDuration!.inMilliseconds, greaterThanOrEqualTo(100));
+      expect(activeState.activeDuration!.inMilliseconds,
+          greaterThanOrEqualTo(100));
     });
 
     test('toString returns formatted string', () {
@@ -151,7 +152,8 @@ void main() {
     test('has correct descriptions', () {
       expect(AlarmMode.standard.description, contains('Normal alarm response'));
       expect(AlarmMode.stealth.description, contains('Silent notifications'));
-      expect(AlarmMode.aggressive.description, contains('Immediate loud barking'));
+      expect(
+          AlarmMode.aggressive.description, contains('Immediate loud barking'));
     });
 
     test('has correct bark intensity', () {

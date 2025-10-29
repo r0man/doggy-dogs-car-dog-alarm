@@ -45,7 +45,8 @@ class DialogueService {
       case DialogueContext.levelUp:
         responses = _getLevelUpResponses(dog, data.newLevel ?? dog.level);
       case DialogueContext.achievement:
-        responses = _getAchievementResponses(dog, data.achievementName ?? 'something');
+        responses =
+            _getAchievementResponses(dog, data.achievementName ?? 'something');
     }
 
     // Personality modifications
@@ -149,7 +150,10 @@ class DialogueService {
   // USER RETURNED RESPONSES
   List<String> _getUserReturnedResponses(Dog dog, Duration? timeGone) {
     if (timeGone == null) {
-      return ["Welcome back. Car's in one piece.", "You're back. Mission accomplished."];
+      return [
+        "Welcome back. Car's in one piece.",
+        "You're back. Mission accomplished."
+      ];
     }
 
     final hours = timeGone.inHours;
@@ -361,7 +365,8 @@ class DialogueService {
   }
 
   // PERSONALITY MODIFIERS
-  List<String> _applyPersonalityModifier(List<String> responses, DogPersonality personality) {
+  List<String> _applyPersonalityModifier(
+      List<String> responses, DogPersonality personality) {
     // Personality affects tone but not content
     // This is where we'd adjust language based on traits
 

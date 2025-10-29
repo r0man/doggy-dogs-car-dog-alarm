@@ -21,7 +21,8 @@ class AnimatedDogWidget extends StatefulWidget {
   State<AnimatedDogWidget> createState() => _AnimatedDogWidgetState();
 }
 
-class _AnimatedDogWidgetState extends State<AnimatedDogWidget> with SingleTickerProviderStateMixin {
+class _AnimatedDogWidgetState extends State<AnimatedDogWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
@@ -131,7 +132,8 @@ class _AnimatedDogWidgetState extends State<AnimatedDogWidget> with SingleTicker
           CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
         );
         _animController.duration = const Duration(milliseconds: 400);
-        _animController.repeat(reverse: true, period: const Duration(seconds: 3));
+        _animController.repeat(
+            reverse: true, period: const Duration(seconds: 3));
 
       case DogAnimationState.playing:
         _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
@@ -141,7 +143,8 @@ class _AnimatedDogWidgetState extends State<AnimatedDogWidget> with SingleTicker
           CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
         );
         _animController.duration = const Duration(milliseconds: 400);
-        _animController.repeat(reverse: true, period: const Duration(milliseconds: 2500));
+        _animController.repeat(
+            reverse: true, period: const Duration(milliseconds: 2500));
     }
   }
 
