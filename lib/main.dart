@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/breed_selection_screen.dart';
 import 'providers/dog_provider.dart';
 import 'services/unlock_code_service.dart';
+import 'theme/urban_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,32 +31,7 @@ class DoggyDogsCarAlarmApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Doggy Dogs Car Alarm',
-      theme: ThemeData(
-        // Manga-inspired color scheme
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.orange,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-
-        // Friendly, rounded components
-        cardTheme: CardTheme(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-      ),
+      theme: UrbanTheme.darkUrbanTheme,
       home: const AppStartupScreen(),
       debugShowCheckedModeBanner: false,
     );
