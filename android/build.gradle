@@ -8,9 +8,6 @@ allprojects {
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
 
     // Configure Flutter extension for all subprojects (including plugins)
     afterEvaluate { project ->
