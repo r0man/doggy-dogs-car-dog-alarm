@@ -9,6 +9,7 @@ import 'bark_audio_service.dart';
 import 'background_monitoring_service.dart';
 import 'notification_service.dart';
 import 'alarm_persistence_service.dart';
+import 'unlock_code_service.dart';
 
 /// Service for managing the car alarm system
 class AlarmService {
@@ -17,9 +18,12 @@ class AlarmService {
   final BackgroundMonitoringService backgroundService;
   final NotificationService notificationService;
   final AlarmPersistenceService persistenceService;
+  final UnlockCodeService unlockCodeService;
+  final int countdownDuration;
   final Dog guardDog;
 
   StreamSubscription<MotionEvent>? _motionSubscription;
+  Timer? _countdownTimer;
 
   final _alarmStateController = StreamController<AlarmState>.broadcast();
   AlarmState _currentState = const AlarmState();
@@ -36,6 +40,8 @@ class AlarmService {
     required this.backgroundService,
     required this.notificationService,
     required this.persistenceService,
+    required this.unlockCodeService,
+    required this.countdownDuration,
     required this.guardDog,
   });
 
@@ -45,11 +51,39 @@ class AlarmService {
   /// Current alarm state
   AlarmState get currentState => _currentState;
 
-  /// Activate the alarm
-  Future<void> activate({AlarmMode mode = AlarmMode.standard}) async {
-    if (_currentState.isActive) return;
+  /// Start activation countdown
+  Future<void> startActivation({AlarmMode mode = AlarmMode.standard}) async {
+    if (_currentState.isActive || _currentState.isCountingDown) return;
 
-    // Update state
+    // Start countdown state
+    _currentState = _currentState.startCountdown(mode, countdownDuration);
+    _alarmStateController.add(_currentState);
+
+    // Persist countdown state
+    await persistenceService.saveAlarmState(_currentState);
+
+    // Start countdown timer
+    int remainingSeconds = countdownDuration;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      remainingSeconds--;
+
+      if (remainingSeconds <= 0) {
+        timer.cancel();
+        _completeActivation();
+      } else {
+        _currentState = _currentState.updateCountdown(remainingSeconds);
+        _alarmStateController.add(_currentState);
+      }
+    });
+  }
+
+  /// Complete activation after countdown
+  Future<void> _completeActivation() async {
+    if (!_currentState.isCountingDown) return;
+
+    final mode = _currentState.mode;
+
+    // Update state to active
     _currentState = _currentState.activate(mode);
     _alarmStateController.add(_currentState);
 
@@ -77,10 +111,38 @@ class AlarmService {
     );
   }
 
-  /// Deactivate the alarm
-  Future<void> deactivate() async {
-    if (!_currentState.isActive) return;
+  /// Cancel activation countdown
+  Future<void> cancelCountdown() async {
+    if (!_currentState.isCountingDown) return;
 
+    // Cancel timer
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+
+    // Update state
+    _currentState = _currentState.cancelCountdown();
+    _alarmStateController.add(_currentState);
+
+    // Clear persisted state
+    await persistenceService.clearAlarmState();
+  }
+
+  /// Deactivate the alarm with unlock code validation
+  Future<bool> deactivateWithUnlockCode(String unlockCode) async {
+    if (!_currentState.isActive) return false;
+
+    // Validate unlock code
+    final isValid = await unlockCodeService.validateUnlockCode(unlockCode);
+    if (!isValid) {
+      return false;
+    }
+
+    await _deactivate();
+    return true;
+  }
+
+  /// Internal deactivation logic
+  Future<void> _deactivate() async {
     // Stop barking if active
     await barkService.stopBarking();
 
@@ -205,6 +267,7 @@ class AlarmService {
   void dispose() {
     _motionSubscription?.cancel();
     _verificationTimer?.cancel();
+    _countdownTimer?.cancel();
     _alarmStateController.close();
   }
 }
@@ -218,6 +281,8 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
   final backgroundService = ref.watch(backgroundMonitoringServiceProvider);
   final notificationService = ref.watch(notificationServiceProvider);
   final persistenceService = ref.watch(alarmPersistenceServiceProvider);
+  final unlockCodeService = ref.watch(unlockCodeServiceProvider);
+  final countdownDuration = ref.watch(countdownDurationProvider);
 
   // Get current dog from dog provider
   final guardDog = ref.watch(dogProvider);
@@ -243,6 +308,8 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
       backgroundService: backgroundService,
       notificationService: notificationService,
       persistenceService: persistenceService,
+      unlockCodeService: unlockCodeService,
+      countdownDuration: countdownDuration,
       guardDog: tempDog,
     );
 
@@ -259,6 +326,8 @@ final alarmServiceProvider = Provider<AlarmService>((ref) {
     backgroundService: backgroundService,
     notificationService: notificationService,
     persistenceService: persistenceService,
+    unlockCodeService: unlockCodeService,
+    countdownDuration: countdownDuration,
     guardDog: guardDog,
   );
 
