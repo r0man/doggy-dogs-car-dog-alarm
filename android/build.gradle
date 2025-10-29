@@ -11,6 +11,24 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+
+    // Configure Flutter extension for all subprojects (including plugins)
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            // Set default Android SDK versions for plugins that use flutter extension
+            project.android {
+                if (!project.android.hasProperty('compileSdkVersion') || project.android.compileSdkVersion == null) {
+                    compileSdkVersion 35
+                }
+                if (!project.android.hasProperty('defaultConfig')) {
+                    defaultConfig {
+                        minSdkVersion 21
+                        targetSdkVersion 34
+                    }
+                }
+            }
+        }
+    }
 }
 
 tasks.register("clean", Delete) {
