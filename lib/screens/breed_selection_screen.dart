@@ -31,7 +31,8 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isOnboarding ? 'Choose Your Guard Dog' : 'Change Breed'),
+        title: Text(
+            widget.isOnboarding ? 'Choose Your Guard Dog' : 'Change Breed'),
         centerTitle: true,
         automaticallyImplyLeading: !widget.isOnboarding,
       ),
@@ -176,7 +177,9 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
                       const Icon(Icons.check_circle),
                       const SizedBox(width: 8),
                       Text(
-                        widget.isOnboarding ? 'Start Protecting' : 'Confirm Change',
+                        widget.isOnboarding
+                            ? 'Start Protecting'
+                            : 'Confirm Change',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -272,7 +275,8 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Your guard dog is now a ${_selectedBreed!.displayName}!'),
+          content:
+              Text('Your guard dog is now a ${_selectedBreed!.displayName}!'),
           backgroundColor: Colors.green,
         ),
       );

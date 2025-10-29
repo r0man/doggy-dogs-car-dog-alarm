@@ -181,7 +181,8 @@ void main() {
       expect(duration.inSeconds, lessThan(65)); // At most 65 seconds
     });
 
-    test('getActivationDuration should return null when not activated', () async {
+    test('getActivationDuration should return null when not activated',
+        () async {
       // Ensure no alarm state exists
       await service.clearAlarmState();
 

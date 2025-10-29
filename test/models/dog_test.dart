@@ -119,7 +119,8 @@ void main() {
       );
 
       expect(wellCaredDog.effectiveness, greaterThan(80));
-      expect(neglectedDog.effectiveness, 30); // Fixed effectiveness when neglected
+      expect(
+          neglectedDog.effectiveness, 30); // Fixed effectiveness when neglected
     });
 
     test('Stats decay over time', () {
@@ -161,7 +162,8 @@ void main() {
     });
 
     test('Asset paths are correct', () {
-      expect(DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd.svg');
+      expect(
+          DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd.svg');
       expect(DogBreed.husky.assetPath, 'assets/dogs/husky.svg');
     });
   });

@@ -31,7 +31,8 @@ class NotificationService {
     debugPrint('🔔 Initializing notification service...');
 
     // Android initialization settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -228,7 +229,8 @@ class NotificationService {
     }
 
     final title = '✅ Alarm Activated';
-    final body = '${dogName ?? 'Your guard dog'} is now watching your car in ${mode.name} mode';
+    final body =
+        '${dogName ?? 'Your guard dog'} is now watching your car in ${mode.name} mode';
 
     const androidDetails = AndroidNotificationDetails(
       NotificationChannels.alarmStatus,

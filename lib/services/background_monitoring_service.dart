@@ -208,7 +208,8 @@ class BackgroundMonitoringService {
 }
 
 /// Provider for background monitoring service
-final backgroundMonitoringServiceProvider = Provider<BackgroundMonitoringService>(
+final backgroundMonitoringServiceProvider =
+    Provider<BackgroundMonitoringService>(
   (ref) => BackgroundMonitoringService(),
 );
 

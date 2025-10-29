@@ -47,15 +47,20 @@ class AlarmPersistenceService {
   Future<void> saveAlarmState(AlarmState state) async {
     await _ensureInitialized();
 
-    debugPrint('💾 Saving alarm state: active=${state.isActive}, triggered=${state.isTriggered}');
+    debugPrint(
+        '💾 Saving alarm state: active=${state.isActive}, triggered=${state.isTriggered}');
 
     try {
       await _prefs!.setBool(PersistenceKeys.alarmIsActive, state.isActive);
-      await _prefs!.setBool(PersistenceKeys.alarmIsTriggered, state.isTriggered);
-      await _prefs!.setBool(PersistenceKeys.alarmIsCountingDown, state.isCountingDown);
-      await _prefs!.setInt(PersistenceKeys.alarmCountdownSeconds, state.countdownSeconds);
+      await _prefs!
+          .setBool(PersistenceKeys.alarmIsTriggered, state.isTriggered);
+      await _prefs!
+          .setBool(PersistenceKeys.alarmIsCountingDown, state.isCountingDown);
+      await _prefs!.setInt(
+          PersistenceKeys.alarmCountdownSeconds, state.countdownSeconds);
       await _prefs!.setString(PersistenceKeys.alarmMode, state.mode.name);
-      await _prefs!.setInt(PersistenceKeys.alarmTriggerCount, state.triggerCount);
+      await _prefs!
+          .setInt(PersistenceKeys.alarmTriggerCount, state.triggerCount);
 
       if (state.activatedAt != null) {
         await _prefs!.setString(
@@ -94,22 +99,27 @@ class AlarmPersistenceService {
         return null;
       }
 
-      final isTriggered = _prefs!.getBool(PersistenceKeys.alarmIsTriggered) ?? false;
-      final isCountingDown = _prefs!.getBool(PersistenceKeys.alarmIsCountingDown) ?? false;
-      final countdownSeconds = _prefs!.getInt(PersistenceKeys.alarmCountdownSeconds) ?? 0;
-      final triggerCount = _prefs!.getInt(PersistenceKeys.alarmTriggerCount) ?? 0;
+      final isTriggered =
+          _prefs!.getBool(PersistenceKeys.alarmIsTriggered) ?? false;
+      final isCountingDown =
+          _prefs!.getBool(PersistenceKeys.alarmIsCountingDown) ?? false;
+      final countdownSeconds =
+          _prefs!.getInt(PersistenceKeys.alarmCountdownSeconds) ?? 0;
+      final triggerCount =
+          _prefs!.getInt(PersistenceKeys.alarmTriggerCount) ?? 0;
       final modeStr = _prefs!.getString(PersistenceKeys.alarmMode);
-      final activatedAtStr = _prefs!.getString(PersistenceKeys.alarmActivatedAt);
-      final lastTriggeredAtStr = _prefs!.getString(PersistenceKeys.alarmLastTriggeredAt);
+      final activatedAtStr =
+          _prefs!.getString(PersistenceKeys.alarmActivatedAt);
+      final lastTriggeredAtStr =
+          _prefs!.getString(PersistenceKeys.alarmLastTriggeredAt);
 
       final mode = AlarmMode.values.firstWhere(
         (m) => m.name == modeStr,
         orElse: () => AlarmMode.standard,
       );
 
-      final activatedAt = activatedAtStr != null
-          ? DateTime.tryParse(activatedAtStr)
-          : null;
+      final activatedAt =
+          activatedAtStr != null ? DateTime.tryParse(activatedAtStr) : null;
 
       final lastTriggeredAt = lastTriggeredAtStr != null
           ? DateTime.tryParse(lastTriggeredAtStr)
@@ -126,7 +136,8 @@ class AlarmPersistenceService {
         triggerCount: triggerCount,
       );
 
-      debugPrint('✅ Alarm state loaded: active=$isActive, triggered=$isTriggered');
+      debugPrint(
+          '✅ Alarm state loaded: active=$isActive, triggered=$isTriggered');
       return state;
     } catch (e) {
       debugPrint('❌ Failed to load alarm state: $e');
@@ -187,7 +198,8 @@ class AlarmPersistenceService {
     await _ensureInitialized();
 
     try {
-      await _prefs!.setString(PersistenceKeys.lastKnownSensitivity, sensitivity);
+      await _prefs!
+          .setString(PersistenceKeys.lastKnownSensitivity, sensitivity);
       debugPrint('💾 Saved sensitivity: $sensitivity');
     } catch (e) {
       debugPrint('❌ Failed to save sensitivity: $e');
@@ -199,7 +211,8 @@ class AlarmPersistenceService {
     await _ensureInitialized();
 
     try {
-      final sensitivity = _prefs!.getString(PersistenceKeys.lastKnownSensitivity);
+      final sensitivity =
+          _prefs!.getString(PersistenceKeys.lastKnownSensitivity);
       debugPrint('📖 Loaded sensitivity: $sensitivity');
       return sensitivity;
     } catch (e) {
