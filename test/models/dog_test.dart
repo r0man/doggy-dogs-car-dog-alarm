@@ -360,8 +360,8 @@ void main() {
           'Muscular and friendly with a big smile');
       expect(DogBreed.husky.description,
           'Striking blue eyes and fluffy appearance');
-      expect(DogBreed.beagle.description,
-          'Sweet and curious with tri-color coat');
+      expect(
+          DogBreed.beagle.description, 'Sweet and curious with tri-color coat');
     });
   });
 
