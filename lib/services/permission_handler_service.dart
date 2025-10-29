@@ -217,7 +217,7 @@ class PermissionStatusSummary {
         '  notifications: $notifications\n'
         '  batteryOptimization: $batteryOptimization\n'
         '  location: $location\n'
-        '  progress: ${grantedCount}/${totalCount} (${completionPercentage.toStringAsFixed(1)}%)\n'
+        '  progress: $grantedCount/$totalCount (${completionPercentage.toStringAsFixed(1)}%)\n'
         ')';
   }
 }

@@ -150,11 +150,11 @@ class _BreedSelectionScreenState extends ConsumerState<BreedSelectionScreen> {
               if (widget.isOnboarding && _selectedBreed != null) ...[
                 TextField(
                   controller: _nameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Name your guard dog',
                     hintText: 'e.g., Max, Rex, Bella',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.pets),
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.pets),
                   ),
                   textCapitalization: TextCapitalization.words,
                   maxLength: 20,

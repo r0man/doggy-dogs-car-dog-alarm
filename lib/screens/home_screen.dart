@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'alarm_screen.dart';
 import 'breed_selection_screen.dart';
 import 'settings_screen.dart';
@@ -153,10 +152,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onPressed: () async {
                         // Trigger eating animation
                         playDogAnimation(ref, DogAnimationState.eating);
+                        final messenger = ScaffoldMessenger.of(context);
 
                         await ref.read(dogProvider.notifier).feed();
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text('${dog.name} enjoyed the meal!'),
                               backgroundColor: Colors.green,
@@ -178,10 +178,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onPressed: () async {
                         // Trigger playing animation
                         playDogAnimation(ref, DogAnimationState.playing);
+                        final messenger = ScaffoldMessenger.of(context);
 
                         await ref.read(dogProvider.notifier).play();
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text('${dog.name} had fun playing!'),
                               backgroundColor: Colors.orange,
