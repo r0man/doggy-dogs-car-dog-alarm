@@ -28,7 +28,10 @@ if command_exists bd; then
 else
     echo "  Downloading beads..."
     cd /tmp
-    curl -L -o beads.tar.gz https://github.com/steveyegge/beads/releases/download/v0.17.7/beads_0.17.7_linux_amd64.tar.gz
+    curl -L --retry 3 --retry-delay 2 --max-time 120 -o beads.tar.gz https://github.com/steveyegge/beads/releases/download/v0.17.7/beads_0.17.7_linux_amd64.tar.gz || {
+        echo "⚠️  Warning: Could not download beads. Skipping."
+        exit 0
+    }
     tar -xzf beads.tar.gz
     sudo mv bd /usr/local/bin/bd
     sudo chmod +x /usr/local/bin/bd
@@ -47,7 +50,10 @@ if command_exists flutter || [ -d "/opt/flutter" ]; then
 else
     echo "  Downloading Flutter SDK..."
     cd /tmp
-    curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz
+    curl -L --retry 3 --retry-delay 2 --max-time 600 -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz || {
+        echo "⚠️  Error: Could not download Flutter SDK."
+        exit 1
+    }
     echo "  Extracting Flutter..."
     cd /opt
     sudo tar xf /tmp/flutter.tar.xz
@@ -86,7 +92,13 @@ else
 
     echo "  Downloading Android command-line tools..."
     cd $ANDROID_HOME/cmdline-tools
-    sudo curl -L -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+    # Try with retries and timeout
+    sudo curl -L --retry 3 --retry-delay 2 --max-time 300 -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip || {
+        echo "⚠️  Warning: Could not download Android SDK. Continuing without Android support."
+        echo "   You can install it manually later."
+        sudo rm -rf $ANDROID_HOME/cmdline-tools
+        exit 0
+    }
 
     echo "  Extracting command-line tools..."
     sudo unzip -q cmdline-tools.zip
@@ -104,7 +116,10 @@ if [ -d "$ANDROID_HOME/platform-tools" ]; then
 else
     echo "  Downloading platform-tools..."
     cd $ANDROID_HOME
-    sudo curl -L -o platform-tools-latest-linux.zip https://dl.google.com/android/repository/platform-tools-latest-linux.zip
+    sudo curl -L --retry 3 --retry-delay 2 --max-time 300 -o platform-tools-latest-linux.zip https://dl.google.com/android/repository/platform-tools-latest-linux.zip || {
+        echo "⚠️  Warning: Could not download platform-tools. Continuing without it."
+        exit 0
+    }
 
     echo "  Extracting platform-tools..."
     sudo unzip -q platform-tools-latest-linux.zip
