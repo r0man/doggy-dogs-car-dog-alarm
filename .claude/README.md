@@ -29,7 +29,7 @@ This ensures the development environment is automatically configured with:
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/setup-claude-code-web.sh"
+            "command": "./scripts/setup-claude-code-web.sh"
           }
         ]
       }
@@ -40,7 +40,6 @@ This ensures the development environment is automatically configured with:
 
 ### Environment Variables
 
-- `$CLAUDE_PROJECT_DIR` - Absolute path to the project root directory
 - `$CLAUDE_CODE_REMOTE` - Set to "true" in Claude Code Web environment
 
 ### How It Works

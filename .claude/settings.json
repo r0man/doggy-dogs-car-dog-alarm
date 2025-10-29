@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/setup-claude-code-web.sh"
+            "command": "./scripts/setup-claude-code-web.sh"
           }
         ]
       }
