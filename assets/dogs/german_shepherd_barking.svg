@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- German Shepherd - Urban Comic Style - Barking State -->
+  <!-- Aggressive, protective stance -->
+
+  <!-- Shadow (solid black) -->
+  <ellipse cx="200" cy="375" rx="110" ry="18" fill="#000000" opacity="0.4"/>
+
+  <!-- Motion/Action lines (comic effect) -->
+  <line x1="320" y1="150" x2="360" y2="140" stroke="#000000" stroke-width="3" opacity="0.4"/>
+  <line x1="320" y1="165" x2="365" y2="160" stroke="#000000" stroke-width="3" opacity="0.4"/>
+  <line x1="320" y1="180" x2="370" y2="180" stroke="#000000" stroke-width="3" opacity="0.4"/>
+
+  <!-- Back legs (planted firmly) -->
+  <path d="M 240 290 L 255 355 L 275 365"
+        fill="none" stroke="#1A1A1A" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="275" cy="368" rx="16" ry="9" fill="#3A2B1F"/>
+
+  <path d="M 260 295 L 280 358 L 300 368"
+        fill="none" stroke="#1A1A1A" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="300" cy="371" rx="16" ry="9" fill="#3A2B1F"/>
+
+  <!-- Body (lunging forward, tense) -->
+  <path d="M 140 230 Q 130 270 140 310 L 160 350 Q 180 335 200 350 L 240 310 Q 260 270 245 230 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="6"/>
+
+  <!-- Bristling fur effect (jagged edges) -->
+  <path d="M 150 235 L 145 240 L 150 245 L 148 250 L 152 255"
+        fill="none" stroke="#000000" stroke-width="3"/>
+  <path d="M 235 235 L 240 240 L 235 245 L 238 250 L 234 255"
+        fill="none" stroke="#000000" stroke-width="3"/>
+
+  <!-- Front legs (lunged forward) -->
+  <path d="M 160 320 L 145 368"
+        fill="none" stroke="#3A2B1F" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="145" cy="372" rx="14" ry="8" fill="#1A1A1A"/>
+
+  <path d="M 200 320 L 180 368"
+        fill="none" stroke="#3A2B1F" stroke-width="7" stroke-linecap="round"/>
+  <ellipse cx="180" cy="372" rx="14" ry="8" fill="#1A1A1A"/>
+
+  <!-- Chest (expanded, aggressive) -->
+  <path d="M 160 220 Q 180 200 200 190 Q 220 200 240 220"
+        fill="#8B6914" stroke="#000000" stroke-width="6"/>
+
+  <!-- Head (frontal view, aggressive) -->
+  <ellipse cx="200" cy="150" rx="65" ry="68" fill="#8B6914" stroke="#000000" stroke-width="6"/>
+
+  <!-- Snout (forward, mouth open) -->
+  <path d="M 200 160 Q 200 180 200 195"
+        fill="#A68B5B" stroke="#000000" stroke-width="5"/>
+
+  <!-- Mouth (WIDE OPEN, aggressive bark) -->
+  <ellipse cx="200" cy="185" rx="35" ry="28" fill="#1A1A1A"/>
+  <ellipse cx="200" cy="188" rx="30" ry="23" fill="#4A0000"/>
+
+  <!-- Teeth (showing) -->
+  <!-- Upper teeth -->
+  <path d="M 175 175 L 172 182 L 178 180 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 188 173 L 185 180 L 191 178 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 200 172 L 197 179 L 203 178 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 212 173 L 209 180 L 215 178 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 225 175 L 222 182 L 228 180 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+
+  <!-- Lower teeth -->
+  <path d="M 178 198 L 181 191 L 175 193 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 191 200 L 194 193 L 188 195 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 203 201 L 206 194 L 200 196 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+  <path d="M 215 200 L 218 193 L 212 195 Z" fill="#E8E8E8" stroke="#000000" stroke-width="2"/>
+
+  <!-- Tongue (visible) -->
+  <ellipse cx="200" cy="195" rx="15" ry="18" fill="#C14545" stroke="#000000" stroke-width="2"/>
+
+  <!-- Nose (wrinkled) -->
+  <ellipse cx="200" cy="155" rx="12" ry="10" fill="#000000"/>
+  <ellipse cx="196" cy="152" rx="3" ry="2" fill="#444444"/>
+
+  <!-- Wrinkle lines (snarling) -->
+  <path d="M 175 158 Q 180 153 185 158"
+        fill="none" stroke="#000000" stroke-width="2"/>
+  <path d="M 215 158 Q 220 153 225 158"
+        fill="none" stroke="#000000" stroke-width="2"/>
+
+  <!-- Ears (pinned back, aggressive) -->
+  <path d="M 145 110 L 125 90 L 155 120 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5" transform="rotate(-20 145 110)"/>
+  <path d="M 255 110 L 275 90 L 245 120 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5" transform="rotate(20 255 110)"/>
+
+  <!-- Eyes (INTENSE, focused, wide) -->
+  <ellipse cx="165" cy="135" rx="16" ry="20" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="167" cy="140" rx="11" ry="14" fill="#2d1810"/>
+  <ellipse cx="169" cy="138" rx="6" ry="8" fill="#000000"/>
+
+  <ellipse cx="235" cy="135" rx="16" ry="20" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="237" cy="140" rx="11" ry="14" fill="#2d1810"/>
+  <ellipse cx="239" cy="138" rx="6" ry="8" fill="#000000"/>
+
+  <!-- Intense highlights -->
+  <ellipse cx="170" cy="136" rx="3" ry="5" fill="#FFFFFF"/>
+  <ellipse cx="240" cy="136" rx="3" ry="5" fill="#FFFFFF"/>
+
+  <!-- Angry eyebrows -->
+  <path d="M 150 125 L 180 120"
+        fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 250 125 L 220 120"
+        fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Collar (visible) -->
+  <path d="M 160 200 Q 200 210 240 200"
+        fill="none" stroke="#5C5C5C" stroke-width="5"/>
+
+  <!-- Bark effect lines (sound waves) -->
+  <path d="M 260 170 Q 280 170 290 175"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 265 185 Q 290 185 305 190"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 260 200 Q 285 200 300 205"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Impact/emphasis star -->
+  <path d="M 310 160 L 320 165 L 315 175 L 325 180 L 315 185 L 320 195 L 310 190 L 300 195 L 305 185 L 295 180 L 305 175 L 300 165 Z"
+        fill="#00F5FF" stroke="#000000" stroke-width="2" opacity="0.7"/>
+
+  <!-- Tail (stiff, raised) -->
+  <path d="M 245 295 Q 270 280 285 250"
+        fill="none" stroke="#3A2B1F" stroke-width="7" stroke-linecap="round"/>
+</svg>

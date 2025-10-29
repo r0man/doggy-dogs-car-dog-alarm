@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- German Shepherd - Urban Comic Style - Happy State -->
+  <!-- Relaxed, tongue out, playful energy -->
+
+  <!-- Shadow (solid black) -->
+  <ellipse cx="200" cy="370" rx="105" ry="16" fill="#000000" opacity="0.4"/>
+
+  <!-- Motion blur on tail (wagging) -->
+  <path d="M 260 270 Q 310 260 330 240"
+        fill="none" stroke="#8B6914" stroke-width="8" opacity="0.2" stroke-linecap="round"/>
+  <path d="M 255 275 Q 300 270 320 250"
+        fill="none" stroke="#8B6914" stroke-width="8" opacity="0.3" stroke-linecap="round"/>
+
+  <!-- Back leg -->
+  <path d="M 245 285 L 258 352 L 278 362"
+        fill="none" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="278" cy="365" rx="15" ry="8" fill="#3A2B1F"/>
+
+  <!-- Body (relaxed, happy posture) -->
+  <path d="M 145 205 Q 135 255 145 305 L 175 345 Q 195 325 215 345 L 245 305 Q 255 255 245 205 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
+
+  <!-- Body highlights -->
+  <path d="M 165 220 Q 180 230 195 235"
+        fill="none" stroke="#8B6914" stroke-width="3"/>
+
+  <!-- Chest/Neck -->
+  <path d="M 165 205 Q 180 185 195 175 Q 210 185 225 205"
+        fill="#8B6914" stroke="#000000" stroke-width="5"/>
+
+  <!-- Front legs (bouncy stance) -->
+  <path d="M 175 305 L 168 362"
+        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="168" cy="367" rx="13" ry="7" fill="#1A1A1A"/>
+
+  <path d="M 215 305 L 205 362"
+        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="205" cy="367" rx="13" ry="7" fill="#1A1A1A"/>
+
+  <!-- Shoulder -->
+  <ellipse cx="170" cy="225" rx="24" ry="28" fill="#8B6914" stroke="#000000" stroke-width="4"/>
+
+  <!-- Head (slight tilt, happy angle) -->
+  <ellipse cx="190" cy="145" rx="58" ry="62" fill="#8B6914" stroke="#000000" stroke-width="5"
+           transform="rotate(-8 190 145)"/>
+
+  <!-- Snout -->
+  <path d="M 190 155 Q 215 160 225 170 L 223 185 Q 215 190 205 185 Z"
+        fill="#A68B5B" stroke="#000000" stroke-width="5"/>
+
+  <!-- Nose -->
+  <ellipse cx="223" cy="170" rx="10" ry="8" fill="#000000"/>
+  <ellipse cx="219" cy="167" rx="3" ry="2" fill="#555555"/>
+
+  <!-- BIG HAPPY SMILE (panting, tongue out) -->
+  <path d="M 225 177 Q 215 188 195 190 Q 175 188 165 182"
+        fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Mouth open -->
+  <path d="M 220 180 Q 210 195 195 197 Q 180 195 170 185"
+        fill="#4A0000" stroke="#000000" stroke-width="3"/>
+
+  <!-- Tongue (lolling out, happy pant) -->
+  <ellipse cx="195" cy="205" rx="18" ry="25" fill="#E85D75" stroke="#000000" stroke-width="3"
+           transform="rotate(10 195 205)"/>
+  <path d="M 195 195 Q 190 210 195 220"
+        fill="none" stroke="#C14545" stroke-width="2"/>
+
+  <!-- Ears (one perked, one relaxed - personality) -->
+  <path d="M 155 100 L 145 55 L 170 95 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
+  <path d="M 160 95 L 152 65 L 167 92 Z"
+        fill="#8B6914"/>
+
+  <path d="M 215 105 L 235 65 L 220 100 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5" transform="rotate(15 225 85)"/>
+  <path d="M 218 100 L 230 72 L 220 98 Z"
+        fill="#8B6914"/>
+
+  <!-- Eyes (bright, wide, happy) -->
+  <ellipse cx="170" cy="135" rx="14" ry="18" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="172" cy="140" rx="9" ry="12" fill="#2d1810"/>
+  <ellipse cx="174" cy="137" rx="4" ry="6" fill="#000000"/>
+
+  <ellipse cx="205" cy="133" rx="14" ry="18" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="207" cy="138" rx="9" ry="12" fill="#2d1810"/>
+  <ellipse cx="209" cy="135" rx="4" ry="6" fill="#000000"/>
+
+  <!-- Big eye highlights (bright, joyful) -->
+  <ellipse cx="176" cy="135" rx="4" ry="6" fill="#FFFFFF"/>
+  <ellipse cx="211" cy="133" rx="4" ry="6" fill="#FFFFFF"/>
+
+  <!-- Happy eyebrows (raised, relaxed) -->
+  <path d="M 160 125 Q 170 122 180 126"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 195 123 Q 205 120 215 124"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Collar with neon glow -->
+  <ellipse cx="195" cy="190" rx="48" ry="13" fill="none" stroke="#5C5C5C" stroke-width="4"/>
+  <rect x="190" y="195" width="10" height="15" fill="#00F5FF" stroke="#000000" stroke-width="2" rx="1"/>
+  <!-- Neon glow effect -->
+  <ellipse cx="195" cy="202" rx="6" ry="8" fill="#00F5FF" opacity="0.4"/>
+
+  <!-- TAIL (wagging - main position) -->
+  <path d="M 245 285 Q 285 275 305 255"
+        fill="none" stroke="#3A2B1F" stroke-width="7" stroke-linecap="round"/>
+  <path d="M 305 255 Q 315 240 310 225"
+        fill="none" stroke="#1A1A1A" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Tail motion lines -->
+  <path d="M 310 230 Q 325 225 330 220"
+        fill="none" stroke="#000000" stroke-width="2" opacity="0.3"/>
+  <path d="M 308 245 Q 320 242 325 238"
+        fill="none" stroke="#000000" stroke-width="2" opacity="0.3"/>
+
+  <!-- Energy lines (bouncy, happy vibe) -->
+  <path d="M 140 180 Q 135 175 130 170"
+        fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
+  <path d="M 145 165 Q 140 160 135 155"
+        fill="none" stroke="#00F5FF" stroke-width="2" opacity="0.4"/>
+
+  <!-- Sparkle effects (minimal, just for happy emphasis) -->
+  <path d="M 250 140 L 254 145 L 250 150 L 246 145 Z"
+        fill="#00F5FF" stroke="#000000" stroke-width="1" opacity="0.6"/>
+  <circle cx="265" cy="165" r="3" fill="#00F5FF" opacity="0.5"/>
+
+  <!-- Fur texture -->
+  <path d="M 155 215 L 152 225" fill="none" stroke="#000000" stroke-width="2"/>
+  <path d="M 165 220 L 163 232" fill="none" stroke="#000000" stroke-width="2"/>
+</svg>

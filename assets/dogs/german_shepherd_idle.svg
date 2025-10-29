@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- German Shepherd - Urban Comic Style - Idle State -->
+  <!-- Seasoned veteran cop-dog with skeptical expression -->
+
+  <!-- Shadow (solid black, noir style) -->
+  <ellipse cx="200" cy="370" rx="100" ry="15" fill="#000000" opacity="0.4"/>
+
+  <!-- Back leg -->
+  <path d="M 250 280 L 260 350 L 280 360"
+        fill="none" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="280" cy="362" rx="15" ry="8" fill="#3A2B1F"/>
+
+  <!-- Body (strong, confident stance) -->
+  <path d="M 150 200 Q 140 250 150 300 L 180 340 Q 200 320 220 340 L 250 300 Q 260 250 250 200 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
+
+  <!-- Body shading (halftone effect suggested with darker fill) -->
+  <path d="M 160 220 Q 155 260 165 290 L 180 320"
+        fill="none" stroke="#2A1F15" stroke-width="3" opacity="0.6"/>
+
+  <!-- Chest/Neck -->
+  <path d="M 170 200 Q 180 180 200 170 Q 220 180 230 200"
+        fill="#8B6914" stroke="#000000" stroke-width="5"/>
+
+  <!-- Front legs (weight on back leg, front relaxed) -->
+  <path d="M 180 300 L 175 360"
+        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="175" cy="365" rx="12" ry="7" fill="#1A1A1A"/>
+
+  <path d="M 220 300 L 210 360"
+        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="210" cy="365" rx="12" ry="7" fill="#1A1A1A"/>
+
+  <!-- Shoulder muscles (bold definition) -->
+  <ellipse cx="175" cy="220" rx="25" ry="30" fill="#8B6914" stroke="#000000" stroke-width="4"/>
+
+  <!-- Head (slight turn, attitude) -->
+  <ellipse cx="195" cy="140" rx="55" ry="60" fill="#8B6914" stroke="#000000" stroke-width="5"
+           transform="rotate(-5 195 140)"/>
+
+  <!-- Snout (strong, defined) -->
+  <path d="M 195 150 Q 220 155 230 165 L 228 180 Q 220 185 210 180 Z"
+        fill="#A68B5B" stroke="#000000" stroke-width="5"/>
+
+  <!-- Nose (bold black) -->
+  <ellipse cx="228" cy="165" rx="10" ry="8" fill="#000000"/>
+  <ellipse cx="224" cy="162" rx="3" ry="2" fill="#444444"/>
+
+  <!-- Mouth (slight smirk) -->
+  <path d="M 228 172 Q 220 176 215 175"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Ears (alert, pointed, one slightly forward) -->
+  <path d="M 160 100 L 155 60 L 175 90 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
+  <path d="M 165 95 L 162 70 L 172 90 Z"
+        fill="#8B6914"/>
+
+  <path d="M 220 95 L 235 55 L 225 90 Z"
+        fill="#3A2B1F" stroke="#000000" stroke-width="5"/>
+  <path d="M 222 90 L 230 65 L 224 88 Z"
+        fill="#8B6914"/>
+
+  <!-- Eyes (skeptical, hooded, seen-it-all expression) -->
+  <ellipse cx="175" cy="130" rx="12" ry="16" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="177" cy="135" rx="8" ry="10" fill="#2d1810"/>
+  <ellipse cx="179" cy="133" rx="3" ry="4" fill="#000000"/>
+
+  <ellipse cx="210" cy="128" rx="12" ry="16" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+  <ellipse cx="212" cy="133" rx="8" ry="10" fill="#2d1810"/>
+  <ellipse cx="214" cy="131" rx="3" ry="4" fill="#000000"/>
+
+  <!-- Eye highlights (minimal, serious) -->
+  <ellipse cx="180" cy="132" rx="2" ry="3" fill="#FFFFFF" opacity="0.6"/>
+  <ellipse cx="215" cy="130" rx="2" ry="3" fill="#FFFFFF" opacity="0.6"/>
+
+  <!-- Eyebrows (skeptical, one raised) -->
+  <path d="M 165 120 Q 175 118 185 122"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 200 117 Q 210 114 220 117"
+        fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Battle scar (notch in ear) -->
+  <path d="M 168 75 L 172 78"
+        fill="none" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Collar with tag (urban accessory) -->
+  <ellipse cx="200" cy="185" rx="45" ry="12" fill="none" stroke="#5C5C5C" stroke-width="4"/>
+  <rect x="195" y="190" width="10" height="15" fill="#00F5FF" stroke="#000000" stroke-width="2" rx="1"/>
+
+  <!-- Tail (relaxed, confident) -->
+  <path d="M 245 280 Q 280 290 295 270"
+        fill="none" stroke="#3A2B1F" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 295 270 Q 305 255 300 240"
+        fill="none" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Fur texture (variable line weight details) -->
+  <path d="M 160 210 L 155 220" fill="none" stroke="#000000" stroke-width="2"/>
+  <path d="M 170 215 L 168 225" fill="none" stroke="#000000" stroke-width="2"/>
+  <path d="M 180 218 L 178 230" fill="none" stroke="#000000" stroke-width="2"/>
+
+  <!-- Cross-hatch shadows under neck -->
+  <path d="M 185 195 L 195 200 M 190 195 L 200 200 M 195 195 L 205 200"
+        fill="none" stroke="#000000" stroke-width="1" opacity="0.3"/>
+</svg>

@@ -172,20 +172,34 @@ class _AnimatedDogWidgetState extends State<AnimatedDogWidget>
   }
 
   Widget _buildDogImage() {
-    // TODO: Support Rive animations when assets are available
-    // For now, use SVG with transforms as placeholder
+    // Use state-specific sprite asset with fallback to legacy single asset
+    final currentState = widget.controller.currentState;
+    String assetPath;
+
+    try {
+      // Try to get state-specific asset
+      assetPath = widget.breed.getAssetPathForState(currentState);
+    } catch (e) {
+      // Fallback to legacy asset path if state-specific doesn't exist
+      assetPath = widget.breed.assetPath;
+    }
 
     return SvgPicture.asset(
-      widget.breed.assetPath,
+      assetPath,
       width: widget.size,
       height: widget.size,
       fit: BoxFit.contain,
       placeholderBuilder: (context) => Container(
         width: widget.size,
         height: widget.size,
-        color: Colors.grey[300],
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2D2F), // Urban concrete gray background
+          border: Border.all(color: Colors.black, width: 3),
+        ),
         child: const Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: Color(0xFF00F5FF), // Neon cyan
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dog_animation_state.dart';
+
 /// Represents a virtual guard dog with personality and stats
 class Dog {
   final String id;
@@ -138,21 +140,30 @@ extension DogBreedExtension on DogBreed {
   }
 
   String get assetPath {
+    // Legacy single asset path - returns idle state
+    return getAssetPathForState(DogAnimationState.idle);
+  }
+
+  /// Get asset path for specific animation state
+  String getAssetPathForState(dynamic state) {
+    // Convert DogAnimationState enum to string
+    final stateStr = state.toString().split('.').last;
+
     switch (this) {
       case DogBreed.germanShepherd:
-        return 'assets/dogs/german_shepherd.svg';
+        return 'assets/dogs/german_shepherd_$stateStr.svg';
       case DogBreed.rottweiler:
-        return 'assets/dogs/rottweiler.svg';
+        return 'assets/dogs/rottweiler_$stateStr.svg';
       case DogBreed.doberman:
-        return 'assets/dogs/doberman.svg';
+        return 'assets/dogs/doberman_$stateStr.svg';
       case DogBreed.bulldog:
-        return 'assets/dogs/bulldog.svg';
+        return 'assets/dogs/bulldog_$stateStr.svg';
       case DogBreed.pitbull:
-        return 'assets/dogs/pitbull.svg';
+        return 'assets/dogs/pitbull_$stateStr.svg';
       case DogBreed.husky:
-        return 'assets/dogs/husky.svg';
+        return 'assets/dogs/husky_$stateStr.svg';
       case DogBreed.beagle:
-        return 'assets/dogs/beagle.svg';
+        return 'assets/dogs/beagle_$stateStr.svg';
     }
   }
 
