@@ -45,6 +45,12 @@ app.*.map.json
 # Android local properties (machine-specific)
 android/local.properties
 
+# Android signing files (sensitive)
+android/key.properties
+android/app/keystore.jks
+android/app/*.keystore
+android/app/*.jks
+
 # Generated plugin files
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
@@ -80,9 +86,7 @@ android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 # Web related
 lib/generated_plugin_registrant.dart
 
-# GitHub Actions workflows (managed separately due to GitHub App permissions)
-# See workflows-to-install/ for workflow files
-.github/
+# Note: .github/workflows/ is committed to the repository
 
 # Exceptions to above rules.
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
