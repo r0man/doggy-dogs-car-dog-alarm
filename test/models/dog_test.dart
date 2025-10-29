@@ -161,8 +161,8 @@ void main() {
     });
 
     test('Asset paths are correct', () {
-      expect(DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd.svg');
-      expect(DogBreed.husky.assetPath, 'assets/dogs/husky.svg');
+      expect(DogBreed.germanShepherd.assetPath, 'assets/dogs/german_shepherd_idle.svg');
+      expect(DogBreed.husky.assetPath, 'assets/dogs/husky_idle.svg');
     });
   });
 
