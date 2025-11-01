@@ -10,8 +10,12 @@ import 'background_monitoring_service.dart';
 import 'notification_service.dart';
 import 'alarm_persistence_service.dart';
 import 'unlock_code_service.dart';
+import 'alarm_state_manager.dart';
+import 'alarm_timer.dart';
+import 'alarm_conditions.dart';
 
 /// Service for managing the car alarm system
+/// This is now a thin orchestration layer over testable business logic
 class AlarmService {
   final SensorDetectionService sensorService;
   final BarkAudioService barkService;
@@ -22,17 +26,16 @@ class AlarmService {
   final int countdownDuration;
   final Dog guardDog;
 
-  StreamSubscription<MotionEvent>? _motionSubscription;
-  Timer? _countdownTimer;
+  // Extracted business logic components (testable)
+  final AlarmStateManager _stateManager;
+  final AlarmTimer _timer;
+  final AlarmConditions _conditions;
 
-  final _alarmStateController = StreamController<AlarmState>.broadcast();
-  AlarmState _currentState = const AlarmState();
+  StreamSubscription<MotionEvent>? _motionSubscription;
 
   // Threat verification
   final List<MotionEvent> _recentMotions = [];
   Timer? _verificationTimer;
-  static const _verificationWindow = Duration(seconds: 3);
-  static const _motionsToConfirm = 2;
 
   AlarmService({
     required this.sensorService,
@@ -43,52 +46,55 @@ class AlarmService {
     required this.unlockCodeService,
     required this.countdownDuration,
     required this.guardDog,
-  });
+    AlarmStateManager? stateManager,
+    AlarmTimer? timer,
+    AlarmConditions? conditions,
+  })  : _stateManager = stateManager ?? AlarmStateManager(),
+        _timer = timer ?? AlarmTimer(),
+        _conditions = conditions ??
+            AlarmConditions(
+              sensitivity: sensorService.sensitivity,
+              guardDog: guardDog,
+            );
 
   /// Stream of alarm state changes
-  Stream<AlarmState> get alarmStateStream => _alarmStateController.stream;
+  Stream<AlarmState> get alarmStateStream => _stateManager.stateStream;
 
   /// Current alarm state
-  AlarmState get currentState => _currentState;
+  AlarmState get currentState => _stateManager.currentState;
 
   /// Start activation countdown
   Future<void> startActivation({AlarmMode mode = AlarmMode.standard}) async {
-    if (_currentState.isActive || _currentState.isCountingDown) return;
+    if (!_stateManager.canStartActivation()) return;
 
     // Start countdown state
-    _currentState = _currentState.startCountdown(mode, countdownDuration);
-    _alarmStateController.add(_currentState);
+    final state = _stateManager.startCountdown(mode, countdownDuration);
 
     // Persist countdown state
-    await persistenceService.saveAlarmState(_currentState);
+    await persistenceService.saveAlarmState(state);
 
     // Start countdown timer
-    int remainingSeconds = countdownDuration;
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      remainingSeconds--;
-
-      if (remainingSeconds <= 0) {
-        timer.cancel();
-        _completeActivation();
-      } else {
-        _currentState = _currentState.updateCountdown(remainingSeconds);
-        _alarmStateController.add(_currentState);
-      }
-    });
+    _timer.start(
+      duration: countdownDuration,
+      onTick: (remainingSeconds) {
+        _stateManager.updateCountdown(remainingSeconds);
+        // State is already broadcast by state manager, no need to persist on each tick
+      },
+      onComplete: () => _completeActivation(),
+    );
   }
 
   /// Complete activation after countdown
   Future<void> _completeActivation() async {
-    if (!_currentState.isCountingDown) return;
+    if (!_stateManager.canCompleteCountdown()) return;
 
-    final mode = _currentState.mode;
+    final mode = _stateManager.currentState.mode;
 
     // Update state to active
-    _currentState = _currentState.activate(mode);
-    _alarmStateController.add(_currentState);
+    final state = _stateManager.completeActivation(mode);
 
     // Persist state
-    await persistenceService.saveAlarmState(_currentState);
+    await persistenceService.saveAlarmState(state);
 
     // Start monitoring sensors
     await sensorService.startMonitoring();
@@ -106,22 +112,21 @@ class AlarmService {
     _motionSubscription = sensorService.motionEvents.listen(
       _handleMotionEvent,
       onError: (error) {
-        _alarmStateController.addError(error);
+        // Propagate error through state manager's stream
+        // _stateManager doesn't have addError, so we'll just handle locally
       },
     );
   }
 
   /// Cancel activation countdown
   Future<void> cancelCountdown() async {
-    if (!_currentState.isCountingDown) return;
+    if (!_stateManager.canCancelCountdown()) return;
 
     // Cancel timer
-    _countdownTimer?.cancel();
-    _countdownTimer = null;
+    _timer.stop();
 
     // Update state
-    _currentState = _currentState.cancelCountdown();
-    _alarmStateController.add(_currentState);
+    _stateManager.cancelCountdown();
 
     // Clear persisted state
     await persistenceService.clearAlarmState();
@@ -129,7 +134,7 @@ class AlarmService {
 
   /// Deactivate the alarm with unlock code validation
   Future<bool> deactivateWithUnlockCode(String unlockCode) async {
-    if (!_currentState.isActive) return false;
+    if (!_stateManager.canDeactivate()) return false;
 
     // Validate unlock code
     final isValid = await unlockCodeService.validateUnlockCode(unlockCode);
@@ -147,8 +152,7 @@ class AlarmService {
     await barkService.stopBarking();
 
     // Update state
-    _currentState = _currentState.deactivate();
-    _alarmStateController.add(_currentState);
+    _stateManager.deactivate();
 
     // Clear persisted state
     await persistenceService.clearAlarmState();
@@ -170,13 +174,12 @@ class AlarmService {
 
   /// Acknowledge and silence a triggered alarm
   Future<void> acknowledge() async {
-    if (!_currentState.isTriggered) return;
+    if (!_stateManager.canAcknowledge()) return;
 
     // Stop barking
     await barkService.stopBarking();
 
-    _currentState = _currentState.acknowledge();
-    _alarmStateController.add(_currentState);
+    _stateManager.acknowledge();
 
     // Clear recent motions after acknowledgment
     _recentMotions.clear();
@@ -184,30 +187,20 @@ class AlarmService {
 
   /// Handle motion event from sensors
   void _handleMotionEvent(MotionEvent event) {
-    if (!_currentState.isActive) return;
+    if (!_stateManager.currentState.isActive) return;
 
-    // Check if motion exceeds sensitivity threshold
-    if (!event.shouldTriggerAlarm(sensorService.sensitivity)) return;
+    // Use AlarmConditions to evaluate the motion
+    final decision = _conditions.evaluateMotion(
+      event,
+      _stateManager.currentState.mode,
+    );
 
-    // Apply dog effectiveness modifier
-    final effectiveIntensity = event.intensity * (guardDog.effectiveness / 100);
-
-    // Aggressive mode: trigger immediately
-    if (_currentState.mode == AlarmMode.aggressive) {
+    if (decision.shouldTrigger) {
       _triggerAlarm(event);
-      return;
-    }
-
-    // Standard/Stealth mode: verify threat first
-    if (_currentState.mode.hasDelayedResponse) {
+    } else if (decision.reason == TriggerReason.needsVerification) {
       _verifyThreat(event);
-      return;
     }
-
-    // If intensity is very high, trigger immediately regardless of mode
-    if (effectiveIntensity > 0.8) {
-      _triggerAlarm(event);
-    }
+    // Otherwise, ignore the motion
   }
 
   /// Verify if motion is a real threat
@@ -215,12 +208,13 @@ class AlarmService {
     // Add to recent motions
     _recentMotions.add(event);
 
-    // Remove old motions outside verification window
-    final cutoff = DateTime.now().subtract(_verificationWindow);
-    _recentMotions.removeWhere((m) => m.timestamp.isBefore(cutoff));
+    // Filter out old motions using AlarmConditions
+    final filteredMotions = _conditions.filterRecentMotions(_recentMotions);
+    _recentMotions.clear();
+    _recentMotions.addAll(filteredMotions);
 
-    // If enough motions detected, trigger alarm
-    if (_recentMotions.length >= _motionsToConfirm) {
+    // Check if threat is verified using AlarmConditions
+    if (_conditions.isVerifiedThreat(_recentMotions)) {
       _triggerAlarm(event);
       _recentMotions.clear();
       return;
@@ -228,7 +222,7 @@ class AlarmService {
 
     // Start verification timer if not already running
     _verificationTimer?.cancel();
-    _verificationTimer = Timer(_verificationWindow, () {
+    _verificationTimer = Timer(AlarmConditions.verificationWindow, () {
       // If we didn't get enough confirmations, clear the buffer
       _recentMotions.clear();
     });
@@ -236,16 +230,15 @@ class AlarmService {
 
   /// Trigger the alarm
   void _triggerAlarm(MotionEvent event) {
-    if (_currentState.isTriggered) return; // Already triggered
+    if (!_stateManager.canTrigger()) return; // Already triggered
 
-    _currentState = _currentState.trigger();
-    _alarmStateController.add(_currentState);
+    final state = _stateManager.trigger();
 
     // Persist triggered state
-    persistenceService.saveAlarmState(_currentState);
+    persistenceService.saveAlarmState(state);
 
     // Start barking with current mode
-    barkService.startBarking(_currentState.mode);
+    barkService.startBarking(state.mode);
 
     // Send notification
     notificationService.showAlarmTriggered(
@@ -267,8 +260,8 @@ class AlarmService {
   void dispose() {
     _motionSubscription?.cancel();
     _verificationTimer?.cancel();
-    _countdownTimer?.cancel();
-    _alarmStateController.close();
+    _timer.dispose();
+    _stateManager.dispose();
   }
 }
 

@@ -1,34 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:doggy_dogs_car_alarm/services/permission_checker.dart';
+import 'package:doggy_dogs_car_alarm/services/permission_analyzer.dart';
+import 'package:doggy_dogs_car_alarm/services/permission_strategy.dart';
 
 /// Service for handling app permissions
+/// This service orchestrates permission operations using:
+/// - PermissionChecker: platform-specific permission operations
+/// - PermissionAnalyzer: pure logic for analyzing permission states
+/// - PermissionStrategy: business logic for permission requirements
 class PermissionHandlerService {
   static final PermissionHandlerService _instance =
       PermissionHandlerService._internal();
 
   factory PermissionHandlerService() => _instance;
 
-  PermissionHandlerService._internal();
+  final PermissionChecker _checker;
+  final PermissionAnalyzer _analyzer;
+  final PermissionStrategy _strategy;
+
+  PermissionHandlerService._internal()
+      : _checker = PlatformPermissionChecker(),
+        _analyzer = PermissionAnalyzer(),
+        _strategy = PermissionStrategy();
+
+  /// Constructor for testing with custom dependencies
+  PermissionHandlerService.forTesting({
+    required PermissionChecker checker,
+    PermissionAnalyzer? analyzer,
+    PermissionStrategy? strategy,
+  })  : _checker = checker,
+        _analyzer = analyzer ?? PermissionAnalyzer(),
+        _strategy = strategy ?? PermissionStrategy();
 
   /// Check if all required permissions are granted
   Future<bool> hasAllRequiredPermissions() async {
-    final sensors = await Permission.sensors.isGranted;
-    final notifications = await Permission.notification.isGranted;
-
-    return sensors && notifications;
+    final statuses = await _getRequiredPermissionStatuses();
+    return _analyzer.hasAllRequiredPermissions(statuses);
   }
 
   /// Request all required permissions
   Future<Map<Permission, PermissionStatus>> requestAllPermissions() async {
     debugPrint('🔐 Requesting all permissions...');
 
-    // Request permissions
-    final Map<Permission, PermissionStatus> statuses = await [
-      Permission.sensors,
-      Permission.notification,
-      Permission.ignoreBatteryOptimizations,
-    ].request();
+    final permissions = _strategy.getAllPermissionsToRequest();
+    final statuses = await _checker.requestPermissions(permissions);
 
     // Log results
     statuses.forEach((permission, status) {
@@ -39,91 +56,85 @@ class PermissionHandlerService {
     return statuses;
   }
 
+  /// Get current statuses of required permissions
+  Future<Map<Permission, PermissionStatus>>
+      _getRequiredPermissionStatuses() async {
+    final permissions = _strategy.getRequiredPermissions();
+    final statuses = <Permission, PermissionStatus>{};
+
+    for (final permission in permissions) {
+      statuses[permission] = await _checker.checkPermission(permission);
+    }
+
+    return statuses;
+  }
+
   /// Check sensor permission
   Future<bool> hasSensorPermission() async {
-    final status = await Permission.sensors.status;
+    final status = await _checker.checkPermission(Permission.sensors);
     return status.isGranted;
   }
 
   /// Request sensor permission
   Future<PermissionStatus> requestSensorPermission() async {
-    debugPrint('🔐 Requesting sensor permission...');
-
-    final status = await Permission.sensors.request();
-
-    if (status.isGranted) {
-      debugPrint('✅ Sensor permission granted');
-    } else if (status.isDenied) {
-      debugPrint('❌ Sensor permission denied');
-    } else if (status.isPermanentlyDenied) {
-      debugPrint('⛔ Sensor permission permanently denied');
-    }
-
-    return status;
+    return await _requestPermission(Permission.sensors, 'sensor');
   }
 
   /// Check notification permission
   Future<bool> hasNotificationPermission() async {
-    final status = await Permission.notification.status;
+    final status = await _checker.checkPermission(Permission.notification);
     return status.isGranted;
   }
 
   /// Request notification permission
   Future<PermissionStatus> requestNotificationPermission() async {
-    debugPrint('🔐 Requesting notification permission...');
-
-    final status = await Permission.notification.request();
-
-    if (status.isGranted) {
-      debugPrint('✅ Notification permission granted');
-    } else if (status.isDenied) {
-      debugPrint('❌ Notification permission denied');
-    } else if (status.isPermanentlyDenied) {
-      debugPrint('⛔ Notification permission permanently denied');
-    }
-
-    return status;
+    return await _requestPermission(Permission.notification, 'notification');
   }
 
   /// Check if battery optimizations are ignored (allows background processing)
   Future<bool> isBatteryOptimizationIgnored() async {
-    final status = await Permission.ignoreBatteryOptimizations.status;
+    final status =
+        await _checker.checkPermission(Permission.ignoreBatteryOptimizations);
     return status.isGranted;
   }
 
   /// Request to ignore battery optimizations
   Future<PermissionStatus> requestIgnoreBatteryOptimizations() async {
-    debugPrint('🔐 Requesting to ignore battery optimizations...');
-
-    final status = await Permission.ignoreBatteryOptimizations.request();
-
-    if (status.isGranted) {
-      debugPrint('✅ Battery optimization permission granted');
-    } else {
-      debugPrint('❌ Battery optimization permission denied');
-    }
-
-    return status;
+    return await _requestPermission(
+      Permission.ignoreBatteryOptimizations,
+      'battery optimization',
+    );
   }
 
   /// Check location permission (for pattern learning feature)
   Future<bool> hasLocationPermission() async {
-    final status = await Permission.location.status;
+    final status = await _checker.checkPermission(Permission.location);
     return status.isGranted;
   }
 
   /// Request location permission (for pattern learning feature)
   Future<PermissionStatus> requestLocationPermission() async {
-    debugPrint('🔐 Requesting location permission...');
+    return await _requestPermission(Permission.location, 'location');
+  }
 
-    final status = await Permission.location.request();
+  /// Request a permission and log the result
+  Future<PermissionStatus> _requestPermission(
+    Permission permission,
+    String name,
+  ) async {
+    debugPrint('🔐 Requesting $name permission...');
+
+    final status = await _checker.requestPermission(permission);
 
     if (status.isGranted) {
-      debugPrint('✅ Location permission granted');
+      debugPrint(
+          '✅ ${name.substring(0, 1).toUpperCase()}${name.substring(1)} permission granted');
     } else if (status.isDenied) {
-      debugPrint('❌ Location permission denied');
+      debugPrint(
+          '❌ ${name.substring(0, 1).toUpperCase()}${name.substring(1)} permission denied');
     } else if (status.isPermanentlyDenied) {
-      debugPrint('⛔ Location permission permanently denied');
+      debugPrint(
+          '⛔ ${name.substring(0, 1).toUpperCase()}${name.substring(1)} permission permanently denied');
     }
 
     return status;
@@ -132,16 +143,17 @@ class PermissionHandlerService {
   /// Open app settings (when permission is permanently denied)
   Future<bool> openAppSettings() async {
     debugPrint('⚙️  Opening app settings...');
-    return await openAppSettings();
+    return await _checker.openAppSettings();
   }
 
   /// Get permission status summary
   Future<PermissionStatusSummary> getPermissionSummary() async {
-    final sensors = await Permission.sensors.status;
-    final notifications = await Permission.notification.status;
+    final sensors = await _checker.checkPermission(Permission.sensors);
+    final notifications =
+        await _checker.checkPermission(Permission.notification);
     final batteryOptimization =
-        await Permission.ignoreBatteryOptimizations.status;
-    final location = await Permission.location.status;
+        await _checker.checkPermission(Permission.ignoreBatteryOptimizations);
+    final location = await _checker.checkPermission(Permission.location);
 
     return PermissionStatusSummary(
       sensors: sensors,
@@ -154,26 +166,18 @@ class PermissionHandlerService {
   /// Check if any permission is permanently denied
   Future<bool> hasAnyPermanentlyDenied() async {
     final summary = await getPermissionSummary();
+    final statuses = {
+      Permission.sensors: summary.sensors,
+      Permission.notification: summary.notifications,
+      Permission.location: summary.location,
+    };
 
-    return summary.sensors.isPermanentlyDenied ||
-        summary.notifications.isPermanentlyDenied ||
-        summary.location.isPermanentlyDenied;
+    return _analyzer.hasAnyPermanentlyDenied(statuses);
   }
 
   /// Get user-friendly permission explanation
   String getPermissionExplanation(Permission permission) {
-    switch (permission) {
-      case Permission.sensors:
-        return 'Required to detect motion when your car is being tampered with';
-      case Permission.notification:
-        return 'Required to alert you when the alarm is triggered';
-      case Permission.ignoreBatteryOptimizations:
-        return 'Recommended to ensure the alarm works in the background';
-      case Permission.location:
-        return 'Optional: Used for pattern learning to adjust sensitivity based on parking location';
-      default:
-        return 'Required for app functionality';
-    }
+    return _strategy.getPermissionExplanation(permission);
   }
 }
 

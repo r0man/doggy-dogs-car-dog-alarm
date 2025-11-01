@@ -158,7 +158,7 @@ All agents are aware of:
 
 - **Product**: Doggy Dogs Car Dog Alarm - virtual pet guard dog for car security
 - **Vision**: Transform car security into an emotionally engaging experience
-- **Tech Stack**: Flutter 3.24.5, Riverpod, sensors_plus, workmanager
+- **Tech Stack**: Flutter 3.35.0, Riverpod, sensors_plus, workmanager
 - **Architecture**: Clean architecture, feature-based organization
 - **Quality Bar**: ≥85% test coverage, all tests passing
 - **Current State**: MVP complete, working on engagement features

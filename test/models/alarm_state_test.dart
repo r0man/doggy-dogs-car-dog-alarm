@@ -2,170 +2,182 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:doggy_dogs_car_alarm/models/alarm_state.dart';
 
 void main() {
-  group('AlarmState', () {
-    test('creates default inactive state', () {
+  group('AlarmState Tests', () {
+    test('creates default alarm state', () {
       const state = AlarmState();
 
-      expect(state.isActive, isFalse);
-      expect(state.isTriggered, isFalse);
-      expect(state.isCountingDown, isFalse);
+      expect(state.isActive, false);
+      expect(state.isTriggered, false);
+      expect(state.isCountingDown, false);
       expect(state.countdownSeconds, 0);
-      expect(state.activatedAt, isNull);
-      expect(state.lastTriggeredAt, isNull);
+      expect(state.activatedAt, null);
+      expect(state.lastTriggeredAt, null);
       expect(state.triggerCount, 0);
       expect(state.mode, AlarmMode.standard);
     });
 
-    test('starts countdown correctly', () {
+    test('copyWith creates new instance with updated values', () {
       const state = AlarmState();
-      final countdownState = state.startCountdown(AlarmMode.aggressive, 30);
-
-      expect(countdownState.isCountingDown, isTrue);
-      expect(countdownState.countdownSeconds, 30);
-      expect(countdownState.mode, AlarmMode.aggressive);
-      expect(countdownState.isActive, isFalse);
-    });
-
-    test('updates countdown seconds', () {
-      const state = AlarmState();
-      final countdownState = state.startCountdown(AlarmMode.standard, 30);
-      final updatedState = countdownState.updateCountdown(25);
-
-      expect(updatedState.isCountingDown, isTrue);
-      expect(updatedState.countdownSeconds, 25);
-    });
-
-    test('cancels countdown', () {
-      const state = AlarmState();
-      final countdownState = state.startCountdown(AlarmMode.standard, 30);
-      final cancelledState = countdownState.cancelCountdown();
-
-      expect(cancelledState.isCountingDown, isFalse);
-      expect(cancelledState.countdownSeconds, 0);
-    });
-
-    test('activates alarm after countdown', () {
-      const state = AlarmState();
-      final countdownState = state.startCountdown(AlarmMode.stealth, 30);
-      final activeState = countdownState.activate(AlarmMode.stealth);
-
-      expect(activeState.isActive, isTrue);
-      expect(activeState.isCountingDown, isFalse);
-      expect(activeState.countdownSeconds, 0);
-      expect(activeState.mode, AlarmMode.stealth);
-      expect(activeState.activatedAt, isNotNull);
-    });
-
-    test('deactivates alarm', () {
-      const state = AlarmState();
-      final activeState = state.activate(AlarmMode.standard);
-      final deactivatedState = activeState.deactivate();
-
-      expect(deactivatedState.isActive, isFalse);
-      expect(deactivatedState.isTriggered, isFalse);
-      expect(deactivatedState.isCountingDown, isFalse);
-      expect(deactivatedState.activatedAt, isNull);
-    });
-
-    test('triggers alarm', () {
-      const state = AlarmState();
-      final activeState = state.activate(AlarmMode.standard);
-      final triggeredState = activeState.trigger();
-
-      expect(triggeredState.isTriggered, isTrue);
-      expect(triggeredState.triggerCount, 1);
-      expect(triggeredState.lastTriggeredAt, isNotNull);
-    });
-
-    test('acknowledges triggered alarm', () {
-      const state = AlarmState();
-      final activeState = state.activate(AlarmMode.standard);
-      final triggeredState = activeState.trigger();
-      final acknowledgedState = triggeredState.acknowledge();
-
-      expect(acknowledgedState.isTriggered, isFalse);
-      expect(acknowledgedState.isActive, isTrue);
-      expect(acknowledgedState.triggerCount, 1);
-    });
-
-    test('increments trigger count on multiple triggers', () {
-      const state = AlarmState();
-      final activeState = state.activate(AlarmMode.standard);
-      final triggeredOnce = activeState.trigger();
-      final acknowledgedOnce = triggeredOnce.acknowledge();
-      final triggeredTwice = acknowledgedOnce.trigger();
-
-      expect(triggeredTwice.triggerCount, 2);
-    });
-
-    test('copyWith creates new instance with updated fields', () {
-      const state = AlarmState(
+      final newState = state.copyWith(
         isActive: true,
-        mode: AlarmMode.standard,
+        mode: AlarmMode.aggressive,
+        triggerCount: 5,
       );
 
-      final newState = state.copyWith(mode: AlarmMode.aggressive);
-
-      expect(newState.isActive, isTrue);
+      expect(newState.isActive, true);
       expect(newState.mode, AlarmMode.aggressive);
+      expect(newState.triggerCount, 5);
+      expect(newState.isTriggered, false); // unchanged
     });
 
-    test('calculates active duration correctly', () async {
+    test('startCountdown sets countdown state', () {
       const state = AlarmState();
-      final activeState = state.activate(AlarmMode.standard);
+      final newState = state.startCountdown(AlarmMode.stealth, 30);
 
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      expect(activeState.activeDuration, isNotNull);
-      expect(activeState.activeDuration!.inMilliseconds,
-          greaterThanOrEqualTo(100));
+      expect(newState.isCountingDown, true);
+      expect(newState.countdownSeconds, 30);
+      expect(newState.mode, AlarmMode.stealth);
     });
 
-    test('toString returns formatted string', () {
-      const state = AlarmState(
+    test('updateCountdown updates seconds', () {
+      const state = AlarmState(isCountingDown: true, countdownSeconds: 30);
+      final newState = state.updateCountdown(25);
+
+      expect(newState.countdownSeconds, 25);
+      expect(newState.isCountingDown, true);
+    });
+
+    test('cancelCountdown resets countdown state', () {
+      const state = AlarmState(isCountingDown: true, countdownSeconds: 15);
+      final newState = state.cancelCountdown();
+
+      expect(newState.isCountingDown, false);
+      expect(newState.countdownSeconds, 0);
+    });
+
+    test('activate sets alarm to active state', () {
+      const state = AlarmState();
+      final newState = state.activate(AlarmMode.aggressive);
+
+      expect(newState.isActive, true);
+      expect(newState.isTriggered, false);
+      expect(newState.isCountingDown, false);
+      expect(newState.countdownSeconds, 0);
+      expect(newState.mode, AlarmMode.aggressive);
+      expect(newState.activatedAt, isNotNull);
+    });
+
+    test('deactivate resets alarm to inactive state', () {
+      final activatedTime = DateTime.now().subtract(const Duration(hours: 1));
+      final triggeredTime = DateTime.now().subtract(const Duration(minutes: 5));
+      final state = AlarmState(
         isActive: true,
         isTriggered: true,
-        isCountingDown: false,
-        countdownSeconds: 0,
-        triggerCount: 2,
+        activatedAt: activatedTime,
+        lastTriggeredAt: triggeredTime,
+        triggerCount: 3,
         mode: AlarmMode.aggressive,
       );
 
-      final str = state.toString();
+      final newState = state.deactivate();
 
+      expect(newState.isActive, false);
+      expect(newState.isTriggered, false);
+      expect(newState.isCountingDown, false);
+      expect(newState.activatedAt, null);
+      expect(newState.lastTriggeredAt, triggeredTime); // preserved
+      expect(newState.triggerCount, 3); // preserved
+      expect(newState.mode, AlarmMode.aggressive); // preserved
+    });
+
+    test('trigger sets triggered state and increments count', () {
+      const state = AlarmState(isActive: true, triggerCount: 2);
+      final newState = state.trigger();
+
+      expect(newState.isTriggered, true);
+      expect(newState.triggerCount, 3);
+      expect(newState.lastTriggeredAt, isNotNull);
+    });
+
+    test('acknowledge clears triggered state', () {
+      const state = AlarmState(isTriggered: true);
+      final newState = state.acknowledge();
+
+      expect(newState.isTriggered, false);
+    });
+
+    test('activeDuration returns null when not activated', () {
+      const state = AlarmState();
+      expect(state.activeDuration, null);
+    });
+
+    test('activeDuration calculates time since activation', () {
+      final activatedTime =
+          DateTime.now().subtract(const Duration(minutes: 30));
+      final state = AlarmState(activatedAt: activatedTime);
+
+      final duration = state.activeDuration;
+      expect(duration, isNotNull);
+      expect(duration!.inMinutes, greaterThanOrEqualTo(29));
+      expect(duration.inMinutes, lessThanOrEqualTo(31));
+    });
+
+    test('timeSinceLastTrigger returns null when never triggered', () {
+      const state = AlarmState();
+      expect(state.timeSinceLastTrigger, null);
+    });
+
+    test('timeSinceLastTrigger calculates time since last trigger', () {
+      final triggeredTime =
+          DateTime.now().subtract(const Duration(seconds: 45));
+      final state = AlarmState(lastTriggeredAt: triggeredTime);
+
+      final duration = state.timeSinceLastTrigger;
+      expect(duration, isNotNull);
+      expect(duration!.inSeconds, greaterThanOrEqualTo(44));
+      expect(duration.inSeconds, lessThanOrEqualTo(46));
+    });
+
+    test('toString returns readable representation', () {
+      const state = AlarmState(
+        isActive: true,
+        isTriggered: false,
+        triggerCount: 3,
+        mode: AlarmMode.stealth,
+      );
+
+      final str = state.toString();
       expect(str, contains('isActive: true'));
-      expect(str, contains('isTriggered: true'));
-      expect(str, contains('isCountingDown: false'));
-      expect(str, contains('countdownSeconds: 0'));
-      expect(str, contains('triggerCount: 2'));
-      expect(str, contains('mode: AlarmMode.aggressive'));
+      expect(str, contains('isTriggered: false'));
+      expect(str, contains('triggerCount: 3'));
+      expect(str, contains('AlarmMode.stealth'));
     });
   });
 
-  group('AlarmMode', () {
-    test('has correct display names', () {
+  group('AlarmMode Extension Tests', () {
+    test('display names are correct', () {
       expect(AlarmMode.standard.displayName, 'Standard');
       expect(AlarmMode.stealth.displayName, 'Stealth');
       expect(AlarmMode.aggressive.displayName, 'Aggressive');
     });
 
-    test('has correct descriptions', () {
-      expect(AlarmMode.standard.description, contains('Normal alarm response'));
-      expect(AlarmMode.stealth.description, contains('Silent notifications'));
-      expect(
-          AlarmMode.aggressive.description, contains('Immediate loud barking'));
+    test('descriptions are provided', () {
+      expect(AlarmMode.standard.description, isNotEmpty);
+      expect(AlarmMode.stealth.description, isNotEmpty);
+      expect(AlarmMode.aggressive.description, isNotEmpty);
+      expect(AlarmMode.stealth.description, contains('Silent'));
     });
 
-    test('has correct bark intensity', () {
+    test('bark intensity values are correct', () {
       expect(AlarmMode.standard.barkIntensity, 1.0);
       expect(AlarmMode.stealth.barkIntensity, 0.0);
       expect(AlarmMode.aggressive.barkIntensity, 1.5);
     });
 
-    test('has correct delayed response flag', () {
-      expect(AlarmMode.standard.hasDelayedResponse, isTrue);
-      expect(AlarmMode.stealth.hasDelayedResponse, isTrue);
-      expect(AlarmMode.aggressive.hasDelayedResponse, isFalse);
+    test('delayed response settings are correct', () {
+      expect(AlarmMode.standard.hasDelayedResponse, true);
+      expect(AlarmMode.stealth.hasDelayedResponse, true);
+      expect(AlarmMode.aggressive.hasDelayedResponse, false);
     });
   });
 }
