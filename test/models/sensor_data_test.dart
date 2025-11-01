@@ -2,9 +2,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
 
 void main() {
-  group('SensorReading', () {
+  group('SensorReading Tests', () {
+    test('creates sensor reading', () {
+      final timestamp = DateTime.now();
+      final reading = SensorReading(
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+        timestamp: timestamp,
+        type: SensorType.accelerometer,
+      );
+
+      expect(reading.x, 1.0);
+      expect(reading.y, 2.0);
+      expect(reading.z, 3.0);
+      expect(reading.timestamp, timestamp);
+      expect(reading.type, SensorType.accelerometer);
+    });
+
     test('calculates magnitude correctly', () {
-      // Arrange
       final reading = SensorReading(
         x: 3.0,
         y: 4.0,
@@ -13,15 +29,10 @@ void main() {
         type: SensorType.accelerometer,
       );
 
-      // Act
-      final magnitude = reading.magnitude;
-
-      // Assert
-      expect(magnitude, 5.0); // sqrt(3^2 + 4^2 + 0^2) = 5
+      expect(reading.magnitude, 5.0); // sqrt(3^2 + 4^2 + 0^2) = 5
     });
 
-    test('calculates difference from another reading correctly', () {
-      // Arrange
+    test('differenceFrom calculates correctly', () {
       final reading1 = SensorReading(
         x: 1.0,
         y: 2.0,
@@ -38,79 +49,35 @@ void main() {
         type: SensorType.accelerometer,
       );
 
-      // Act
-      final difference = reading2.differenceFrom(reading1);
-
-      // Assert
-      // sqrt((4-1)^2 + (6-2)^2 + (3-3)^2) = sqrt(9 + 16 + 0) = 5
-      expect(difference, 5.0);
+      final diff = reading1.differenceFrom(reading2);
+      expect(diff, 5.0); // sqrt((4-1)^2 + (6-2)^2 + (3-3)^2) = sqrt(9 + 16) = 5
     });
 
-    test('copyWith creates new instance with updated values', () {
-      // Arrange
-      final original = SensorReading(
+    test('copyWith updates specified values', () {
+      final timestamp1 = DateTime.now();
+      final timestamp2 = DateTime.now().add(const Duration(seconds: 1));
+
+      final reading = SensorReading(
         x: 1.0,
         y: 2.0,
         z: 3.0,
-        timestamp: DateTime.now(),
+        timestamp: timestamp1,
         type: SensorType.accelerometer,
       );
 
-      // Act
-      final copy = original.copyWith(x: 10.0, y: 20.0);
-
-      // Assert
-      expect(copy.x, 10.0);
-      expect(copy.y, 20.0);
-      expect(copy.z, 3.0); // Unchanged
-      expect(copy.type, SensorType.accelerometer); // Unchanged
-    });
-
-    test('copyWith can update z and timestamp', () {
-      // Arrange
-      final original = SensorReading(
-        x: 1.0,
-        y: 2.0,
-        z: 3.0,
-        timestamp: DateTime(2024, 1, 1),
-        type: SensorType.accelerometer,
+      final updated = reading.copyWith(
+        x: 5.0,
+        timestamp: timestamp2,
       );
 
-      final newTimestamp = DateTime(2024, 12, 31);
-
-      // Act
-      final copy = original.copyWith(z: 30.0, timestamp: newTimestamp);
-
-      // Assert
-      expect(copy.x, 1.0); // Unchanged
-      expect(copy.y, 2.0); // Unchanged
-      expect(copy.z, 30.0);
-      expect(copy.timestamp, newTimestamp);
-      expect(copy.type, SensorType.accelerometer); // Unchanged
-    });
-
-    test('copyWith can update type', () {
-      // Arrange
-      final original = SensorReading(
-        x: 1.0,
-        y: 2.0,
-        z: 3.0,
-        timestamp: DateTime.now(),
-        type: SensorType.accelerometer,
-      );
-
-      // Act
-      final copy = original.copyWith(type: SensorType.gyroscope);
-
-      // Assert
-      expect(copy.x, 1.0);
-      expect(copy.y, 2.0);
-      expect(copy.z, 3.0);
-      expect(copy.type, SensorType.gyroscope);
+      expect(updated.x, 5.0);
+      expect(updated.y, 2.0); // unchanged
+      expect(updated.z, 3.0); // unchanged
+      expect(updated.timestamp, timestamp2);
+      expect(updated.type, SensorType.accelerometer); // unchanged
     });
 
     test('toString returns readable representation', () {
-      // Arrange
       final reading = SensorReading(
         x: 1.5,
         y: 2.5,
@@ -119,10 +86,7 @@ void main() {
         type: SensorType.gyroscope,
       );
 
-      // Act
       final str = reading.toString();
-
-      // Assert
       expect(str, contains('SensorReading'));
       expect(str, contains('gyroscope'));
       expect(str, contains('x=1.5'));
@@ -131,177 +95,154 @@ void main() {
     });
   });
 
-  group('MotionEvent', () {
-    test('shouldTriggerAlarm returns true when intensity exceeds threshold',
-        () {
-      // Arrange
+  group('MotionEvent Tests', () {
+    test('creates motion event', () {
+      final timestamp = DateTime.now();
+      final reading = SensorReading(
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+        timestamp: timestamp,
+        type: SensorType.accelerometer,
+      );
+
+      final event = MotionEvent(
+        intensity: 0.8,
+        type: MotionType.shake,
+        timestamp: timestamp,
+        triggerReading: reading,
+      );
+
+      expect(event.intensity, 0.8);
+      expect(event.type, MotionType.shake);
+      expect(event.timestamp, timestamp);
+      expect(event.triggerReading, reading);
+    });
+
+    test('shouldTriggerAlarm checks sensitivity threshold', () {
       final event = MotionEvent(
         intensity: 0.6,
         type: MotionType.shake,
         timestamp: DateTime.now(),
         triggerReading: SensorReading(
-          x: 5.0,
-          y: 5.0,
-          z: 5.0,
-          timestamp: DateTime.now(),
-          type: SensorType.accelerometer,
-        ),
-      );
-
-      // Act
-      final shouldTrigger = event.shouldTriggerAlarm(AlarmSensitivity.medium);
-
-      // Assert
-      expect(shouldTrigger, true); // 0.6 >= 0.5 (medium threshold)
-    });
-
-    test('shouldTriggerAlarm returns false when intensity below threshold', () {
-      // Arrange
-      final event = MotionEvent(
-        intensity: 0.4,
-        type: MotionType.subtle,
-        timestamp: DateTime.now(),
-        triggerReading: SensorReading(
           x: 1.0,
-          y: 1.0,
-          z: 1.0,
+          y: 2.0,
+          z: 3.0,
           timestamp: DateTime.now(),
           type: SensorType.accelerometer,
         ),
       );
 
-      // Act
-      final shouldTrigger = event.shouldTriggerAlarm(AlarmSensitivity.medium);
-
-      // Assert
-      expect(shouldTrigger, false); // 0.4 < 0.5 (medium threshold)
+      expect(event.shouldTriggerAlarm(AlarmSensitivity.low),
+          false); // threshold 0.7
+      expect(event.shouldTriggerAlarm(AlarmSensitivity.medium),
+          true); // threshold 0.5
+      expect(event.shouldTriggerAlarm(AlarmSensitivity.high),
+          true); // threshold 0.3
+      expect(event.shouldTriggerAlarm(AlarmSensitivity.veryHigh),
+          true); // threshold 0.15
     });
 
     test('toString returns readable representation', () {
-      // Arrange
       final event = MotionEvent(
-        intensity: 0.8,
+        intensity: 0.75,
         type: MotionType.impact,
         timestamp: DateTime.now(),
         triggerReading: SensorReading(
-          x: 10.0,
-          y: 10.0,
-          z: 10.0,
+          x: 1.0,
+          y: 2.0,
+          z: 3.0,
           timestamp: DateTime.now(),
           type: SensorType.accelerometer,
         ),
       );
 
-      // Act
       final str = event.toString();
-
-      // Assert
       expect(str, contains('MotionEvent'));
       expect(str, contains('impact'));
-      expect(str, contains('intensity=0.8'));
+      expect(str, contains('intensity=0.75'));
     });
   });
 
-  group('AlarmSensitivity', () {
-    test('predefined sensitivity levels have correct thresholds', () {
-      // Assert
+  group('AlarmSensitivity Tests', () {
+    test('predefined sensitivities have correct values', () {
+      expect(AlarmSensitivity.low.name, 'Low');
       expect(AlarmSensitivity.low.threshold, 0.7);
+      expect(AlarmSensitivity.low.accelerometerThreshold, 5.0);
+      expect(AlarmSensitivity.low.gyroscopeThreshold, 2.0);
+
+      expect(AlarmSensitivity.medium.name, 'Medium');
       expect(AlarmSensitivity.medium.threshold, 0.5);
+
+      expect(AlarmSensitivity.high.name, 'High');
       expect(AlarmSensitivity.high.threshold, 0.3);
+
+      expect(AlarmSensitivity.veryHigh.name, 'Very High');
       expect(AlarmSensitivity.veryHigh.threshold, 0.15);
     });
 
-    test('low sensitivity has highest thresholds', () {
-      // Assert
+    test('sensitivity thresholds are in descending order', () {
+      expect(AlarmSensitivity.low.threshold > AlarmSensitivity.medium.threshold,
+          true);
       expect(
-        AlarmSensitivity.low.accelerometerThreshold >
-            AlarmSensitivity.medium.accelerometerThreshold,
-        true,
-      );
+          AlarmSensitivity.medium.threshold > AlarmSensitivity.high.threshold,
+          true);
       expect(
-        AlarmSensitivity.low.gyroscopeThreshold >
-            AlarmSensitivity.medium.gyroscopeThreshold,
-        true,
-      );
+          AlarmSensitivity.high.threshold > AlarmSensitivity.veryHigh.threshold,
+          true);
     });
 
-    test('very high sensitivity has lowest thresholds', () {
-      // Assert
-      expect(
-        AlarmSensitivity.veryHigh.accelerometerThreshold <
-            AlarmSensitivity.high.accelerometerThreshold,
-        true,
-      );
-      expect(
-        AlarmSensitivity.veryHigh.gyroscopeThreshold <
-            AlarmSensitivity.high.gyroscopeThreshold,
-        true,
-      );
-    });
-
-    test('all predefined sensitivities are available', () {
-      // Assert
+    test('all predefined sensitivities are accessible', () {
       expect(AlarmSensitivity.all.length, 4);
-      expect(AlarmSensitivity.all, contains(AlarmSensitivity.low));
-      expect(AlarmSensitivity.all, contains(AlarmSensitivity.medium));
-      expect(AlarmSensitivity.all, contains(AlarmSensitivity.high));
-      expect(AlarmSensitivity.all, contains(AlarmSensitivity.veryHigh));
+      expect(AlarmSensitivity.all.contains(AlarmSensitivity.low), true);
+      expect(AlarmSensitivity.all.contains(AlarmSensitivity.medium), true);
+      expect(AlarmSensitivity.all.contains(AlarmSensitivity.high), true);
+      expect(AlarmSensitivity.all.contains(AlarmSensitivity.veryHigh), true);
     });
 
-    test('copyWith creates new instance with updated values', () {
-      // Arrange
-      const original = AlarmSensitivity.medium;
+    test('copyWith updates specified values', () {
+      const sensitivity = AlarmSensitivity.medium;
+      final updated = sensitivity.copyWith(
+        name: 'Custom',
+        threshold: 0.4,
+      );
 
-      // Act
-      final copy = original.copyWith(
+      expect(updated.name, 'Custom');
+      expect(updated.threshold, 0.4);
+      expect(updated.accelerometerThreshold, 3.0); // unchanged
+      expect(updated.gyroscopeThreshold, 1.5); // unchanged
+    });
+
+    test('custom sensitivity can be created', () {
+      const custom = AlarmSensitivity(
         name: 'Custom',
         threshold: 0.6,
+        accelerometerThreshold: 4.0,
+        gyroscopeThreshold: 1.8,
       );
 
-      // Assert
-      expect(copy.name, 'Custom');
-      expect(copy.threshold, 0.6);
-      expect(copy.accelerometerThreshold, original.accelerometerThreshold);
-      expect(copy.gyroscopeThreshold, original.gyroscopeThreshold);
-    });
-
-    test('copyWith can update all parameters', () {
-      // Arrange
-      const original = AlarmSensitivity.medium;
-
-      // Act
-      final copy = original.copyWith(
-        name: 'Super Sensitive',
-        threshold: 0.1,
-        accelerometerThreshold: 0.5,
-        gyroscopeThreshold: 0.3,
-      );
-
-      // Assert
-      expect(copy.name, 'Super Sensitive');
-      expect(copy.threshold, 0.1);
-      expect(copy.accelerometerThreshold, 0.5);
-      expect(copy.gyroscopeThreshold, 0.3);
+      expect(custom.name, 'Custom');
+      expect(custom.threshold, 0.6);
+      expect(custom.accelerometerThreshold, 4.0);
+      expect(custom.gyroscopeThreshold, 1.8);
     });
   });
 
-  group('MotionType', () {
+  group('MotionType Tests', () {
     test('all motion types are defined', () {
-      // Assert
       expect(MotionType.values.length, 4);
-      expect(MotionType.values, contains(MotionType.shake));
-      expect(MotionType.values, contains(MotionType.tilt));
-      expect(MotionType.values, contains(MotionType.impact));
-      expect(MotionType.values, contains(MotionType.subtle));
+      expect(MotionType.values.contains(MotionType.shake), true);
+      expect(MotionType.values.contains(MotionType.tilt), true);
+      expect(MotionType.values.contains(MotionType.impact), true);
+      expect(MotionType.values.contains(MotionType.subtle), true);
     });
   });
 
-  group('SensorType', () {
+  group('SensorType Tests', () {
     test('all sensor types are defined', () {
-      // Assert
       expect(SensorType.values.length, 2);
-      expect(SensorType.values, contains(SensorType.accelerometer));
-      expect(SensorType.values, contains(SensorType.gyroscope));
+      expect(SensorType.values.contains(SensorType.accelerometer), true);
+      expect(SensorType.values.contains(SensorType.gyroscope), true);
     });
   });
 }

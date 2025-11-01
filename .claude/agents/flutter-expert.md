@@ -23,7 +23,7 @@ This is the **Doggy Dogs Car Dog Alarm** project - a virtual pet guard dog app t
 - Bark audio system with escalation patterns
 
 ### Tech Stack
-- Flutter 3.24.5, Dart 3.5.4
+- Flutter 3.35.0, Dart 3.8.0
 - Riverpod for state management
 - SharedPreferences for local storage
 - sensors_plus for motion detection

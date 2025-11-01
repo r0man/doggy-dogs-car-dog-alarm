@@ -102,7 +102,6 @@ class DogAnimationController extends ChangeNotifier {
       case DogMood.grumpy:
         return DogAnimationState.sad;
       case DogMood.content:
-      default:
         return DogAnimationState.idle;
     }
   }

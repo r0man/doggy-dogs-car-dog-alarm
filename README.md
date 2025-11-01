@@ -52,7 +52,7 @@ The app utilizes multiple phone sensors:
 ## Installation
 
 ### Prerequisites
-- Flutter SDK (version 3.0 or higher)
+- Flutter SDK (version 3.35.0 or higher)
 - Dart SDK
 - Android Studio / Xcode for mobile development
 - A physical device for testing (sensors work best on real hardware)

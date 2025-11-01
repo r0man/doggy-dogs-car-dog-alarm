@@ -4,10 +4,10 @@ Flutter has been successfully installed and configured for the Doggy Dogs Car Do
 
 ## Installation Details
 
-**Flutter Version**: 3.24.5 (stable channel)
-**Dart Version**: 3.5.4
-**DevTools**: 2.37.3
-**Install Date**: 2025-10-28
+**Flutter Version**: 3.35.0 (stable channel)
+**Dart Version**: 3.8.0
+**DevTools**: 2.40.1
+**Install Date**: 2025-11-01
 **Install Location**: `/opt/flutter`
 
 ## Installation Steps Performed
@@ -80,7 +80,7 @@ Total: 11/11 tests passed ✅
 ## Flutter Doctor Status
 
 ```
-[✓] Flutter (Channel stable, 3.24.5)
+[✓] Flutter (Channel stable, 3.35.0)
 [✗] Android toolchain - Not installed (not needed yet)
 [✗] Chrome - Not needed for development
 [✗] Linux toolchain - Not needed for development

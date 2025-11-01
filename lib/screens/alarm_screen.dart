@@ -6,6 +6,7 @@ import '../services/alarm_service.dart';
 import '../services/sensor_detection_service.dart';
 import '../services/app_settings_service.dart';
 import '../widgets/unlock_dialog.dart';
+import 'alarm_screen_view_model.dart';
 
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
@@ -22,6 +23,13 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     final alarmService = ref.watch(alarmServiceProvider);
     final currentSensitivity = ref.watch(alarmSensitivityProvider);
 
+    final viewModel = AlarmScreenViewModel(
+      alarmState: alarmService.currentState,
+      sensitivity: currentSensitivity,
+    );
+
+    final displayConfig = viewModel.displayConfig;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Guard Dog Alarm'),
@@ -35,304 +43,275 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
             children: [
               // Alarm Status Card
               Expanded(
-                child: Card(
-                  color: alarmService.currentState.isTriggered
-                      ? Colors.red.shade50
-                      : alarmService.currentState.isCountingDown
-                          ? Colors.orange.shade50
-                          : alarmService.currentState.isActive
-                              ? Colors.green.shade50
-                              : Colors.grey.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Countdown Display
-                        if (alarmService.currentState.isCountingDown) ...[
-                          Text(
-                            'ACTIVATING IN',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '${alarmService.currentState.countdownSeconds}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .displayLarge
-                                ?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 80,
-                                ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'seconds',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  color: Colors.orange.shade700,
-                                ),
-                          ),
-                        ] else ...[
-                          // Status Icon
-                          Icon(
-                            alarmService.currentState.isTriggered
-                                ? Icons.warning_amber_rounded
-                                : alarmService.currentState.isActive
-                                    ? Icons.security
-                                    : Icons.security_outlined,
-                            size: 100,
-                            color: alarmService.currentState.isTriggered
-                                ? Colors.red
-                                : alarmService.currentState.isActive
-                                    ? Colors.green
-                                    : Colors.grey,
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Status Text
-                          Text(
-                            alarmService.currentState.isTriggered
-                                ? 'ALARM TRIGGERED!'
-                                : alarmService.currentState.isActive
-                                    ? 'GUARD DOG ACTIVE'
-                                    : 'GUARD DOG SLEEPING',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: alarmService.currentState.isTriggered
-                                      ? Colors.red
-                                      : alarmService.currentState.isActive
-                                          ? Colors.green
-                                          : Colors.grey,
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Additional Info
-                          if (alarmService.currentState.isActive) ...[
-                            Text(
-                              'Mode: ${alarmService.currentState.mode.displayName}',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Sensitivity: ${currentSensitivity.name}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            if (alarmService.currentState.activeDuration !=
-                                null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Active for: ${_formatDuration(alarmService.currentState.activeDuration!)}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Colors.grey.shade600,
-                                    ),
-                              ),
-                            ],
-                          ],
-
-                          if (alarmService.currentState.triggerCount > 0) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              'Triggers: ${alarmService.currentState.triggerCount}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
+                child: _buildStatusCard(context, displayConfig),
               ),
               const SizedBox(height: 16),
 
               // Mode Selection (when inactive and not counting down)
-              if (!alarmService.currentState.isActive &&
-                  !alarmService.currentState.isCountingDown) ...[
-                Text(
-                  'Alarm Mode',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+              if (viewModel.shouldShowModeSelection) ...[
+                _buildModeSelection(context),
                 const SizedBox(height: 8),
-                ...AlarmMode.values.map((mode) => RadioListTile<AlarmMode>(
-                      title: Text(mode.displayName),
-                      subtitle: Text(mode.description),
-                      value: mode,
-                      groupValue: _selectedMode,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedMode = value;
-                          });
-                        }
-                      },
-                    )),
-                const SizedBox(height: 8),
+              ],
 
-                // Sensitivity Selection
-                Text(
-                  'Sensitivity: ${currentSensitivity.name}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                SegmentedButton<AlarmSensitivity>(
-                  segments: const [
-                    ButtonSegment(
-                      value: AlarmSensitivity.low,
-                      label: Text('Low'),
-                    ),
-                    ButtonSegment(
-                      value: AlarmSensitivity.medium,
-                      label: Text('Med'),
-                    ),
-                    ButtonSegment(
-                      value: AlarmSensitivity.high,
-                      label: Text('High'),
-                    ),
-                    ButtonSegment(
-                      value: AlarmSensitivity.veryHigh,
-                      label: Text('Max'),
-                    ),
-                  ],
-                  selected: {currentSensitivity},
-                  onSelectionChanged: (Set<AlarmSensitivity> selection) {
-                    final service = ref.read(appSettingsServiceProvider);
-                    final sensitivityName =
-                        service.getSensitivityName(selection.first);
-                    ref
-                        .read(appSettingsProvider.notifier)
-                        .setSensitivityLevel(sensitivityName);
-                  },
-                ),
+              // Sensitivity Selection
+              if (viewModel.shouldShowSensitivitySelection) ...[
+                _buildSensitivitySelection(context, currentSensitivity),
                 const SizedBox(height: 16),
               ],
 
               // Action Buttons
-              if (alarmService.currentState.isCountingDown)
-                // Cancel button during countdown
-                ElevatedButton(
-                  onPressed: () => alarmService.cancelCountdown(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cancel, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'CANCEL ACTIVATION',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (alarmService.currentState.isTriggered)
-                ElevatedButton(
-                  onPressed: () => alarmService.acknowledge(),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'ACKNOWLEDGE',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (alarmService.currentState.isActive) ...[
-                ElevatedButton(
-                  onPressed: () => _handleDeactivate(context, alarmService),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.stop, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'DEACTIVATE ALARM',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _buildActionButton(
+                context,
+                displayConfig,
+                alarmService,
+              ),
+
+              // Recalibrate button for active state
+              if (displayConfig.state == AlarmDisplayState.active) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: () => alarmService.recalibrate(),
                   child: const Text('Recalibrate Sensors'),
                 ),
-              ] else
-                ElevatedButton(
-                  onPressed: () =>
-                      alarmService.startActivation(mode: _selectedMode),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.security, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'ACTIVATE GUARD DOG',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildStatusCard(BuildContext context, AlarmDisplayConfig config) {
+    return Card(
+      color: config.backgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (config.state == AlarmDisplayState.countdown)
+              _buildCountdownDisplay(context, config)
+            else
+              _buildStatusDisplay(context, config),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountdownDisplay(
+      BuildContext context, AlarmDisplayConfig config) {
+    return Column(
+      children: [
+        Text(
+          config.statusText,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: config.foregroundColor,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          config.countdownText ?? '0',
+          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                color: config.foregroundColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 80,
+              ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'seconds',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: config.foregroundColor,
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusDisplay(BuildContext context, AlarmDisplayConfig config) {
+    return Column(
+      children: [
+        Icon(
+          config.icon,
+          size: 100,
+          color: config.foregroundColor,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          config.statusText,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: config.foregroundColor,
+              ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+
+        // Additional Info
+        if (config.modeText != null) ...[
+          Text(
+            config.modeText!,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (config.sensitivityText != null) ...[
+          Text(
+            config.sensitivityText!,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (config.durationText != null) ...[
+          Text(
+            config.durationText!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+          ),
+        ],
+
+        if (config.triggerCount != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Triggers: ${config.triggerCount}',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildModeSelection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Alarm Mode: ${_selectedMode.displayName}',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<AlarmMode>(
+          segments: AlarmMode.values
+              .map((mode) => ButtonSegment<AlarmMode>(
+                    value: mode,
+                    label: Text(mode.displayName),
+                    tooltip: mode.description,
+                  ))
+              .toList(),
+          selected: {_selectedMode},
+          onSelectionChanged: (Set<AlarmMode> selection) {
+            setState(() {
+              _selectedMode = selection.first;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSensitivitySelection(
+    BuildContext context,
+    AlarmSensitivity currentSensitivity,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Sensitivity: ${currentSensitivity.name}',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        SegmentedButton<AlarmSensitivity>(
+          segments: const [
+            ButtonSegment(
+              value: AlarmSensitivity.low,
+              label: Text('Low'),
+            ),
+            ButtonSegment(
+              value: AlarmSensitivity.medium,
+              label: Text('Med'),
+            ),
+            ButtonSegment(
+              value: AlarmSensitivity.high,
+              label: Text('High'),
+            ),
+            ButtonSegment(
+              value: AlarmSensitivity.veryHigh,
+              label: Text('Max'),
+            ),
+          ],
+          selected: {currentSensitivity},
+          onSelectionChanged: (Set<AlarmSensitivity> selection) {
+            final service = ref.read(appSettingsServiceProvider);
+            final sensitivityName = service.getSensitivityName(selection.first);
+            ref
+                .read(appSettingsProvider.notifier)
+                .setSensitivityLevel(sensitivityName);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    AlarmDisplayConfig config,
+    AlarmService alarmService,
+  ) {
+    final buttonConfig = config.buttonConfig;
+
+    return ElevatedButton(
+      onPressed: () =>
+          _handleAction(context, buttonConfig.action, alarmService),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        backgroundColor: buttonConfig.backgroundColor,
+        foregroundColor: buttonConfig.foregroundColor,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(buttonConfig.icon, size: 28),
+          const SizedBox(width: 12),
+          Text(
+            buttonConfig.text,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleAction(
+    BuildContext context,
+    AlarmAction action,
+    AlarmService alarmService,
+  ) async {
+    switch (action) {
+      case AlarmAction.activate:
+        await alarmService.startActivation(mode: _selectedMode);
+        break;
+      case AlarmAction.deactivate:
+        await _handleDeactivate(context, alarmService);
+        break;
+      case AlarmAction.cancelCountdown:
+        await alarmService.cancelCountdown();
+        break;
+      case AlarmAction.acknowledge:
+        await alarmService.acknowledge();
+        break;
+      case AlarmAction.recalibrate:
+        await alarmService.recalibrate();
+        break;
+    }
   }
 
   Future<void> _handleDeactivate(
@@ -365,15 +344,5 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         },
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    if (duration.inHours > 0) {
-      return '${duration.inHours}h ${duration.inMinutes.remainder(60)}m';
-    } else if (duration.inMinutes > 0) {
-      return '${duration.inMinutes}m ${duration.inSeconds.remainder(60)}s';
-    } else {
-      return '${duration.inSeconds}s';
-    }
   }
 }

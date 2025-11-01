@@ -73,10 +73,10 @@ Future<void> _checkAlarmStateTask(Map<String, dynamic>? inputData) async {
       BackgroundTasks.monitorSensors,
       frequency: const Duration(minutes: 15),
       constraints: Constraints(
-        networkType: NetworkType.not_required,
+        networkType: NetworkType.notRequired,
         requiresCharging: false,
       ),
-      existingWorkPolicy: ExistingWorkPolicy.keep,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   } else {
     debugPrint('⏹️  Background: Alarm not active');
@@ -105,7 +105,6 @@ class BackgroundMonitoringService {
       // Initialize workmanager
       await Workmanager().initialize(
         callbackDispatcher,
-        isInDebugMode: false, // Set to true for debugging
       );
 
       _isInitialized = true;
@@ -140,11 +139,11 @@ class BackgroundMonitoringService {
         frequency: frequency,
         initialDelay: const Duration(seconds: 5),
         constraints: Constraints(
-          networkType: NetworkType.not_required,
+          networkType: NetworkType.notRequired,
           requiresCharging: false,
           requiresBatteryNotLow: false,
         ),
-        existingWorkPolicy: ExistingWorkPolicy.replace,
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
       );
 
       // Register periodic state check task
@@ -153,10 +152,10 @@ class BackgroundMonitoringService {
         BackgroundTasks.checkAlarmState,
         frequency: const Duration(minutes: 15),
         constraints: Constraints(
-          networkType: NetworkType.not_required,
+          networkType: NetworkType.notRequired,
           requiresCharging: false,
         ),
-        existingWorkPolicy: ExistingWorkPolicy.replace,
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
       );
 
       _isMonitoring = true;

@@ -1,13 +1,20 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import '../models/sensor_data.dart';
 import 'app_settings_service.dart';
+import 'motion_analyzer.dart';
+import 'motion_classifier.dart';
+import 'threshold_calculator.dart';
 
 /// Service for detecting motion events using device sensors
+/// Platform-dependent sensor code is isolated here, while pure logic
+/// is delegated to testable analyzer classes
 class SensorDetectionService {
   final AlarmSensitivity sensitivity;
+  late final MotionAnalyzer _motionAnalyzer;
+  late final MotionClassifier _motionClassifier;
+  late final ThresholdCalculator _thresholdCalculator;
 
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
@@ -30,7 +37,11 @@ class SensorDetectionService {
 
   SensorDetectionService({
     this.sensitivity = AlarmSensitivity.medium,
-  });
+  }) {
+    _motionAnalyzer = MotionAnalyzer(sensitivity: sensitivity);
+    _motionClassifier = MotionClassifier(sensitivity: sensitivity);
+    _thresholdCalculator = const ThresholdCalculator();
+  }
 
   /// Stream of detected motion events
   Stream<MotionEvent> get motionEvents => _motionEventController.stream;
@@ -159,60 +170,33 @@ class SensorDetectionService {
     _lastGyroscopeReading = reading;
   }
 
-  /// Calculate average of sensor readings
+  /// Calculate average of sensor readings using ThresholdCalculator
   SensorReading _calculateAverageReading(
     List<SensorReading> readings,
     SensorType type,
   ) {
-    final avgX =
-        readings.map((r) => r.x).reduce((a, b) => a + b) / readings.length;
-    final avgY =
-        readings.map((r) => r.y).reduce((a, b) => a + b) / readings.length;
-    final avgZ =
-        readings.map((r) => r.z).reduce((a, b) => a + b) / readings.length;
-
-    return SensorReading(
-      x: avgX,
-      y: avgY,
-      z: avgZ,
-      timestamp: DateTime.now(),
-      type: type,
-    );
+    return _thresholdCalculator.calculateAverage(readings, type);
   }
 
-  /// Detect motion from sensor readings
+  /// Detect motion from sensor readings using MotionAnalyzer and MotionClassifier
   void _detectMotion(
     SensorReading current,
     SensorReading previous,
     SensorReading baseline,
   ) {
-    // Calculate change from baseline
-    final changeFromBaseline = current.differenceFrom(baseline);
+    // Use MotionAnalyzer to analyze the motion
+    final analysisResult = _motionAnalyzer.analyzeMotion(
+      current: current,
+      previous: previous,
+      baseline: baseline,
+    );
 
-    // Calculate rate of change
-    final rateOfChange = current.differenceFrom(previous);
-
-    // Determine if motion exceeds thresholds
-    final threshold = current.type == SensorType.accelerometer
-        ? sensitivity.accelerometerThreshold
-        : sensitivity.gyroscopeThreshold;
-
-    if (changeFromBaseline > threshold || rateOfChange > threshold * 0.5) {
-      // Calculate intensity (0.0 to 1.0)
-      final intensity = min(
-        1.0,
-        max(changeFromBaseline, rateOfChange) / (threshold * 2),
-      );
-
-      // Determine motion type
-      final motionType = _classifyMotion(
-        changeFromBaseline,
-        rateOfChange,
-        current.type,
-      );
+    // If motion detected, classify it and emit event
+    if (analysisResult != null) {
+      final motionType = _motionClassifier.classifyMotion(analysisResult);
 
       final event = MotionEvent(
-        intensity: intensity,
+        intensity: analysisResult.intensity,
         type: motionType,
         timestamp: current.timestamp,
         triggerReading: current,
@@ -220,32 +204,6 @@ class SensorDetectionService {
 
       _motionEventController.add(event);
     }
-  }
-
-  /// Classify the type of motion detected
-  MotionType _classifyMotion(
-    double changeFromBaseline,
-    double rateOfChange,
-    SensorType sensorType,
-  ) {
-    // High rate of change = impact or shake
-    if (rateOfChange > changeFromBaseline * 0.8) {
-      if (sensorType == SensorType.accelerometer) {
-        return rateOfChange > sensitivity.accelerometerThreshold * 2
-            ? MotionType.impact
-            : MotionType.shake;
-      } else {
-        return MotionType.shake;
-      }
-    }
-
-    // Gradual change = tilt
-    if (changeFromBaseline > sensitivity.accelerometerThreshold * 0.5) {
-      return MotionType.tilt;
-    }
-
-    // Small movements
-    return MotionType.subtle;
   }
 
   /// Manually recalibrate sensors (useful after car parks in new position)
