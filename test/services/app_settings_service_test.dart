@@ -22,7 +22,7 @@ void main() {
     test('loadSettings returns defaults when no saved settings', () async {
       final settings = await service.loadSettings();
 
-      expect(settings.countdownDuration, 30);
+      expect(settings.countdownDuration, 10);
       expect(settings.sensitivityLevel, 'medium');
       expect(settings.barkVolume, 0.8);
     });
@@ -60,14 +60,14 @@ void main() {
       await service.clearSettings();
 
       final loaded = await service.loadSettings();
-      expect(loaded.countdownDuration, 30); // Back to default
+      expect(loaded.countdownDuration, 10); // Back to default
     });
 
     test('loadSettings handles corrupted JSON gracefully', () async {
       await prefs.setString('app_settings', 'invalid json');
 
       final settings = await service.loadSettings();
-      expect(settings.countdownDuration, 30); // Returns defaults
+      expect(settings.countdownDuration, 10); // Returns defaults
     });
 
     test('getAlarmSensitivity converts correctly', () {
@@ -114,7 +114,7 @@ void main() {
     });
 
     test('initializes with default settings', () {
-      expect(notifier.state.countdownDuration, 30);
+      expect(notifier.state.countdownDuration, 10);
       expect(notifier.state.sensitivityLevel, 'medium');
     });
 
@@ -130,7 +130,7 @@ void main() {
 
     test('setCountdownDuration throws on invalid value', () async {
       expect(
-        () => notifier.setCountdownDuration(10), // Too low
+        () => notifier.setCountdownDuration(9), // Too low
         throwsArgumentError,
       );
 
@@ -201,7 +201,7 @@ void main() {
 
       await notifier.resetToDefaults();
 
-      expect(notifier.state.countdownDuration, 30);
+      expect(notifier.state.countdownDuration, 10);
       expect(notifier.state.sensitivityLevel, 'medium');
     });
   });

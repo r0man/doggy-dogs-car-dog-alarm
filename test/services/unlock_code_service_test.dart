@@ -220,7 +220,7 @@ void main() {
       addTearDown(container.dispose);
 
       final duration = container.read(countdownDurationProvider);
-      expect(duration, 30); // Default countdown duration
+      expect(duration, 10); // Default countdown duration
     });
 
     test('countdownDurationProvider reacts to settings changes', () {

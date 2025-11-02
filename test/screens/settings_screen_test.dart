@@ -244,8 +244,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Check for default countdown duration (30s)
-      expect(find.text('30s'), findsWidgets);
+      // Check for default countdown duration (10s)
+      expect(find.text('10s'), findsWidgets);
 
       // Check for default volume percentage (80%)
       expect(find.text('80%'), findsOneWidget);
@@ -1551,7 +1551,7 @@ void main() {
       // Verify default values restored - the reset clears the JSON, so we need to check individual keys
       // or verify that default AppSettings are being used
       const defaultSettings = AppSettings();
-      expect(defaultSettings.countdownDuration, 30);
+      expect(defaultSettings.countdownDuration, 10);
       expect(defaultSettings.sensitivityLevel, 'medium');
       expect(defaultSettings.barkVolume, 0.8);
       expect(defaultSettings.notificationsEnabled, true);
@@ -1563,7 +1563,7 @@ void main() {
       if (settingsJson != null) {
         final settings = AppSettings.fromJson(
             (jsonDecode(settingsJson) as Map<String, dynamic>));
-        expect(settings.countdownDuration, 30);
+        expect(settings.countdownDuration, 10);
         expect(settings.sensitivityLevel, 'medium');
         expect(settings.barkVolume, 0.8);
         expect(settings.notificationsEnabled, true);

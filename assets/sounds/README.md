@@ -1,162 +1,186 @@
-# Bark Sound Assets
+# Dog Bark Sounds
 
-This directory contains the bark sound files for the Doggy Dogs Car Alarm app.
+This directory contains bark sound files for all 8 dog breeds in the Doggy Dogs Car Dog Alarm app.
 
 ## Directory Structure
 
-Each dog breed has its own subdirectory with bark sound files:
+Each breed has its own folder with sound files following the code's expected naming convention:
 
 ```
 assets/sounds/
 ├── germanshepherd/
+│   ├── bark_01.mp3 (original master file)
+│   ├── warning_low.mp3 (duplicate of bark_01.mp3)
+│   ├── warning_medium.mp3 (duplicate of bark_01.mp3)
+│   ├── ... (16 variants total)
 ├── rottweiler/
 ├── doberman/
 ├── bulldog/
 ├── pitbull/
 ├── husky/
-└── beagle/
+├── beagle/
+└── chihuahua/
 ```
+
+## Current Implementation
+
+**Status**: ✅ All 8 breeds have bark sounds implemented
+
+Each breed folder contains:
+- **17 identical files** (~24-48KB each): One `bark_01.mp3` plus 16 type/intensity variants
+- All files are duplicates to ensure compatibility with Flutter's asset bundling on mobile platforms
+- **Total size**: ~6.1 MB (acceptable for mobile deployment)
+
+**Why duplicates instead of symbolic links?**
+- Flutter's asset bundling may not properly handle symbolic links on Android/iOS
+- Duplicates ensure reliable asset loading across all platforms
+- File size (~6MB) is reasonable for a mobile app with audio assets
+
+This allows the app to work immediately while we can later add authentic variations for different types and intensities.
 
 ## File Naming Convention
 
-Files follow the pattern: `{barkType}_{intensity}.mp3`
+The code expects files in the pattern: `{type}_{intensity}.mp3`
 
 ### Bark Types:
-- `warning` - Single warning bark (1 second)
-- `alert` - Alert barking sequence (3 seconds)
-- `aggressive` - Aggressive barking (5 seconds)
-- `threat` - Intense threat barking (8 seconds)
+- `warning` - Single warning bark
+- `alert` - Alert barking sequence
+- `aggressive` - Aggressive barking
+- `threat` - Intense threat barking
 
 ### Intensity Levels:
-- `low` - Quiet, less threatening
-- `medium` - Normal barking volume
-- `high` - Loud, intimidating
-- `maximum` - Maximum volume and aggression
+- `low` - Quieter volume (40%)
+- `medium` - Normal volume (60%)
+- `high` - Loud volume (80%)
+- `maximum` - Maximum volume (100%)
 
-## Required Files (Per Breed)
+### Example Files:
+- `warning_low.mp3` - Quiet warning bark
+- `alert_medium.mp3` - Normal alert bark
+- `aggressive_high.mp3` - Loud aggressive bark
+- `threat_maximum.mp3` - Maximum threat bark
 
-Each breed directory needs 16 audio files:
+**Total per breed**: 16 files (4 types × 4 intensities)
+**Total in app**: 128 files (8 breeds × 16 files)
 
-1. `warning_low.mp3`
-2. `warning_medium.mp3`
-3. `warning_high.mp3`
-4. `warning_maximum.mp3`
-5. `alert_low.mp3`
-6. `alert_medium.mp3`
-7. `alert_high.mp3`
-8. `alert_maximum.mp3`
-9. `aggressive_low.mp3`
-10. `aggressive_medium.mp3`
-11. `aggressive_high.mp3`
-12. `aggressive_maximum.mp3`
-13. `threat_low.mp3`
-14. `threat_medium.mp3`
-15. `threat_high.mp3`
-16. `threat_maximum.mp3`
+## Sound Files - Sources & Licensing
 
-Total: **112 audio files** (7 breeds × 16 files each)
+All sounds are normalized to **3 seconds** duration for consistency.
 
-## Audio Specifications
+| Breed | Master File | Source | License | Duration | Size | Notes |
+|-------|-------------|--------|---------|----------|------|-------|
+| German Shepherd | `germanshepherd/bark_01.mp3` | [OrangeFreeSound](https://orangefreesounds.com/dog-barking-sound-german-shepherd/) | CC BY 4.0 | 3.00s | 48K | Normalized, fade out |
+| Chihuahua | `chihuahua/bark_01.mp3` | [SoundFXCenter](https://soundfxcenter.com/) | Free to use* | 3.00s | 24K | Small dog bark |
+| Beagle | `beagle/bark_01.mp3` | [SoundFXCenter](https://soundfxcenter.com/) | Free to use* | 3.00s | 48K | Padded with silence |
+| Doberman | `doberman/bark_01.mp3` | [SoundFXCenter](https://soundfxcenter.com/) | Free to use* | 3.00s | 48K | Guard dog bark |
+| Rottweiler | `rottweiler/bark_01.mp3` | [LibSounds](https://libsounds.com/sound/28) | LibSounds License** | 3.00s | 48K | Deep, powerful |
+| Bulldog | `bulldog/bark_01.mp3` | [BigSoundBank](https://bigsoundbank.com/detail-0916-barking-dog.html) | CC0 Public Domain | 3.00s | 48K | Large dog close-up |
+| Pitbull | `pitbull/bark_01.mp3` | [BigSoundBank](https://bigsoundbank.com/barking-dogs-s0288.html) | CC0 Public Domain | 3.00s | 48K | Aggressive barking |
+| Husky | `husky/bark_01.mp3` | [BigSoundBank](https://bigsoundbank.com/detail-0916-barking-dog.html) | CC0 Public Domain | 3.00s | 48K | Large dog bark |
+
+### Licensing Notes:
+
+✅ **Verified for Commercial Use:**
+- **CC BY 4.0** (German Shepherd): ✅ Requires attribution - "Dog barking sound by OrangeFreeSound"
+- **CC0 Public Domain** (Bulldog, Pitbull, Husky): ✅ No attribution required, free for commercial use
+
+⚠️ **Requires Verification Before Commercial Distribution:**
+- ***SoundFXCenter** (Chihuahua, Beagle, Doberman):
+  - **Status**: Publicly available for free download
+  - **License**: Terms state "free to use" but specific commercial use terms unclear
+  - **Action needed**: Visit SoundFXCenter.com ToS/licensing page to verify commercial distribution rights
+  - **Alternative**: If unclear, replace with CC0 sounds from FreesSound.org or BigSoundBank
+
+- ****LibSounds** (Rottweiler):
+  - **Status**: Downloaded from LibSounds.com
+  - **License**: LibSounds license - terms need verification
+  - **Action needed**: Review LibSounds.com terms of service for commercial use rights
+  - **Alternative**: If unclear, replace with CC0 sound from BigSoundBank
+
+### Before Commercial App Release:
+
+⚠️ **ACTION REQUIRED**: The 4 sounds from SoundFXCenter and LibSounds must have licensing verified or be replaced with clearly-licensed alternatives (CC0 or CC BY) before distributing the app commercially on Google Play or Apple App Store.
+
+**Recommended sources for replacement sounds (if needed):**
+1. [FreesSound.org](https://freesound.org) - Search for breed-specific barks with CC0 or CC BY licenses
+2. [BigSoundBank](https://bigsoundbank.com) - Already using for 3 breeds, all CC0 public domain
+3. [AudioJungle](https://audiojungle.net) - Commercial royalty-free sounds (paid)
+
+## Audio Format
 
 - **Format**: MP3
-- **Sample Rate**: 44.1 kHz
-- **Bit Rate**: 128 kbps or higher
+- **Duration**: 3 seconds (all files normalized to same duration)
+- **Sample Rate**: 44.1-48 kHz
+- **Bitrate**: 128 kbps
 - **Channels**: Mono or Stereo
-- **Duration**:
-  - Warning: ~1 second
-  - Alert: ~3 seconds
-  - Aggressive: ~5 seconds
-  - Threat: ~8 seconds
+- **Processing**: Trimmed/padded to 3s with 0.3s fade-out
+- **Total Size**: ~6.1 MB for all breeds
 
-## Sound Characteristics by Breed
+**Note on Duration**: Currently all bark types (warning, alert, aggressive, threat) use the same 3-second audio. The code's `BarkType.duration` property returns 3.0 seconds to match this implementation. Future enhancement will add duration-specific variants (warning=1s, alert=3s, aggressive=5s, threat=8s).
 
-### German Shepherd
-- Deep, authoritative bark
-- Clear and commanding
-- Natural guard dog sound
-
-### Rottweiler
-- Very deep, rumbling bark
-- Powerful and intimidating
-- Low frequency emphasis
-
-### Doberman
-- Sharp, alert bark
-- Medium-high pitch
-- Quick, staccato pattern
-
-### Bulldog
-- Gruff, raspy bark
-- Medium pitch
-- Distinctive gravelly quality
-
-### Pitbull
-- Strong, confident bark
-- Medium pitch
-- Persistent and determined
-
-### Husky
-- Vocal, howl-like quality
-- Can be higher pitched
-- Talkative, expressive
-
-### Beagle
-- Higher pitched bark
-- Persistent "bay" quality
-- More rapid fire
-
-## Sourcing Audio
-
-### Options for obtaining bark sounds:
-
-1. **Professional Sound Libraries**:
-   - freesound.org (Creative Commons)
-   - AudioJungle
-   - Epidemic Sound
-   - SoundDogs
-
-2. **Recording Real Dogs**:
-   - Work with dog trainers
-   - Record at dog parks (with permission)
-   - Hire professional dog handlers
-
-3. **AI-Generated Sounds**:
-   - Use AI audio generation tools
-   - Modify and enhance with audio editing
-
-4. **Placeholder Sounds**:
-   - Currently, the app will continue silently if files are missing
-   - In development, you can use generic barks for all breeds
-
-## Audio Processing Tips
-
-1. **Normalize Volume**: Ensure consistent peak levels
-2. **Remove Background Noise**: Clean up recordings
-3. **Add Reverb** (optional): For more intimidating effect
-4. **Fade In/Out**: Smooth transitions at start/end
-5. **Loop Preparation**: If creating loops, ensure seamless transitions
-
-## Testing
-
-Test each sound file:
-```bash
-flutter run
-# Navigate to Alarm Screen
-# Activate alarm with different modes
-# Verify barks play correctly
-```
-
-## Legal Considerations
-
-- Ensure you have proper licensing for all audio files
-- Attribute sources as required by licenses
-- Consider volume limits based on local regulations
-- Add user controls for maximum volume
+All files are optimized for mobile playback and consistent user experience.
 
 ## Future Enhancements
 
+### Phase 1: Type Variations (Priority)
+Add authentic variations for bark types:
+- [ ] Short warning bark (~1s)
+- [ ] Alert bark sequence (~3s)
+- [ ] Aggressive barking (~5s)
+- [ ] Intense threat bark (~8s)
+
+### Phase 2: Intensity Variations
+Record or synthesize intensity levels:
+- [ ] Volume modulation
+- [ ] Frequency filtering
+- [ ] Reverb/echo effects
+
+### Phase 3: Advanced Features
 - [ ] Dynamic pitch shifting based on dog level
-- [ ] Layered sounds for more realistic barking
-- [ ] Environmental reverb effects
-- [ ] Breed-mixing for adopted dogs
-- [ ] User-uploaded custom barks
+- [ ] Layered sounds for realism
+- [ ] Environmental reverb
+- [ ] Breed-specific vocalizations (growls, howls)
+
+## Adding New Sounds
+
+To replace a breed's bark sound:
+
+1. Add the MP3 file to the breed's folder as `bark_01.mp3`
+2. Normalize to 3 seconds:
+   ```bash
+   ffmpeg -i input.mp3 -t 3.0 -af "afade=t=out:st=2.7:d=0.3" bark_01.mp3 -y
+   ```
+3. The symbolic links will automatically use the new file
+4. Update this README with source and license info
+
+To add type/intensity-specific variations:
+
+1. Replace the symbolic link with an actual file:
+   ```bash
+   cd germanshepherd
+   rm warning_low.mp3
+   cp my_quiet_warning.mp3 warning_low.mp3
+   ```
+2. Ensure correct duration for the type (warning=1s, alert=3s, etc.)
+
+## Testing
+
+Verify sounds load and play correctly:
+
+```bash
+# Run tests
+flutter test
+
+# Test on device
+flutter run
+# Navigate to Alarm Screen → Settings → Test Bark Sounds
+# Verify all breeds play correctly
+```
+
+## Attribution
+
+When distributing the app, include in credits/about screen:
+
+> German Shepherd bark sound by [OrangeFreeSound](https://orangefreesounds.com/) licensed under CC BY 4.0
+>
+> Additional dog bark sounds from BigSoundBank (CC0), SoundFXCenter, and LibSounds

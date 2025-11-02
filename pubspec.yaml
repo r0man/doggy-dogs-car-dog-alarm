@@ -40,8 +40,15 @@ flutter:
   assets:
     # Dog breed artwork
     - assets/dogs/
-    # Sound effects
-    - assets/sounds/
+    # Bark sound effects for all breeds
+    - assets/sounds/germanshepherd/
+    - assets/sounds/rottweiler/
+    - assets/sounds/doberman/
+    - assets/sounds/bulldog/
+    - assets/sounds/pitbull/
+    - assets/sounds/husky/
+    - assets/sounds/beagle/
+    - assets/sounds/chihuahua/
 
   # fonts:
   #   - family: CustomFont

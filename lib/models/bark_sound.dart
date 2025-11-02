@@ -13,11 +13,12 @@ class BarkSound {
   });
 
   /// Get asset path for this bark sound
+  /// Note: AssetSource automatically adds "assets/" prefix, so we omit it here
   String get assetPath {
     final breedName = breed.name.toLowerCase();
     final typeName = type.name;
     final intensityName = intensity.name;
-    return 'assets/sounds/$breedName/${typeName}_$intensityName.mp3';
+    return 'sounds/$breedName/${typeName}_$intensityName.mp3';
   }
 
   @override
@@ -60,17 +61,20 @@ extension BarkTypeExtension on BarkType {
   }
 
   /// Duration in seconds for this bark type
+  /// NOTE: All current audio files are normalized to 3.0 seconds
+  /// Future enhancement: Add duration-specific variants (warning=1s, alert=3s, aggressive=5s, threat=8s)
   double get duration {
-    switch (this) {
-      case BarkType.warning:
-        return 1.0;
-      case BarkType.alert:
-        return 3.0;
-      case BarkType.aggressive:
-        return 5.0;
-      case BarkType.threat:
-        return 8.0;
-    }
+    // All sounds currently normalized to 3 seconds
+    // TODO: Implement duration-specific variants per bark type
+    return 3.0;
+
+    // Future implementation:
+    // switch (this) {
+    //   case BarkType.warning: return 1.0;
+    //   case BarkType.alert: return 3.0;
+    //   case BarkType.aggressive: return 5.0;
+    //   case BarkType.threat: return 8.0;
+    // }
   }
 }
 

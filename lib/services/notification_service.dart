@@ -66,7 +66,8 @@ class NotificationService {
 
   /// Create notification channels (Android)
   Future<void> _createNotificationChannels() async {
-    // Alarm triggered channel (high priority, with sound)
+    // Alarm triggered channel (high priority)
+    // Note: Bark sounds are played through BarkAudioService, not notification sounds
     const alarmChannel = AndroidNotificationChannel(
       NotificationChannels.alarmTriggered,
       'Alarm Alerts',
@@ -74,8 +75,7 @@ class NotificationService {
       importance: Importance.max,
       enableVibration: true,
       enableLights: true,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound('bark_alert'),
+      playSound: false, // Bark sounds handled by BarkAudioService
     );
 
     // Alarm status channel (medium priority)
@@ -172,8 +172,7 @@ class NotificationService {
       priority: Priority.max,
       enableVibration: true,
       enableLights: true,
-      playSound: true,
-      sound: RawResourceAndroidNotificationSound('bark_alert'),
+      playSound: false, // Bark sounds handled by BarkAudioService
       category: AndroidNotificationCategory.alarm,
       ongoing: true, // Make it persistent until acknowledged
       autoCancel: false,
@@ -194,8 +193,7 @@ class NotificationService {
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
-      presentSound: true,
-      sound: 'bark_alert.aiff',
+      presentSound: false, // Bark sounds handled by BarkAudioService
       interruptionLevel: InterruptionLevel.critical,
     );
 

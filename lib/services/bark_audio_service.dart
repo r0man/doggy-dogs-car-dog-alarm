@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/bark_sound.dart';
 import '../models/dog.dart';
@@ -25,16 +26,24 @@ class BarkAudioService {
 
   /// Start barking with specified mode
   Future<void> startBarking(AlarmMode mode) async {
-    if (_isPlaying) return;
+    debugPrint('🐕 BarkAudioService.startBarking() called with mode: $mode');
+
+    if (_isPlaying) {
+      debugPrint('⚠️ Already playing, ignoring');
+      return;
+    }
 
     // Select escalation pattern based on mode
     _currentEscalation = _getEscalationForMode(mode);
 
     // Stealth mode: no actual barking
     if (mode == AlarmMode.stealth) {
+      debugPrint('🤫 Stealth mode - no barking');
       _isPlaying = true;
       return;
     }
+
+    debugPrint('🔊 Starting bark escalation for ${guardDog.breed.displayName}');
 
     _isPlaying = true;
     await _playCurrentLevel();
@@ -42,13 +51,26 @@ class BarkAudioService {
 
   /// Stop barking
   Future<void> stopBarking() async {
+    debugPrint('🛑 BarkAudioService.stopBarking() called');
+
+    if (!_isPlaying) {
+      debugPrint('⚠️ Not playing, nothing to stop');
+      return;
+    }
+
     _isPlaying = false;
     _escalationTimer?.cancel();
     _repeatTimer?.cancel();
-    // Fire and forget - don't await to avoid pending timers in tests
-    _player.stop().then((_) {}, onError: (_) {
-      // Ignore errors when stopping player (test environment)
-    });
+
+    // Stop the audio player immediately
+    try {
+      await _player.stop();
+      debugPrint('✅ Audio player stopped successfully');
+    } catch (e) {
+      debugPrint('⚠️ Error stopping audio player: $e');
+      // Ignore errors in test environment
+    }
+
     _currentEscalation?.reset();
   }
 
@@ -108,17 +130,20 @@ class BarkAudioService {
   /// Play a single bark sound
   Future<void> _playBarkSound(BarkSound sound) async {
     try {
+      debugPrint('🎵 Playing bark: ${sound.assetPath}');
+
       // Apply volume based on intensity and dog effectiveness
       final effectivenessMultiplier = guardDog.effectiveness / 100;
       final volume = sound.intensity.volume * effectivenessMultiplier;
+
+      debugPrint(
+          '🔊 Volume: ${volume.toStringAsFixed(2)} (intensity: ${sound.intensity.volume}, effectiveness: $effectivenessMultiplier)');
 
       await _player
           .setVolume(volume)
           .timeout(const Duration(milliseconds: 100));
 
       // Try to play from assets
-      // Note: In production, you would use: await _player.play(AssetSource(sound.assetPath));
-      // For now, we'll use a placeholder approach since we don't have actual audio files
       await _player
           .setSource(AssetSource(sound.assetPath))
           .timeout(const Duration(milliseconds: 100));
@@ -127,8 +152,12 @@ class BarkAudioService {
       // Wait for the bark to finish
       await Future.delayed(
           Duration(milliseconds: (sound.type.duration * 1000).toInt()));
+
+      debugPrint('✅ Bark completed');
     } catch (e) {
       // If audio file doesn't exist or timeout in test environment, continue silently
+      debugPrint('❌ Error playing bark sound: $e');
+      debugPrint('   Asset path: ${sound.assetPath}');
       // In production, you'd want to log this or have fallback sounds
     }
   }
