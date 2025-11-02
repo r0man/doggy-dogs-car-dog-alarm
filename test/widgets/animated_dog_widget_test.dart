@@ -504,10 +504,15 @@ void main() {
 
         // Tap the dog
         await tester.tap(find.byType(AnimatedDogWidget));
-        await tester.pump();
+        await tester.pumpAndSettle(); // Wait for gesture to complete
 
         // Should trigger playing animation
         expect(controller.currentState, DogAnimationState.playing);
+
+        // Wait for the playOnce timer to complete (playing is 2.5s + buffer)
+        await tester.pump(const Duration(milliseconds: 2501));
+        await tester.pump(); // Execute the timer callback
+        await tester.pump(); // Allow state change to propagate
       });
 
       testWidgets('tap calls onTap callback', (WidgetTester tester) async {
@@ -529,9 +534,14 @@ void main() {
 
         // Tap the dog
         await tester.tap(find.byType(AnimatedDogWidget));
-        await tester.pump();
+        await tester.pumpAndSettle(); // Wait for gesture to complete
 
         expect(tapCalled, isTrue);
+
+        // Wait for the playOnce timer to complete
+        await tester.pump(const Duration(milliseconds: 2501));
+        await tester.pump(); // Execute the timer callback
+        await tester.pump(); // Allow state change to propagate
       });
 
       testWidgets('double tap triggers happy animation',
@@ -550,7 +560,7 @@ void main() {
         // Initial state
         expect(controller.currentState, DogAnimationState.idle);
 
-        // Double tap the dog
+        // Double tap the dog (note: first tap triggers playOnce)
         await tester.tap(find.byType(AnimatedDogWidget));
         await tester.pump(const Duration(milliseconds: 100));
         await tester.tap(find.byType(AnimatedDogWidget));
@@ -558,6 +568,10 @@ void main() {
 
         // Should trigger happy animation
         expect(controller.currentState, DogAnimationState.happy);
+
+        // Wait for the playOnce timer from first tap (playing is 2.5s)
+        await tester.pump(const Duration(milliseconds: 2500));
+        await tester.pump();
       });
 
       testWidgets('double tap calls onDoubleTap callback',
@@ -578,13 +592,17 @@ void main() {
           ),
         );
 
-        // Double tap the dog
+        // Double tap the dog (note: first tap triggers playOnce)
         await tester.tap(find.byType(AnimatedDogWidget));
         await tester.pump(const Duration(milliseconds: 100));
         await tester.tap(find.byType(AnimatedDogWidget));
         await tester.pump();
 
         expect(doubleTapCalled, isTrue);
+
+        // Wait for the playOnce timer from first tap
+        await tester.pump(const Duration(milliseconds: 2500));
+        await tester.pump();
       });
 
       testWidgets('long press triggers eating animation',
@@ -609,6 +627,10 @@ void main() {
 
         // Should trigger eating animation
         expect(controller.currentState, DogAnimationState.eating);
+
+        // Wait for the playOnce timer to complete (eating is 3s)
+        await tester.pump(const Duration(milliseconds: 3100));
+        await tester.pump();
       });
 
       testWidgets('long press calls onLongPress callback',
@@ -634,6 +656,10 @@ void main() {
         await tester.pump();
 
         expect(longPressCalled, isTrue);
+
+        // Wait for the playOnce timer to complete
+        await tester.pump(const Duration(milliseconds: 3100));
+        await tester.pump();
       });
 
       testWidgets('fast swipe triggers playing animation',
@@ -662,6 +688,10 @@ void main() {
 
         // Should trigger playing animation
         expect(controller.currentState, DogAnimationState.playing);
+
+        // Wait for the playOnce timer to complete
+        await tester.pump(const Duration(milliseconds: 2600));
+        await tester.pump();
       });
 
       testWidgets('slow swipe does not trigger animation',
