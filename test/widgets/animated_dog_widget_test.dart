@@ -487,7 +487,8 @@ void main() {
     });
 
     group('Touch Interactions', () {
-      testWidgets('tap triggers playing animation', (WidgetTester tester) async {
+      testWidgets('tap triggers playing animation',
+          (WidgetTester tester) async {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
@@ -504,15 +505,16 @@ void main() {
 
         // Tap the dog
         await tester.tap(find.byType(AnimatedDogWidget));
-        await tester.pumpAndSettle(); // Wait for gesture to complete
+        await tester.pump(); // Start processing the tap
+        await tester.pump(const Duration(
+            milliseconds: 300)); // Wait for tap/double-tap disambiguation
 
         // Should trigger playing animation
         expect(controller.currentState, DogAnimationState.playing);
 
-        // Wait for the playOnce timer to complete (playing is 2.5s + buffer)
-        await tester.pump(const Duration(milliseconds: 2501));
+        // Wait for the playOnce timer to complete (playing is 2.5s)
+        await tester.pump(const Duration(milliseconds: 2500));
         await tester.pump(); // Execute the timer callback
-        await tester.pump(); // Allow state change to propagate
       });
 
       testWidgets('tap calls onTap callback', (WidgetTester tester) async {
@@ -534,14 +536,15 @@ void main() {
 
         // Tap the dog
         await tester.tap(find.byType(AnimatedDogWidget));
-        await tester.pumpAndSettle(); // Wait for gesture to complete
+        await tester.pump(); // Start processing the tap
+        await tester.pump(const Duration(
+            milliseconds: 300)); // Wait for tap/double-tap disambiguation
 
         expect(tapCalled, isTrue);
 
         // Wait for the playOnce timer to complete
-        await tester.pump(const Duration(milliseconds: 2501));
+        await tester.pump(const Duration(milliseconds: 2500));
         await tester.pump(); // Execute the timer callback
-        await tester.pump(); // Allow state change to propagate
       });
 
       testWidgets('double tap triggers happy animation',
