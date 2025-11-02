@@ -86,13 +86,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 150));
     });
 
-    testWidgets('displays ready status when alarm is inactive',
+    testWidgets('displays sleeping status when alarm is inactive',
         (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.pumpAndSettle();
 
-      expect(find.text('GUARD DOG READY'), findsOneWidget);
+      expect(find.text('GUARD DOG SLEEPING'), findsOneWidget);
       expect(find.byIcon(Icons.security_outlined), findsOneWidget);
 
       // Allow pending timers to complete
@@ -662,7 +662,7 @@ void main() {
       );
       final config = viewModel.displayConfig;
       expect(config.state, AlarmDisplayState.inactive);
-      expect(config.statusText, 'GUARD DOG READY');
+      expect(config.statusText, 'GUARD DOG SLEEPING');
       expect(config.icon, Icons.security_outlined);
       expect(config.buttonConfig.action, AlarmAction.activate);
     });
@@ -713,7 +713,7 @@ void main() {
       const config = AlarmDisplayConfig.inactive();
       expect(config.state, AlarmDisplayState.inactive);
       expect(config.foregroundColor, Colors.grey);
-      expect(config.statusText, 'GUARD DOG READY');
+      expect(config.statusText, 'GUARD DOG SLEEPING');
       expect(config.buttonConfig.text, 'ACTIVATE GUARD DOG');
       expect(config.buttonConfig.backgroundColor, Colors.green);
     });
