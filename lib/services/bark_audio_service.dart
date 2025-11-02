@@ -61,10 +61,16 @@ class BarkAudioService {
     _isPlaying = false;
     _escalationTimer?.cancel();
     _repeatTimer?.cancel();
-    // Fire and forget - don't await to avoid pending timers in tests
-    _player.stop().then((_) {}, onError: (_) {
-      // Ignore errors when stopping player (test environment)
-    });
+
+    // Stop the audio player immediately
+    try {
+      await _player.stop();
+      debugPrint('✅ Audio player stopped successfully');
+    } catch (e) {
+      debugPrint('⚠️ Error stopping audio player: $e');
+      // Ignore errors in test environment
+    }
+
     _currentEscalation?.reset();
   }
 
