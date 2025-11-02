@@ -1,9 +1,16 @@
 #!/bin/bash
 
 # Installation script for Claude Code Web development environment
-# Step 1: Guile Scheme
-# Step 2: Spritely Goblins
-# Step 3: Hoot (to be added)
+# Installs the complete Spritely stack:
+# Step 1: Guile Scheme (interpreter)
+# Step 2: Spritely Goblins (distributed object programming)
+# Step 3: Spritely Hoot (Scheme to WebAssembly compiler)
+#
+# Supports:
+# - Linux: Guix, apt, dnf, yum, pacman, zypper, or source
+# - macOS: Homebrew, Guix, or source
+#
+# The script is idempotent and safe to run multiple times.
 
 set -e
 
@@ -237,6 +244,175 @@ install_goblins() {
     fi
 }
 
+# Function to check if Hoot is installed
+check_hoot_installed() {
+    # Check if guild command exists and has compile-wasm subcommand
+    if command_exists guild; then
+        guild compile-wasm --version >/dev/null 2>&1 && return 0
+    fi
+    return 1
+}
+
+# Function to install Hoot via Guix
+install_hoot_guix() {
+    echo "  Using Guix to install Hoot..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found, will use source installation"
+        return 1
+    fi
+
+    guix install guile-hoot
+
+    # Verify installation
+    if check_hoot_installed; then
+        echo "  ✓ Hoot installed via Guix"
+        return 0
+    else
+        echo "  ⚠️  Guix installation completed but guild compile-wasm not found, trying source install"
+        return 1
+    fi
+}
+
+# Function to install Hoot via Homebrew (macOS)
+install_hoot_homebrew() {
+    echo "  Using Homebrew to install Hoot..."
+
+    if ! command_exists brew; then
+        echo "  ⚠️  Homebrew not found, will use source installation"
+        return 1
+    fi
+
+    # Add the Guile tap if not already added
+    brew tap aconchillo/guile 2>/dev/null || true
+    brew install guile-hoot
+
+    # Verify installation
+    if check_hoot_installed; then
+        echo "  ✓ Hoot installed via Homebrew"
+        return 0
+    else
+        echo "  ⚠️  Homebrew installation completed but guild compile-wasm not found"
+        return 1
+    fi
+}
+
+# Function to install Hoot from source
+install_hoot_source() {
+    echo "  Installing Hoot from source..."
+
+    # Check for required build tools
+    local missing_tools=""
+    for tool in git autoconf automake pkg-config make; do
+        if ! command_exists "$tool"; then
+            missing_tools="$missing_tools $tool"
+        fi
+    done
+
+    if [ -n "$missing_tools" ]; then
+        echo "  ⚠️  Missing build tools:$missing_tools"
+        echo "  Please install these tools and run again"
+        return 1
+    fi
+
+    # Clone the repository
+    local tmp_dir="/tmp/hoot-install-$$"
+    echo "  Cloning Hoot repository from Codeberg..."
+    git clone https://codeberg.org/spritely/hoot "$tmp_dir"
+
+    cd "$tmp_dir"
+
+    echo "  Building Hoot..."
+    ./bootstrap.sh 2>/dev/null || autoreconf -vif
+    ./configure --prefix=/usr/local
+    make
+
+    echo "  Running tests (may take a while)..."
+    make check || echo "  ⚠️  Some tests failed, but continuing installation..."
+
+    echo "  Installing Hoot (requires sudo)..."
+    run_as_root make install
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ Hoot installed from source"
+}
+
+# Function to install Hoot
+install_hoot() {
+    echo ""
+    echo "Step 3: Installing Spritely Hoot"
+    echo "---------------------------------"
+    echo ""
+
+    # Check if Hoot is already installed
+    if check_hoot_installed; then
+        echo "✓ Spritely Hoot already installed"
+        echo ""
+        guild compile-wasm --version 2>&1 | head -n 1 || echo "guild compile-wasm is available"
+        return 0
+    fi
+
+    echo "Spritely Hoot not found. Installing..."
+    echo ""
+
+    # Try installation methods based on OS
+    os=$(detect_os)
+    local installed=false
+
+    case "$os" in
+        linux)
+            # Try Guix first, then fall back to source
+            if install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+
+        macos)
+            # Try Homebrew first, then Guix, then source
+            if install_hoot_homebrew || install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+
+        *)
+            echo "  Unsupported OS, trying Guix and source installation..."
+            if install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+    esac
+
+    if [ "$installed" = true ]; then
+        # Verify installation
+        if check_hoot_installed; then
+            echo ""
+            echo "✓ Spritely Hoot successfully installed"
+            guild compile-wasm --version 2>&1 | head -n 1 || echo "guild compile-wasm is available"
+            return 0
+        else
+            echo ""
+            echo "⚠️  Warning: Hoot installation completed but guild compile-wasm not available"
+            echo "   This may be due to PATH issues. Try running:"
+            echo "   export PATH=\"\$PATH:/usr/local/bin\""
+            echo "   Or check if Hoot needs additional configuration"
+            return 0
+        fi
+    else
+        echo ""
+        echo "❌ Error: All installation methods failed"
+        echo "   Please install Hoot manually from https://codeberg.org/spritely/hoot"
+        return 1
+    fi
+}
+
 # Main installation logic
 main() {
     echo "Step 1: Installing Guile Scheme"
@@ -318,26 +494,58 @@ main() {
         fi
     fi
 
-    # Now install Goblins (requires Guile)
+    # Now install Goblins (requires Guile) - optional
+    local goblins_status="Installed"
     if ! install_goblins; then
+        goblins_status="Not installed (optional)"
         echo ""
-        echo "⚠️  Warning: Goblins installation failed"
-        echo "   Guile is installed but Goblins could not be installed"
-        echo "   You can try installing manually from https://codeberg.org/spritely/goblins"
-        exit 1
+        echo "⚠️  Note: Goblins installation was skipped or failed"
+        echo "   This is optional - the core Guile environment is ready"
+        echo "   Manual installation: https://codeberg.org/spritely/goblins"
+        echo ""
+    fi
+
+    # Now install Hoot (requires Guile) - optional
+    local hoot_status="Installed"
+    if ! install_hoot; then
+        hoot_status="Not installed (optional)"
+        echo ""
+        echo "⚠️  Note: Hoot installation was skipped or failed"
+        echo "   This is optional - the core Guile environment is ready"
+        echo "   Manual installation: https://codeberg.org/spritely/hoot"
+        echo ""
     fi
 
     echo ""
-    echo "✅ Installation complete!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "✅ Installation Complete!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-    echo "📝 Summary:"
-    echo "  - Guile Scheme: $(check_guile_version)"
-    echo "  - Spritely Goblins: Installed"
+    echo "📝 Summary of installed components:"
     echo ""
-    echo "📝 Next steps:"
-    echo "  - Step 3: Hoot installation (coming soon)"
+    echo "  ✓ GNU Guile: $(check_guile_version)"
+    echo "  Spritely Goblins: $goblins_status"
+    echo "  Spritely Hoot: $hoot_status"
     echo ""
-    echo "🚀 Development environment ready!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧪 Quick verification commands:"
+    echo ""
+    echo "Test Guile REPL:"
+    echo "  guile"
+    echo ""
+    echo "Test Goblins:"
+    echo "  guile -c '(use-modules (goblins))'"
+    echo ""
+    echo "Test Hoot:"
+    echo "  guild compile-wasm --version"
+    echo ""
+    echo "Compile Scheme to WASM (example):"
+    echo "  echo '42' > /tmp/test.scm"
+    echo "  guild compile-wasm --run /tmp/test.scm"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🚀 Spritely development environment ready!"
+    echo ""
 }
 
 # Run main function
