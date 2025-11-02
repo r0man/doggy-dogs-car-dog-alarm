@@ -36,7 +36,7 @@ We have implemented four comprehensive CI/CD workflows:
 ### Quality Gates
 
 All PRs must pass:
-- Code formatting (`flutter format`)
+- Code formatting (`dart format`)
 - Static analysis (`flutter analyze`)
 - All tests must pass
 - Coverage ≥ 80%
@@ -228,7 +228,7 @@ Configure in **Settings → Branches → Branch protection rules**:
 #### "Code formatting check failed"
 ```bash
 # Fix locally:
-flutter format .
+dart format .
 
 # Commit and push
 git add .

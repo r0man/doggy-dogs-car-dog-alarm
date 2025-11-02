@@ -307,7 +307,7 @@ expect(detector.isMotionDetected, false);
 Every PR triggers:
 
 1. **Lint** - `flutter analyze`
-2. **Format Check** - `flutter format --set-exit-if-changed`
+2. **Format Check** - `dart format --set-exit-if-changed`
 3. **Unit Tests** - `flutter test`
 4. **Coverage Report** - Generate and upload to Codecov
 5. **Build APK** - Ensure app compiles

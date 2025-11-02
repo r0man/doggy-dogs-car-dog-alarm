@@ -373,7 +373,7 @@ jobs:
         run: flutter pub get
 
       - name: Verify formatting
-        run: flutter format --set-exit-if-changed .
+        run: dart format --set-exit-if-changed .
 
       - name: Analyze project source
         run: flutter analyze
@@ -422,7 +422,7 @@ import 'package:doggy_dogs_car_alarm/models/sensor_data.dart';
 ### Quality Gates
 
 All PRs must pass:
-1. ✅ Code formatting (`flutter format`)
+1. ✅ Code formatting (`dart format`)
 2. ✅ Static analysis (`flutter analyze`)
 3. ✅ All tests passing
 4. ✅ Coverage >= 80%
