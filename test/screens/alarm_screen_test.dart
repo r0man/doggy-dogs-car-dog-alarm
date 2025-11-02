@@ -615,7 +615,7 @@ void main() {
       );
       final config = viewModel.displayConfig;
       expect(config.state, AlarmDisplayState.inactive);
-      expect(config.statusText, 'GUARD DOG SLEEPING');
+      expect(config.statusText, 'GUARD DOG READY');
       expect(config.icon, Icons.security_outlined);
       expect(config.buttonConfig.action, AlarmAction.activate);
     });
@@ -666,7 +666,7 @@ void main() {
       const config = AlarmDisplayConfig.inactive();
       expect(config.state, AlarmDisplayState.inactive);
       expect(config.foregroundColor, Colors.grey);
-      expect(config.statusText, 'GUARD DOG SLEEPING');
+      expect(config.statusText, 'GUARD DOG READY');
       expect(config.buttonConfig.text, 'ACTIVATE GUARD DOG');
       expect(config.buttonConfig.backgroundColor, Colors.green);
     });

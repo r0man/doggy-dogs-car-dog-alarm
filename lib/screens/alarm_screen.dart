@@ -23,8 +23,11 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     final alarmService = ref.watch(alarmServiceProvider);
     final currentSensitivity = ref.watch(alarmSensitivityProvider);
 
+    // Watch the alarm state stream for reactive updates
+    final alarmStateAsync = ref.watch(alarmStateProvider);
+
     final viewModel = AlarmScreenViewModel(
-      alarmState: alarmService.currentState,
+      alarmState: alarmStateAsync.value ?? alarmService.currentState,
       sensitivity: currentSensitivity,
     );
 
@@ -298,18 +301,54 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     switch (action) {
       case AlarmAction.activate:
         await alarmService.startActivation(mode: _selectedMode);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Activating Guard Dog...'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         break;
       case AlarmAction.deactivate:
         await _handleDeactivate(context, alarmService);
         break;
       case AlarmAction.cancelCountdown:
         await alarmService.cancelCountdown();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Activation cancelled'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         break;
       case AlarmAction.acknowledge:
         await alarmService.acknowledge();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Alarm acknowledged'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         break;
       case AlarmAction.recalibrate:
         await alarmService.recalibrate();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sensors recalibrated'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
         break;
     }
   }

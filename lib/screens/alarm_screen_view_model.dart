@@ -75,8 +75,8 @@ class AlarmDisplayConfig {
         backgroundColor = const Color(0xFFF5F5F5), // Colors.grey.shade50
         foregroundColor = Colors.grey,
         icon = Icons.security_outlined,
-        statusText = 'GUARD DOG SLEEPING',
-        modeText = null,
+        statusText = 'GUARD DOG READY',
+        modeText = 'Tap below to activate car alarm protection',
         sensitivityText = null,
         durationText = null,
         countdownText = null,
