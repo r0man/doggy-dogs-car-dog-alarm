@@ -17,9 +17,9 @@ You are a Spritely Goblins expert with deep expertise in distributed object prog
 - **Distributed Systems**: OCapN (Object Capability Network), CapTP protocol, promise pipelining, network efficiency, nested boundaries
 - **Security Patterns**: Sealers/unsealers, facets, wards, membranes, caretakers, rights amplification, confused deputy prevention
 - **Authentication**: Sealer-based tokens, capability-based access control, revokable capabilities
-- **Standard Library**: actor-lib utilities including cells, queues, timers, pub/sub, joiners, swappables, and more
+- **Standard Library**: actor-lib utilities including cells, vectors (v0.17.0+), ring-buffers (v0.17.0+), queues, timers, pub/sub, joiners, swappables, and more
 - **Debugging**: Time-travel debugging, transactional replay, actormap snapshots, event recording/replay
-- **Persistence**: Syrup serialization, vat state save/restore, auto-save patterns, distributed game persistence
+- **Persistence**: Bloblin Store (v0.17.0+) for high-performance delta persistence, Syrup serialization, vat state save/restore, auto-save patterns, distributed game persistence, migration between stores
 
 ### Project Context
 This is the **Doggy Dogs Dog World** project - a multiplayer networked game where players own virtual dogs that can interact, play, and socialize in a shared world. The game uses **Spritely Goblins** for:
@@ -32,10 +32,10 @@ This is the **Doggy Dogs Dog World** project - a multiplayer networked game wher
 
 ### Tech Stack
 - **Guile Scheme** 3.0+
-- **Spritely Goblins** v0.16.1+ for distributed actors
+- **Spritely Goblins** v0.17.0+ for distributed actors
 - **OCapN/CapTP** for network communication
 - **GNU Guix** for reproducible development environment
-- **actor-lib** for common patterns (cells, queues, timers, pub/sub)
+- **actor-lib** for common patterns (cells, vectors, ring-buffers, queues, timers, pub/sub)
 - **Spritely Ecosystem**: Hoot (Scheme to Wasm compiler), Oaken (secure sandboxing)
 
 ## Your Approach
@@ -216,6 +216,70 @@ This is the **Doggy Dogs Dog World** project - a multiplayer networked game wher
 ;; Set value
 ($ my-cell "updated")
 ($ my-cell)  ; => "updated"
+```
+
+#### Vector from actor-lib (v0.17.0+)
+Resizable vectors with efficient persistence through underlying cell-based storage:
+
+```scheme
+(use-modules (goblins actor-lib vector))
+
+;; Spawn a vector with initial values
+(define my-vec (spawn ^vector 'item1 'item2 'item3))
+
+;; Get element by index
+($ my-vec 'ref 0)  ; => 'item1
+
+;; Set element by index
+($ my-vec 'set! 1 'new-item)
+($ my-vec 'ref 1)  ; => 'new-item
+
+;; Get vector length
+($ my-vec 'length)  ; => 3
+
+;; Push new element to end
+($ my-vec 'push! 'item4)
+($ my-vec 'length)  ; => 4
+
+;; Performance benefit: Each element stored in individual ^cell
+;; Only modified cells are serialized during persistence deltas
+;; Not entire vector on every update
+```
+
+#### Ring-Buffer from actor-lib (v0.17.0+)
+Circular buffer data structure useful for bounded queues and logs:
+
+```scheme
+(use-modules (goblins actor-lib ring-buffer))
+
+;; Create ring buffer with capacity
+(define buffer (spawn ^ring-buffer 5))  ; capacity of 5
+
+;; Push elements
+($ buffer 'push! 'a)
+($ buffer 'push! 'b)
+($ buffer 'push! 'c)
+
+;; Get current size
+($ buffer 'size)  ; => 3
+
+;; Peek at oldest element without removing
+($ buffer 'peek)  ; => 'a
+
+;; Pop oldest element
+($ buffer 'pop!)  ; => 'a
+($ buffer 'size)  ; => 2
+
+;; When full, oldest elements are automatically evicted
+($ buffer 'push! 'd)
+($ buffer 'push! 'e)
+($ buffer 'push! 'f)
+($ buffer 'push! 'g)  ; Capacity reached, 'b' evicted
+($ buffer 'peek)  ; => 'c
+
+;; Use case: Event logs with bounded memory
+(define event-log (spawn ^ring-buffer 1000))
+(<- event-log 'push! `(player-action time: ,(current-time)))
 ```
 
 #### Cell for Transactional State Management
@@ -1143,8 +1207,108 @@ Goblins supports time-travel debugging by capturing and restoring vat state snap
 (<- recorder 'replay debug-handler)
 ```
 
+### Persistence with Bloblin Store (v0.17.0+)
+
+**Bloblin Store** is a high-performance persistence system designed as a faster alternative to Syrup store. It uses streaming delta changes for efficient state management.
+
+#### How Bloblin Store Works
+
+1. **Initial Write**: Complete object graph written to file on first vat spawn
+2. **Delta Streaming**: Subsequent updates stream as compressed delta changes
+3. **Binary Log**: Data stored as binary log of Syrup-encoded information
+4. **Periodic Snapshots**: After configurable number of churns, full object graph written again
+5. **Auto-Cleanup**: Obsolete log files automatically removed
+
+**Performance**: Can stream thousands of deltas per second to disk.
+
+#### Creating a Bloblin Store
+
+```scheme
+(use-modules (goblins actor-lib persist))
+
+;; Create Bloblin Store with configuration
+(define my-store
+  (make-bloblin-store "my-bloblin-store"
+                      #:deltas-per-file 500    ; Write full snapshot after 500 deltas
+                      #:max-bloblin-files 3))  ; Keep maximum 3 snapshot files
+
+;; Create vat with Bloblin Store for persistence
+(define persistent-vat
+  (spawn-vat #:persist-store my-store))
+
+(call-with-vat persistent-vat
+  (lambda ()
+    ;; Create actors - state automatically persisted
+    (define game-state (spawn ^game-state))
+    (define player (spawn ^player))
+
+    ;; Updates stream as deltas to disk
+    ($ game-state 'set-level 5)
+    ($ player 'add-score 100)))
+```
+
+#### Configuration Parameters
+
+- **`deltas-per-file`**: Number of delta changes before writing full snapshot (default: 500)
+- **`max-bloblin-files`**: Maximum number of snapshot files to retain (default: 3)
+
+#### Design Pattern: Efficient Delta Persistence
+
+For optimal performance, minimize serialized data per change by using cell-based storage:
+
+```scheme
+;; GOOD: Using individual cells (efficient deltas)
+(define (^efficient-vector bcom cells)
+  (methods
+   ((ref index)
+    ($ (list-ref cells index)))
+
+   ((set! index value)
+    ;; Only this cell's delta is serialized, not entire vector
+    (let ((cell (list-ref cells index)))
+      ($ cell value)))))
+
+;; BAD: Serializing entire data structure (large deltas)
+(define (^inefficient-vector bcom data)
+  (methods
+   ((set! index value)
+    ;; Entire vector serialized on every update
+    (let ((new-data (list-copy data)))
+      (list-set! new-data index value)
+      (bcom (^inefficient-vector bcom new-data))))))
+```
+
+**Best Practice**: Use `^vector` from actor-lib, which implements cell-based storage automatically.
+
+#### Migrating Between Stores
+
+Seamlessly convert between Syrup and Bloblin stores:
+
+```scheme
+(use-modules (goblins actor-lib persist))
+
+;; Existing Syrup store
+(define syrup-store (make-syrup-store "game-save.syrup"))
+
+;; New Bloblin store
+(define bloblin-store (make-bloblin-store "game-save-bloblin"
+                                          #:deltas-per-file 500
+                                          #:max-bloblin-files 3))
+
+;; Copy data from Syrup to Bloblin
+(persistence-store-copy! syrup-store bloblin-store)
+
+;; Now use Bloblin store for better performance
+(define new-vat (spawn-vat #:persist-store bloblin-store))
+```
+
+#### Critical Bug Fixes in v0.17.0
+
+1. **Upgraded Actors Persistence**: Actors that upgrade their behavior now have new state properly persisted during restoration
+2. **Graph Traversal**: Root-based graph traversal prevents orphaned objects from spawning incorrectly on restore
+
 ### Persistence with Syrup Serialization
-Goblins uses Syrup for serializing and persisting actor state:
+Goblins uses Syrup for serializing and persisting actor state (Bloblin Store recommended for v0.17.0+):
 
 ```scheme
 (use-modules (goblins)
@@ -1302,6 +1466,8 @@ Remember: Write capability-secure code that follows POLA, leverages transactions
 - **CRDT (OR-Set, LWW-Register)**: Eventually consistent distributed state, conflict-free merging
 
 **Collections & Processing:**
+- **Vector (v0.17.0+)**: Resizable vectors with efficient persistence via cell-based storage
+- **Ring-Buffer (v0.17.0+)**: Bounded circular buffers for queues and logs with automatic eviction
 - **Ticker**: Process collections with consistent iteration, frame-based updates, event queues
 - **Inbox**: Queue external events for transactional processing in vat
 
@@ -1320,7 +1486,9 @@ Remember: Write capability-secure code that follows POLA, leverages transactions
 **Development & Operations:**
 - **Time-Travel Debugging**: Reproduce bugs, test scenarios, snapshot/restore state
 - **Event Recorder**: Record interactions for replay, debugging multiplayer issues
-- **Persistence (Syrup)**: Save game state, load/save worlds, auto-save
+- **Persistence (Bloblin Store v0.17.0+)**: High-performance delta-based persistence with thousands of updates per second
+- **Persistence (Syrup)**: Traditional full-state serialization, save game state, load/save worlds, auto-save
+- **Persistence Migration**: Convert between stores using `persistence-store-copy!`
 - **Actormap Introspection**: Debug live actor state, identify memory leaks
 
 ### Pattern Combinations
@@ -1450,6 +1618,87 @@ guix shell -m manifest.scm
 This ensures consistent versions of Guile, Goblins, and all dependencies.
 
 ## Version History & Release Notes
+
+### Spritely Goblins v0.17.0 (Date TBD)
+
+**Release Type**: Major feature release with high-performance persistence improvements
+
+**Major Features:**
+
+1. **Bloblin Store** (NEW - HIGH PERFORMANCE)
+   - **Feature**: New high-performance persistence store as alternative to Syrup store
+   - **How it Works**:
+     - Initial vat spawn writes complete object graph to file
+     - Subsequent updates stream as compressed delta changes
+     - Data stored as binary log of Syrup-encoded information
+     - After configurable number of churns, full object graph written again and process repeats
+     - Automatic cleanup of obsolete log files
+   - **Performance**: Can stream thousands of deltas per second to disk
+   - **Configuration**: `make-bloblin-store` with `#:deltas-per-file` and `#:max-bloblin-files` parameters
+   - **Use Case**: High-throughput applications requiring frequent state updates with persistent storage
+   - **Design Pattern**: Minimize serialized data per change using cell-based storage for optimal delta efficiency
+   - **Developer Note**: See "Persistence with Bloblin Store" section for implementation patterns
+
+2. **New Actor Library Components** (NEW)
+   - **`^vector`**: Actor interface for resizable vectors with efficient persistence
+     - Implements cell-based storage - each element in individual `^cell`
+     - Only modified cells serialized during persistence deltas (not entire vector)
+     - Methods: `ref`, `set!`, `length`, `push!`
+     - **Performance Benefit**: Dramatically reduces delta size for large vectors with sparse updates
+   - **`^ring-buffer`**: Circular buffer data structure
+     - Useful for bounded queues and logs
+     - Automatic eviction of oldest elements when capacity reached
+     - Methods: `push!`, `pop!`, `peek`, `size`
+     - **Use Case**: Event logs, message queues, sliding windows with bounded memory
+
+3. **Persistence Store Migration Tool** (NEW)
+   - **Feature**: `persistence-store-copy!` procedure for seamless store conversion
+   - **Use Case**: Migrate from Syrup store to Bloblin store without data loss
+   - **Implementation**: `(persistence-store-copy! syrup-store bloblin-store)`
+   - **Developer Note**: Enables zero-downtime migration to higher-performance storage
+
+**Critical Bug Fixes:**
+
+1. **Upgraded Actors Persistence** (HIGH PRIORITY)
+   - **Issue**: Actors that upgrade their behavior during runtime didn't have new state persisted during restoration
+   - **Impact**: State loss after vat restore for actors that had undergone behavior changes
+   - **Resolution**: Upgraded actors now properly persist new state during restoration
+   - **Developer Impact**: More reliable persistence for actors using `bcom` to change behavior
+
+2. **Graph Traversal on Restore** (HIGH PRIORITY)
+   - **Issue**: Orphaned objects could spawn incorrectly during vat restoration
+   - **Impact**: Restored vat could have incorrect object graph with missing or duplicate actors
+   - **Resolution**: Root-based graph traversal ensures correct object restoration
+   - **Developer Impact**: More reliable vat restoration with correct actor references
+
+**Design Patterns Introduced:**
+
+- **Efficient Delta Persistence**: Use cell-based storage to minimize serialized data per change
+- **Example**: `^vector` uses individual `^cell` instances instead of serializing entire vector on updates
+
+**Performance Impact:**
+- **Bloblin Store**: Thousands of deltas per second (vs traditional full-state serialization)
+- **`^vector` with deltas**: Only modified cells serialized (dramatic reduction for sparse updates)
+- **Migration**: Zero-downtime transition to high-performance storage via `persistence-store-copy!`
+
+**Migration from v0.16.1:**
+- **Backward Compatible**: Existing Syrup-based persistence continues to work
+- **Recommended**: Migrate to Bloblin Store for applications with frequent state updates
+- **Migration Path**: Use `persistence-store-copy!` to convert existing saves
+- **No Breaking Changes**: All v0.16.1 APIs remain functional
+
+**Installation:**
+
+For Guix users:
+```bash
+guix pull
+guix install guile-goblins
+```
+
+**Additional Resources:**
+- Blog post: https://spritely.institute/news/spritely-goblins-v0-17-0-persistence-is-better-than-ever.html
+- Full changelog available in the project's NEWS file
+- Community support at community.spritely.institute
 
 ### Spritely Goblins v0.16.1 (September 3, 2025)
 
