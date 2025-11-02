@@ -73,7 +73,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
               if (displayConfig.state == AlarmDisplayState.active) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(
-                  onPressed: () => alarmService.recalibrate(),
+                  onPressed: () => _handleAction(
+                      context, AlarmAction.recalibrate, alarmService),
                   child: const Text('Recalibrate Sensors'),
                 ),
               ],
@@ -315,7 +316,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         await _handleDeactivate(context, alarmService);
         break;
       case AlarmAction.cancelCountdown:
-        await alarmService.cancelCountdown();
+        // Show feedback before async operation to avoid context issues
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -325,6 +326,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
             ),
           );
         }
+        await alarmService.cancelCountdown();
         break;
       case AlarmAction.acknowledge:
         await alarmService.acknowledge();
