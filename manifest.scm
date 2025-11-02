@@ -15,6 +15,7 @@
    "gst-plugins-good"
    "gst-plugins-bad"
    "gtk+"
+   "lcov"
    "libepoxy"
    "make"
    "ninja"
