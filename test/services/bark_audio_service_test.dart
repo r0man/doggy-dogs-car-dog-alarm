@@ -18,7 +18,7 @@ void main() {
         final expectedBreedName = breed.name.toLowerCase();
         expect(
           sound.assetPath,
-          'assets/sounds/$expectedBreedName/warning_low.mp3',
+          'sounds/$expectedBreedName/warning_low.mp3',
         );
       }
     });
@@ -37,7 +37,7 @@ void main() {
 
           expect(
             sound.assetPath,
-            'assets/sounds/germanshepherd/${type.name}_${intensity.name}.mp3',
+            'sounds/germanshepherd/${type.name}_${intensity.name}.mp3',
           );
         }
       }
@@ -59,13 +59,14 @@ void main() {
               );
 
               // Directly load the asset and verify it exists
-              final data = await rootBundle.load(sound.assetPath);
+              // Note: rootBundle.load() expects full path with "assets/" prefix
+              final data = await rootBundle.load('assets/${sound.assetPath}');
 
               expect(
                 data.lengthInBytes,
                 greaterThan(0),
                 reason:
-                    'Asset file should exist and have content: ${sound.assetPath}',
+                    'Asset file should exist and have content: assets/${sound.assetPath}',
               );
 
               // Verify reasonable file size (between 10KB and 100KB for 3-second MP3)

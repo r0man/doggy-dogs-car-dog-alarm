@@ -13,11 +13,12 @@ class BarkSound {
   });
 
   /// Get asset path for this bark sound
+  /// Note: AssetSource automatically adds "assets/" prefix, so we omit it here
   String get assetPath {
     final breedName = breed.name.toLowerCase();
     final typeName = type.name;
     final intensityName = intensity.name;
-    return 'assets/sounds/$breedName/${typeName}_$intensityName.mp3';
+    return 'sounds/$breedName/${typeName}_$intensityName.mp3';
   }
 
   @override
