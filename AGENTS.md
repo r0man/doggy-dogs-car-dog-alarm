@@ -102,6 +102,59 @@ Then use `mcp__beads__*` functions instead of CLI commands.
 
 For more details, see README.md and the [beads repository](https://github.com/steveyegge/beads).
 
+## Development Environment
+
+### Using Guix Shell
+
+This project uses **GNU Guix** for reproducible development environments. Most development tools and dependencies are defined in `manifest.scm`.
+
+**Note**: Guix Shell does NOT provide Flutter SDK or Android SDK. You need to install those separately (see FLUTTER_SETUP.md). Guix Shell provides most other development tools.
+
+#### Enter Development Shell
+
+```bash
+guix shell -m manifest.scm
+```
+
+This will provide you with development tools including:
+- Build tools (gcc, pkg-config, etc.)
+- Testing utilities (lcov, genhtml)
+- Common Unix tools
+- And more
+
+**Not included** (install separately):
+- Flutter SDK
+- Android SDK
+
+#### Missing Commands
+
+If you encounter a missing command during development (e.g., `tree`, `lcov`, `genhtml`), you can get it using Guix Shell:
+
+```bash
+# Example: Get a specific tool temporarily
+guix shell tree
+
+# Or add it to your current shell
+guix shell -m manifest.scm tree lcov
+```
+
+**Best Practice**: Always work within the Guix Shell environment to ensure consistency with CI/CD and other developers:
+
+```bash
+# Start your development session
+guix shell -m manifest.scm
+
+# Now all commands will use the correct versions
+flutter --version
+dart --version
+```
+
+This ensures:
+- ✅ Reproducible builds across all environments
+- ✅ Consistent tool versions with CI/CD
+- ✅ No dependency conflicts
+- ✅ Easy onboarding for new contributors
+
 ## Code Quality Workflow
 
 **IMPORTANT**: After making any code changes, ALWAYS follow this workflow to ensure code quality:
