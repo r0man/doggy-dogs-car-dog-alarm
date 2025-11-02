@@ -15,7 +15,7 @@ class AppSettings {
   final bool batteryOptimizationEnabled;
 
   const AppSettings({
-    this.countdownDuration = 30,
+    this.countdownDuration = 10,
     this.sensitivityLevel = 'medium',
     this.barkVolume = 0.8,
     this.notificationsEnabled = true,
@@ -53,7 +53,7 @@ class AppSettings {
   /// Create from JSON
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
-      countdownDuration: json['countdownDuration'] as int? ?? 30,
+      countdownDuration: json['countdownDuration'] as int? ?? 10,
       sensitivityLevel: json['sensitivityLevel'] as String? ?? 'medium',
       barkVolume: (json['barkVolume'] as num?)?.toDouble() ?? 0.8,
       notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
@@ -64,7 +64,7 @@ class AppSettings {
 
   /// Validate countdown duration
   bool isValidCountdownDuration() {
-    return countdownDuration >= 15 && countdownDuration <= 120;
+    return countdownDuration >= 10 && countdownDuration <= 120;
   }
 
   /// Validate bark volume

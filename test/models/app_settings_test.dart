@@ -6,7 +6,7 @@ void main() {
     test('creates default settings', () {
       const settings = AppSettings();
 
-      expect(settings.countdownDuration, 30);
+      expect(settings.countdownDuration, 10);
       expect(settings.sensitivityLevel, 'medium');
       expect(settings.barkVolume, 0.8);
       expect(settings.notificationsEnabled, true);
@@ -69,7 +69,7 @@ void main() {
 
       final settings = AppSettings.fromJson(json);
 
-      expect(settings.countdownDuration, 30);
+      expect(settings.countdownDuration, 10);
       expect(settings.sensitivityLevel, 'medium');
       expect(settings.barkVolume, 0.8);
       expect(settings.notificationsEnabled, true);
@@ -78,7 +78,7 @@ void main() {
 
     test('isValidCountdownDuration validates range', () {
       expect(
-          const AppSettings(countdownDuration: 15).isValidCountdownDuration(),
+          const AppSettings(countdownDuration: 10).isValidCountdownDuration(),
           true);
       expect(
           const AppSettings(countdownDuration: 60).isValidCountdownDuration(),
@@ -87,7 +87,7 @@ void main() {
           const AppSettings(countdownDuration: 120).isValidCountdownDuration(),
           true);
       expect(
-          const AppSettings(countdownDuration: 14).isValidCountdownDuration(),
+          const AppSettings(countdownDuration: 9).isValidCountdownDuration(),
           false);
       expect(
           const AppSettings(countdownDuration: 121).isValidCountdownDuration(),

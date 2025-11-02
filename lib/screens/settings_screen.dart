@@ -71,7 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Expanded(
                   child: Slider(
                     value: settings.countdownDuration.toDouble(),
-                    min: 15,
+                    min: 10,
                     max: 120,
                     divisions: 21, // 5-second increments
                     label: '${settings.countdownDuration}s',

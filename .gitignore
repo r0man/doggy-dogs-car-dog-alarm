@@ -87,7 +87,6 @@ android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # Web related
-lib/generated_plugin_registrant.dart
 
 # Note: .github/workflows/ is committed to the repository
 
