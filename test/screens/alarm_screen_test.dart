@@ -86,13 +86,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 150));
     });
 
-    testWidgets('displays sleeping status when alarm is inactive',
+    testWidgets('displays ready status when alarm is inactive',
         (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.pumpAndSettle();
 
-      expect(find.text('GUARD DOG SLEEPING'), findsOneWidget);
+      expect(find.text('GUARD DOG READY'), findsOneWidget);
       expect(find.byIcon(Icons.security_outlined), findsOneWidget);
 
       // Allow pending timers to complete
@@ -565,6 +565,53 @@ void main() {
 
       // Allow pending timers to complete
       await tester.pump(const Duration(milliseconds: 150));
+    });
+
+    testWidgets('shows snackbar when activating alarm', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Tap the activate button
+      final activateButton = find.text('ACTIVATE GUARD DOG');
+      await tester.tap(activateButton);
+
+      // Pump to show snackbar (don't use pumpAndSettle yet)
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Check snackbar appears with correct message
+      expect(find.text('Activating Guard Dog...'), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      // Allow pending timers to complete
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('shows snackbar when cancelling activation', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // First activate to get into countdown state
+      final activateButton = find.text('ACTIVATE GUARD DOG');
+      await tester.tap(activateButton);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // Then cancel
+      final cancelButton = find.text('CANCEL ACTIVATION');
+      expect(cancelButton, findsOneWidget);
+      await tester.tap(cancelButton);
+
+      // Pump to show snackbar
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Check snackbar appears with correct message
+      expect(find.text('Activation cancelled'), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      // Allow pending timers to complete
+      await tester.pumpAndSettle();
     });
   });
 
