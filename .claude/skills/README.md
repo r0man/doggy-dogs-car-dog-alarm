@@ -1,8 +1,8 @@
-# Claude Agents for Doggy Dogs Car Alarm
+# Claude Skills for Doggy Dogs Car Alarm
 
-This directory contains specialized Claude agent definitions that provide expert assistance for different aspects of the project.
+This directory contains specialized Claude skills that provide expert assistance for different aspects of the project.
 
-## Available Agents
+## Available Skills
 
 ### 🔧 Flutter Expert (`flutter-expert.md`)
 **When to use**: For implementing features, architectural decisions, and Flutter best practices.
@@ -14,10 +14,11 @@ This directory contains specialized Claude agent definitions that provide expert
 - Performance optimization
 - Platform integrations
 
-**Example prompts**:
-- "Help me implement dog training mini-games"
-- "How should I structure the geofencing feature?"
-- "Review this state management approach for the alarm history"
+**Example usage**:
+```
+/skill flutter-expert
+"Help me implement dog training mini-games"
+```
 
 ### 🔍 Code Reviewer (`code-reviewer.md`)
 **When to use**: For code review, quality checks, and identifying issues before merge.
@@ -29,10 +30,11 @@ This directory contains specialized Claude agent definitions that provide expert
 - Testing gaps
 - Best practices compliance
 
-**Example prompts**:
-- "Review the changes in PR #42"
-- "Check this alarm service implementation for issues"
-- "Is this widget properly optimized?"
+**Example usage**:
+```
+/skill code-reviewer
+"Review the alarm service implementation"
+```
 
 ### 🧪 Code Tester (`code-tester.md`)
 **When to use**: For test strategy, writing tests, and improving test coverage.
@@ -44,10 +46,11 @@ This directory contains specialized Claude agent definitions that provide expert
 - Test coverage analysis (target: ≥85%)
 - Mocking and test data strategies
 
-**Example prompts**:
-- "Write tests for the new achievement system"
-- "How should I test the background monitoring service?"
-- "Review test coverage for the sensor detection module"
+**Example usage**:
+```
+/skill code-tester
+"Write tests for the achievement system"
+```
 
 ### 📋 Product Manager (`product-manager.md`)
 **When to use**: For requirements clarification, feature prioritization, and product decisions.
@@ -59,26 +62,31 @@ This directory contains specialized Claude agent definitions that provide expert
 - Product roadmap alignment
 - Scope definition
 
-**Example prompts**:
-- "Help me define requirements for the social sharing feature"
-- "Should we prioritize achievements or alarm analytics?"
-- "What acceptance criteria should Issue #8 have?"
+**Example usage**:
+```
+/skill product-manager
+"Help me define requirements for social sharing"
+```
 
-## How to Use These Agents
+## How to Use Skills
 
-### In Claude Code CLI
+### Invoking a Skill
 
-While these agent definitions are stored as markdown files for reference, you can invoke specialized behavior by:
+Skills can be invoked using the `/skill` command or the Skill tool:
 
-1. **Reference the agent**: "Acting as the Flutter Expert agent..."
-2. **Specify the role**: "Review this code as the Code Reviewer would..."
-3. **Request analysis**: "From a Product Manager perspective, should we..."
+```bash
+# Command line
+/skill flutter-expert
 
-### Agent Interaction Patterns
+# Or reference in conversation
+"Using the flutter-expert skill, how should I..."
+```
+
+### Skill Interaction Patterns
 
 #### For Implementation
 ```
-User: "I need to implement alarm history (Issue #15)"
+User: /skill flutter-expert "I need to implement alarm history (Issue #15)"
 
 Assistant (as Flutter Expert):
 1. Explains architecture approach
@@ -90,7 +98,7 @@ Assistant (as Flutter Expert):
 
 #### For Code Review
 ```
-User: "Review this AlarmHistoryService implementation"
+User: /skill code-reviewer "Review this AlarmHistoryService"
 
 Assistant (as Code Reviewer):
 1. Summary of changes
@@ -98,12 +106,12 @@ Assistant (as Code Reviewer):
 3. Important issues (should fix)
 4. Minor suggestions
 5. Positive feedback
-6. Overall recommendation (approve/changes needed)
+6. Overall recommendation
 ```
 
 #### For Testing
 ```
-User: "Write tests for the achievement system"
+User: /skill code-tester "Write tests for achievements"
 
 Assistant (as Code Tester):
 1. Test strategy (what to test, how)
@@ -115,7 +123,7 @@ Assistant (as Code Tester):
 
 #### For Product Decisions
 ```
-User: "Should we add a premium subscription?"
+User: /skill product-manager "Should we add premium features?"
 
 Assistant (as Product Manager):
 1. Context (market fit, user needs)
@@ -126,7 +134,7 @@ Assistant (as Product Manager):
 6. Recommendation
 ```
 
-## Agent Characteristics
+## Skill Characteristics
 
 ### Flutter Expert
 - **Tone**: Technical, precise, practical
@@ -154,7 +162,7 @@ Assistant (as Product Manager):
 
 ## Project Context
 
-All agents are aware of:
+All skills are aware of:
 
 - **Product**: Doggy Dogs Car Dog Alarm - virtual pet guard dog for car security
 - **Vision**: Transform car security into an emotionally engaging experience
@@ -163,22 +171,22 @@ All agents are aware of:
 - **Quality Bar**: ≥85% test coverage, all tests passing
 - **Current State**: MVP complete, working on engagement features
 
-## Combining Agents
+## Combining Skills
 
-You can involve multiple agents for complex tasks:
+You can use multiple skills for complex tasks:
 
 ```
 User: "I want to add a social feature to share dog achievements"
 
-1. Product Manager: Define requirements, acceptance criteria, priority
-2. Flutter Expert: Design architecture, recommend implementation approach
-3. Code Tester: Plan test strategy, identify test scenarios
-4. Code Reviewer: Review implementation, ensure quality standards
+1. /skill product-manager - Define requirements, acceptance criteria
+2. /skill flutter-expert - Design architecture, implementation
+3. /skill code-tester - Plan test strategy, scenarios
+4. /skill code-reviewer - Review implementation, quality
 ```
 
-## Updating Agents
+## Updating Skills
 
-These agent definitions should evolve as the project grows:
+These skill definitions should evolve as the project grows:
 
 - Add new project patterns and conventions
 - Update tech stack changes
@@ -193,9 +201,9 @@ To update: Edit the markdown files and commit with clear changelog.
 1. **Be specific**: "Review the alarm persistence logic" vs "review the code"
 2. **Provide context**: Link to issues, PRs, or paste relevant code
 3. **State your goal**: "I want to optimize performance" vs "make this better"
-4. **Ask follow-ups**: Agents can explain reasoning, suggest alternatives
-5. **Combine perspectives**: Use multiple agents for comprehensive analysis
+4. **Ask follow-ups**: Skills can explain reasoning, suggest alternatives
+5. **Combine perspectives**: Use multiple skills for comprehensive analysis
 
 ---
 
-These agents are designed to help maintain high code quality, clear requirements, and effective collaboration throughout the project lifecycle.
+These skills are designed to help maintain high code quality, clear requirements, and effective collaboration throughout the project lifecycle.

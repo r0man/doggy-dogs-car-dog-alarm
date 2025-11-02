@@ -8,6 +8,51 @@ import '../services/app_settings_service.dart';
 import '../widgets/unlock_dialog.dart';
 import 'alarm_screen_view_model.dart';
 
+/// User feedback messages for alarm actions
+class AlarmFeedbackMessages {
+  static const activating = 'Activating Guard Dog...';
+  static const cancelled = 'Activation cancelled';
+  static const acknowledged = 'Alarm acknowledged';
+  static const recalibrated = 'Sensors recalibrated';
+}
+
+/// Feedback types for snackbar styling
+enum FeedbackType {
+  /// Warning/pending state (orange/amber)
+  warning,
+
+  /// Informational state (blue)
+  info,
+
+  /// Success state (green)
+  success,
+}
+
+/// Extension to get theme-aware colors for feedback types
+extension FeedbackTypeColors on FeedbackType {
+  /// Returns appropriate color for this feedback type based on theme
+  Color getColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+
+    switch (this) {
+      case FeedbackType.warning:
+        // Use a warm amber/orange tone that works in both light and dark modes
+        return brightness == Brightness.light
+            ? Colors.orange.shade700
+            : Colors.orange.shade400;
+      case FeedbackType.info:
+        // Use theme's primary color for informational messages
+        return colorScheme.primary;
+      case FeedbackType.success:
+        // Use a green tone that works in both light and dark modes
+        return brightness == Brightness.light
+            ? Colors.green.shade700
+            : Colors.green.shade400;
+    }
+  }
+}
+
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
 
@@ -23,8 +68,11 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     final alarmService = ref.watch(alarmServiceProvider);
     final currentSensitivity = ref.watch(alarmSensitivityProvider);
 
+    // Watch the alarm state stream for reactive updates
+    final alarmStateAsync = ref.watch(alarmStateProvider);
+
     final viewModel = AlarmScreenViewModel(
-      alarmState: alarmService.currentState,
+      alarmState: alarmStateAsync.value ?? alarmService.currentState,
       sensitivity: currentSensitivity,
     );
 
@@ -70,7 +118,8 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
               if (displayConfig.state == AlarmDisplayState.active) ...[
                 const SizedBox(height: 8),
                 OutlinedButton(
-                  onPressed: () => alarmService.recalibrate(),
+                  onPressed: () => _handleAction(
+                      context, AlarmAction.recalibrate, alarmService),
                   child: const Text('Recalibrate Sensors'),
                 ),
               ],
@@ -290,6 +339,19 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     );
   }
 
+  /// Shows a snackbar with feedback to the user
+  void _showFeedback(BuildContext context, String message, FeedbackType type) {
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: type.getColor(context),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _handleAction(
     BuildContext context,
     AlarmAction action,
@@ -298,18 +360,34 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     switch (action) {
       case AlarmAction.activate:
         await alarmService.startActivation(mode: _selectedMode);
+        if (context.mounted) {
+          _showFeedback(
+              context, AlarmFeedbackMessages.activating, FeedbackType.warning);
+        }
         break;
       case AlarmAction.deactivate:
         await _handleDeactivate(context, alarmService);
         break;
       case AlarmAction.cancelCountdown:
         await alarmService.cancelCountdown();
+        if (context.mounted) {
+          _showFeedback(
+              context, AlarmFeedbackMessages.cancelled, FeedbackType.warning);
+        }
         break;
       case AlarmAction.acknowledge:
         await alarmService.acknowledge();
+        if (context.mounted) {
+          _showFeedback(
+              context, AlarmFeedbackMessages.acknowledged, FeedbackType.info);
+        }
         break;
       case AlarmAction.recalibrate:
         await alarmService.recalibrate();
+        if (context.mounted) {
+          _showFeedback(context, AlarmFeedbackMessages.recalibrated,
+              FeedbackType.success);
+        }
         break;
     }
   }

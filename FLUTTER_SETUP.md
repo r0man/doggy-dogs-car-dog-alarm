@@ -102,7 +102,7 @@ flutter test
 flutter analyze
 
 # Format code
-flutter format lib/
+dart format lib/
 
 # Check for outdated packages
 flutter pub outdated
