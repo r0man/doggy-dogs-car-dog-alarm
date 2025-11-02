@@ -57,6 +57,10 @@ The app utilizes multiple phone sensors:
 - Android Studio / Xcode for mobile development
 - A physical device for testing (sensors work best on real hardware)
 
+### Platform Requirements
+- **iOS**: iOS 14.0 or higher
+- **Android**: Android 5.0 (API level 21) or higher
+
 ### Setup
 
 ```bash
