@@ -130,7 +130,8 @@ class BarkAudioService {
       final effectivenessMultiplier = guardDog.effectiveness / 100;
       final volume = sound.intensity.volume * effectivenessMultiplier;
 
-      debugPrint('🔊 Volume: ${volume.toStringAsFixed(2)} (intensity: ${sound.intensity.volume}, effectiveness: $effectivenessMultiplier)');
+      debugPrint(
+          '🔊 Volume: ${volume.toStringAsFixed(2)} (intensity: ${sound.intensity.volume}, effectiveness: $effectivenessMultiplier)');
 
       await _player
           .setVolume(volume)

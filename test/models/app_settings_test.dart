@@ -86,8 +86,7 @@ void main() {
       expect(
           const AppSettings(countdownDuration: 120).isValidCountdownDuration(),
           true);
-      expect(
-          const AppSettings(countdownDuration: 9).isValidCountdownDuration(),
+      expect(const AppSettings(countdownDuration: 9).isValidCountdownDuration(),
           false);
       expect(
           const AppSettings(countdownDuration: 121).isValidCountdownDuration(),
