@@ -485,5 +485,231 @@ void main() {
 
       expect(find.byType(AnimatedDogWidget), findsOneWidget);
     });
+
+    group('Touch Interactions', () {
+      testWidgets('tap triggers playing animation', (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // Initial state
+        expect(controller.currentState, DogAnimationState.idle);
+
+        // Tap the dog
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        // Should trigger playing animation
+        expect(controller.currentState, DogAnimationState.playing);
+      });
+
+      testWidgets('tap calls onTap callback', (WidgetTester tester) async {
+        var tapCalled = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+                onTap: () {
+                  tapCalled = true;
+                },
+              ),
+            ),
+          ),
+        );
+
+        // Tap the dog
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        expect(tapCalled, isTrue);
+      });
+
+      testWidgets('double tap triggers happy animation',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // Initial state
+        expect(controller.currentState, DogAnimationState.idle);
+
+        // Double tap the dog
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        // Should trigger happy animation
+        expect(controller.currentState, DogAnimationState.happy);
+      });
+
+      testWidgets('double tap calls onDoubleTap callback',
+          (WidgetTester tester) async {
+        var doubleTapCalled = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+                onDoubleTap: () {
+                  doubleTapCalled = true;
+                },
+              ),
+            ),
+          ),
+        );
+
+        // Double tap the dog
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.tap(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        expect(doubleTapCalled, isTrue);
+      });
+
+      testWidgets('long press triggers eating animation',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // Initial state
+        expect(controller.currentState, DogAnimationState.idle);
+
+        // Long press the dog
+        await tester.longPress(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        // Should trigger eating animation
+        expect(controller.currentState, DogAnimationState.eating);
+      });
+
+      testWidgets('long press calls onLongPress callback',
+          (WidgetTester tester) async {
+        var longPressCalled = false;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+                onLongPress: () {
+                  longPressCalled = true;
+                },
+              ),
+            ),
+          ),
+        );
+
+        // Long press the dog
+        await tester.longPress(find.byType(AnimatedDogWidget));
+        await tester.pump();
+
+        expect(longPressCalled, isTrue);
+      });
+
+      testWidgets('fast swipe triggers playing animation',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // Initial state
+        expect(controller.currentState, DogAnimationState.idle);
+
+        // Swipe across the dog (fast horizontal drag)
+        await tester.fling(
+          find.byType(AnimatedDogWidget),
+          const Offset(200, 0), // Horizontal swipe
+          600, // velocity > 500 threshold
+        );
+        await tester.pump();
+
+        // Should trigger playing animation
+        expect(controller.currentState, DogAnimationState.playing);
+      });
+
+      testWidgets('slow swipe does not trigger animation',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // Set to a specific state first
+        controller.forceState(DogAnimationState.alert);
+        await tester.pump();
+        expect(controller.currentState, DogAnimationState.alert);
+
+        // Slow swipe (velocity < 500 threshold)
+        await tester.fling(
+          find.byType(AnimatedDogWidget),
+          const Offset(100, 0),
+          300, // velocity below threshold
+        );
+        await tester.pump();
+
+        // Should remain in alert state
+        expect(controller.currentState, DogAnimationState.alert);
+      });
+
+      testWidgets('touch interactions work with GestureDetector',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: AnimatedDogWidget(
+                breed: DogBreed.germanShepherd,
+                controller: controller,
+              ),
+            ),
+          ),
+        );
+
+        // GestureDetector should be present
+        expect(find.byType(GestureDetector), findsOneWidget);
+      });
+    });
   });
 }

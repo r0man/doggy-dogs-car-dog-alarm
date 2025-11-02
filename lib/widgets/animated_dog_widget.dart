@@ -9,12 +9,18 @@ class AnimatedDogWidget extends StatefulWidget {
   final DogBreed breed;
   final DogAnimationController controller;
   final double size;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final VoidCallback? onLongPress;
 
   const AnimatedDogWidget({
     super.key,
     required this.breed,
     required this.controller,
     this.size = 200.0,
+    this.onTap,
+    this.onDoubleTap,
+    this.onLongPress,
   });
 
   @override
@@ -150,25 +156,70 @@ class _AnimatedDogWidgetState extends State<AnimatedDogWidget>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: AnimatedBuilder(
-        animation: _animController,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Transform.rotate(
-              angle: _rotationAnimation.value,
-              child: Opacity(
-                opacity: _opacityAnimation.value,
-                child: _buildDogImage(),
+    return GestureDetector(
+      onTap: () {
+        _handleTap();
+        widget.onTap?.call();
+      },
+      onDoubleTap: () {
+        _handleDoubleTap();
+        widget.onDoubleTap?.call();
+      },
+      onLongPress: () {
+        _handleLongPress();
+        widget.onLongPress?.call();
+      },
+      onHorizontalDragEnd: _handleSwipe,
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: AnimatedBuilder(
+          animation: _animController,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Transform.rotate(
+                angle: _rotationAnimation.value,
+                child: Opacity(
+                  opacity: _opacityAnimation.value,
+                  child: _buildDogImage(),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
+  }
+
+  /// Handle tap gesture - trigger happy response
+  void _handleTap() {
+    // Trigger a brief happy bounce
+    widget.controller.playOnce(DogAnimationState.playing);
+  }
+
+  /// Handle double tap gesture - trigger excited response
+  void _handleDoubleTap() {
+    // Show extra excitement
+    if (widget.controller.canTransitionTo(DogAnimationState.happy)) {
+      widget.controller.forceState(DogAnimationState.happy);
+    }
+  }
+
+  /// Handle long press gesture - trigger eating/content response
+  void _handleLongPress() {
+    // Long press shows affection
+    widget.controller.playOnce(DogAnimationState.eating);
+  }
+
+  /// Handle swipe gesture - trigger playful response
+  void _handleSwipe(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+
+    // Only trigger if swipe is fast enough
+    if (velocity.abs() > 500) {
+      widget.controller.playOnce(DogAnimationState.playing);
+    }
   }
 
   Widget _buildDogImage() {
