@@ -25,7 +25,7 @@ void main() {
 
     test('generates correct asset paths for all type/intensity combinations',
         () {
-      final breed = DogBreed.germanShepherd;
+      const breed = DogBreed.germanShepherd;
 
       for (final type in BarkType.values) {
         for (final intensity in BarkIntensity.values) {
@@ -50,23 +50,29 @@ void main() {
       group('${breed.displayName} bark assets', () {
         for (final type in BarkType.values) {
           for (final intensity in BarkIntensity.values) {
-            test('${type.name}_${intensity.name}.mp3 exists', () async {
+            test('${type.name}_${intensity.name}.mp3 exists and loads',
+                () async {
               final sound = BarkSound(
                 type: type,
                 intensity: intensity,
                 breed: breed,
               );
 
-              // Try to load the asset
-              // In test environment, we check if the file exists by attempting to load it
+              // Directly load the asset and verify it exists
+              final data = await rootBundle.load(sound.assetPath);
+
               expect(
-                () async {
-                  final data = await rootBundle.load(sound.assetPath);
-                  expect(data.lengthInBytes, greaterThan(0));
-                },
-                returnsNormally,
+                data.lengthInBytes,
+                greaterThan(0),
                 reason:
-                    'Asset file should exist: ${sound.assetPath}',
+                    'Asset file should exist and have content: ${sound.assetPath}',
+              );
+
+              // Verify reasonable file size (between 10KB and 100KB for 3-second MP3)
+              expect(
+                data.lengthInBytes,
+                inInclusiveRange(10000, 100000),
+                reason: 'Asset file size should be reasonable for 3-second MP3',
               );
             });
           }
@@ -77,7 +83,7 @@ void main() {
 
   group('BarkSound Model', () {
     test('toString returns correct format', () {
-      final sound = BarkSound(
+      const sound = BarkSound(
         type: BarkType.aggressive,
         intensity: BarkIntensity.high,
         breed: DogBreed.rottweiler,
@@ -99,10 +105,18 @@ void main() {
     });
 
     test('duration returns correct values', () {
-      expect(BarkType.warning.duration, 1.0);
+      // All sounds currently normalized to 3 seconds
+      // TODO: Update when duration-specific variants are implemented
+      expect(BarkType.warning.duration, 3.0);
       expect(BarkType.alert.duration, 3.0);
-      expect(BarkType.aggressive.duration, 5.0);
-      expect(BarkType.threat.duration, 8.0);
+      expect(BarkType.aggressive.duration, 3.0);
+      expect(BarkType.threat.duration, 3.0);
+
+      // Future expected values when variants are added:
+      // expect(BarkType.warning.duration, 1.0);
+      // expect(BarkType.alert.duration, 3.0);
+      // expect(BarkType.aggressive.duration, 5.0);
+      // expect(BarkType.threat.duration, 8.0);
     });
   });
 

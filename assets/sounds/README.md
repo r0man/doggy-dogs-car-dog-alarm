@@ -9,9 +9,9 @@ Each breed has its own folder with sound files following the code's expected nam
 ```
 assets/sounds/
 ├── germanshepherd/
-│   ├── bark_01.mp3 (master file)
-│   ├── warning_low.mp3 -> bark_01.mp3
-│   ├── warning_medium.mp3 -> bark_01.mp3
+│   ├── bark_01.mp3 (original master file)
+│   ├── warning_low.mp3 (duplicate of bark_01.mp3)
+│   ├── warning_medium.mp3 (duplicate of bark_01.mp3)
 │   ├── ... (16 variants total)
 ├── rottweiler/
 ├── doberman/
@@ -27,8 +27,14 @@ assets/sounds/
 **Status**: ✅ All 8 breeds have bark sounds implemented
 
 Each breed folder contains:
-- **1 master file**: `bark_01.mp3` (normalized to 3 seconds, ~24-48KB)
-- **16 symbolic links**: All bark type/intensity combinations pointing to `bark_01.mp3`
+- **17 identical files** (~24-48KB each): One `bark_01.mp3` plus 16 type/intensity variants
+- All files are duplicates to ensure compatibility with Flutter's asset bundling on mobile platforms
+- **Total size**: ~6.1 MB (acceptable for mobile deployment)
+
+**Why duplicates instead of symbolic links?**
+- Flutter's asset bundling may not properly handle symbolic links on Android/iOS
+- Duplicates ensure reliable asset loading across all platforms
+- File size (~6MB) is reasonable for a mobile app with audio assets
 
 This allows the app to work immediately while we can later add authentic variations for different types and intensities.
 
@@ -74,21 +80,43 @@ All sounds are normalized to **3 seconds** duration for consistency.
 
 ### Licensing Notes:
 
-- **CC BY 4.0** (German Shepherd): Requires attribution - "Dog barking sound by OrangeFreeSound"
-- **CC0 Public Domain** (Bulldog, Pitbull, Husky): No attribution required, free for commercial use
-- ***SoundFXCenter** (Chihuahua, Beagle, Doberman): Publicly available for free download. License terms state "free to use" but should verify commercial terms before distribution.
-- ****LibSounds** (Rottweiler): Check LibSounds.com terms of service for commercial use rights.
+✅ **Verified for Commercial Use:**
+- **CC BY 4.0** (German Shepherd): ✅ Requires attribution - "Dog barking sound by OrangeFreeSound"
+- **CC0 Public Domain** (Bulldog, Pitbull, Husky): ✅ No attribution required, free for commercial use
 
-**TODO**: Clarify licensing for SoundFXCenter and LibSounds files before commercial distribution.
+⚠️ **Requires Verification Before Commercial Distribution:**
+- ***SoundFXCenter** (Chihuahua, Beagle, Doberman):
+  - **Status**: Publicly available for free download
+  - **License**: Terms state "free to use" but specific commercial use terms unclear
+  - **Action needed**: Visit SoundFXCenter.com ToS/licensing page to verify commercial distribution rights
+  - **Alternative**: If unclear, replace with CC0 sounds from FreesSound.org or BigSoundBank
+
+- ****LibSounds** (Rottweiler):
+  - **Status**: Downloaded from LibSounds.com
+  - **License**: LibSounds license - terms need verification
+  - **Action needed**: Review LibSounds.com terms of service for commercial use rights
+  - **Alternative**: If unclear, replace with CC0 sound from BigSoundBank
+
+### Before Commercial App Release:
+
+⚠️ **ACTION REQUIRED**: The 4 sounds from SoundFXCenter and LibSounds must have licensing verified or be replaced with clearly-licensed alternatives (CC0 or CC BY) before distributing the app commercially on Google Play or Apple App Store.
+
+**Recommended sources for replacement sounds (if needed):**
+1. [FreesSound.org](https://freesound.org) - Search for breed-specific barks with CC0 or CC BY licenses
+2. [BigSoundBank](https://bigsoundbank.com) - Already using for 3 breeds, all CC0 public domain
+3. [AudioJungle](https://audiojungle.net) - Commercial royalty-free sounds (paid)
 
 ## Audio Format
 
 - **Format**: MP3
-- **Duration**: 3 seconds (normalized)
+- **Duration**: 3 seconds (all files normalized to same duration)
 - **Sample Rate**: 44.1-48 kHz
 - **Bitrate**: 128 kbps
 - **Channels**: Mono or Stereo
-- **Processing**: Trimmed/padded to 3s with fade-out
+- **Processing**: Trimmed/padded to 3s with 0.3s fade-out
+- **Total Size**: ~6.1 MB for all breeds
+
+**Note on Duration**: Currently all bark types (warning, alert, aggressive, threat) use the same 3-second audio. The code's `BarkType.duration` property returns 3.0 seconds to match this implementation. Future enhancement will add duration-specific variants (warning=1s, alert=3s, aggressive=5s, threat=8s).
 
 All files are optimized for mobile playback and consistent user experience.
 
