@@ -8,6 +8,14 @@ import '../services/app_settings_service.dart';
 import '../widgets/unlock_dialog.dart';
 import 'alarm_screen_view_model.dart';
 
+/// User feedback messages for alarm actions
+class AlarmFeedbackMessages {
+  static const activating = 'Activating Guard Dog...';
+  static const cancelled = 'Activation cancelled';
+  static const acknowledged = 'Alarm acknowledged';
+  static const recalibrated = 'Sensors recalibrated';
+}
+
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
 
@@ -294,6 +302,19 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
     );
   }
 
+  /// Shows a snackbar with feedback to the user
+  void _showFeedback(BuildContext context, String message, Color color) {
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _handleAction(
     BuildContext context,
     AlarmAction action,
@@ -303,53 +324,32 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
       case AlarmAction.activate:
         await alarmService.startActivation(mode: _selectedMode);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Activating Guard Dog...'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _showFeedback(
+              context, AlarmFeedbackMessages.activating, Colors.orange);
         }
         break;
       case AlarmAction.deactivate:
         await _handleDeactivate(context, alarmService);
         break;
       case AlarmAction.cancelCountdown:
-        // Show feedback before async operation to avoid context issues
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Activation cancelled'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
         await alarmService.cancelCountdown();
+        if (context.mounted) {
+          _showFeedback(
+              context, AlarmFeedbackMessages.cancelled, Colors.orange);
+        }
         break;
       case AlarmAction.acknowledge:
         await alarmService.acknowledge();
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Alarm acknowledged'),
-              backgroundColor: Colors.blue,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _showFeedback(
+              context, AlarmFeedbackMessages.acknowledged, Colors.blue);
         }
         break;
       case AlarmAction.recalibrate:
         await alarmService.recalibrate();
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Sensors recalibrated'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _showFeedback(
+              context, AlarmFeedbackMessages.recalibrated, Colors.green);
         }
         break;
     }
