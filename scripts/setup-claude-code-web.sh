@@ -30,8 +30,8 @@ else
     cd /tmp
     curl -L -o beads.tar.gz https://github.com/steveyegge/beads/releases/download/v0.17.7/beads_0.17.7_linux_amd64.tar.gz
     tar -xzf beads.tar.gz
-    sudo mv bd /usr/local/bin/bd
-    sudo chmod +x /usr/local/bin/bd
+    mv bd /usr/local/bin/bd
+    chmod +x /usr/local/bin/bd
     rm beads.tar.gz
     echo "✓ beads installed ($(bd --version))"
 fi
@@ -47,10 +47,10 @@ if command_exists flutter || [ -d "/opt/flutter" ]; then
 else
     echo "  Downloading Flutter SDK..."
     cd /tmp
-    curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.24.5-stable.tar.xz
+    curl -L -o flutter.tar.xz https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.0-stable.tar.xz
     echo "  Extracting Flutter..."
     cd /opt
-    sudo tar xf /tmp/flutter.tar.xz
+    tar xf /tmp/flutter.tar.xz
     rm /tmp/flutter.tar.xz
 
     # Fix git ownership
@@ -82,16 +82,16 @@ if [ -d "$ANDROID_HOME/cmdline-tools/latest" ]; then
     echo "✓ Android SDK already installed"
 else
     echo "  Creating Android SDK directory..."
-    sudo mkdir -p $ANDROID_HOME/cmdline-tools
+    mkdir -p $ANDROID_HOME/cmdline-tools
 
     echo "  Downloading Android command-line tools..."
     cd $ANDROID_HOME/cmdline-tools
-    sudo curl -L -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+    curl -L -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
 
     echo "  Extracting command-line tools..."
-    sudo unzip -q cmdline-tools.zip
-    sudo mv cmdline-tools latest
-    sudo rm cmdline-tools.zip
+    unzip -q cmdline-tools.zip
+    mv cmdline-tools latest
+    rm cmdline-tools.zip
 
     echo "✓ Android command-line tools installed"
 fi
@@ -104,11 +104,11 @@ if [ -d "$ANDROID_HOME/platform-tools" ]; then
 else
     echo "  Downloading platform-tools..."
     cd $ANDROID_HOME
-    sudo curl -L -o platform-tools-latest-linux.zip https://dl.google.com/android/repository/platform-tools-latest-linux.zip
+    curl -L -o platform-tools-latest-linux.zip https://dl.google.com/android/repository/platform-tools-latest-linux.zip
 
     echo "  Extracting platform-tools..."
-    sudo unzip -q platform-tools-latest-linux.zip
-    sudo rm platform-tools-latest-linux.zip
+    unzip -q platform-tools-latest-linux.zip
+    rm platform-tools-latest-linux.zip
 
     echo "✓ Platform-tools installed"
 fi
