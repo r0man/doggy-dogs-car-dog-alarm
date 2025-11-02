@@ -1,0 +1,344 @@
+#!/bin/bash
+
+# Installation script for Claude Code Web development environment
+# Step 1: Guile Scheme
+# Step 2: Spritely Goblins
+# Step 3: Hoot (to be added)
+
+set -e
+
+echo "🔧 Claude Code Web Development Environment Installer"
+echo "===================================================="
+echo ""
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to run command with sudo only if not root
+run_as_root() {
+    if [ "$EUID" -eq 0 ]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
+# Function to detect OS
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "linux"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to detect Linux package manager
+detect_package_manager() {
+    if command_exists apt-get; then
+        echo "apt"
+    elif command_exists dnf; then
+        echo "dnf"
+    elif command_exists yum; then
+        echo "yum"
+    elif command_exists pacman; then
+        echo "pacman"
+    elif command_exists zypper; then
+        echo "zypper"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to check Guile version
+check_guile_version() {
+    if ! command_exists guile; then
+        return 1
+    fi
+
+    local version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+' | head -n 1)
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+
+    # Check if version is 3.0 or higher
+    if [ "$major" -ge 3 ]; then
+        echo "$version"
+        return 0
+    else
+        echo "$version"
+        return 1
+    fi
+}
+
+# Function to install Guile on Linux
+install_guile_linux() {
+    local pkg_manager=$1
+
+    echo "  Detected package manager: $pkg_manager"
+    echo "  Installing Guile Scheme..."
+
+    case "$pkg_manager" in
+        apt)
+            run_as_root apt-get update
+            run_as_root apt-get install -y guile-3.0 guile-3.0-dev
+            ;;
+        dnf)
+            run_as_root dnf install -y guile30 guile30-devel
+            ;;
+        yum)
+            run_as_root yum install -y guile30 guile30-devel
+            ;;
+        pacman)
+            run_as_root pacman -S --noconfirm guile
+            ;;
+        zypper)
+            run_as_root zypper install -y guile guile-devel
+            ;;
+        *)
+            echo "❌ Error: Unsupported package manager '$pkg_manager'"
+            echo "   Please install Guile 3.0+ manually from https://www.gnu.org/software/guile/"
+            return 1
+            ;;
+    esac
+}
+
+# Function to install Guile on macOS
+install_guile_macos() {
+    echo "  Checking for Homebrew..."
+
+    if ! command_exists brew; then
+        echo "❌ Error: Homebrew is not installed"
+        echo "   Please install Homebrew from https://brew.sh/"
+        echo "   Then run this script again"
+        return 1
+    fi
+
+    echo "  ✓ Homebrew found"
+    echo "  Installing Guile Scheme..."
+
+    brew install guile
+}
+
+# Function to check if Goblins is installed
+check_goblins_installed() {
+    # Try to use guile to check if goblins module is available
+    if command_exists guile; then
+        guile -c "(use-modules (goblins))" 2>/dev/null && return 0
+    fi
+    return 1
+}
+
+# Function to install Goblins via Guix
+install_goblins_guix() {
+    echo "  Using Guix to install Goblins..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found, will use source installation"
+        return 1
+    fi
+
+    guix install guile-goblins
+
+    # Verify installation
+    if check_goblins_installed; then
+        echo "  ✓ Goblins installed via Guix"
+        return 0
+    else
+        echo "  ⚠️  Guix installation completed but module not found, trying source install"
+        return 1
+    fi
+}
+
+# Function to install Goblins from source
+install_goblins_source() {
+    echo "  Installing Goblins from source..."
+
+    # Check for required build tools
+    local missing_tools=""
+    for tool in git autoconf automake pkg-config make; do
+        if ! command_exists "$tool"; then
+            missing_tools="$missing_tools $tool"
+        fi
+    done
+
+    if [ -n "$missing_tools" ]; then
+        echo "  ⚠️  Missing build tools:$missing_tools"
+        echo "  Please install these tools and run again"
+        return 1
+    fi
+
+    # Clone the repository
+    local tmp_dir="/tmp/goblins-install-$$"
+    echo "  Cloning Goblins repository..."
+    git clone https://codeberg.org/spritely/goblins "$tmp_dir"
+
+    cd "$tmp_dir"
+
+    echo "  Building Goblins..."
+    ./bootstrap.sh
+    ./configure
+    make
+
+    echo "  Installing Goblins (requires sudo)..."
+    run_as_root make install
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ Goblins installed from source"
+}
+
+# Function to install Goblins
+install_goblins() {
+    echo ""
+    echo "Step 2: Installing Spritely Goblins"
+    echo "------------------------------------"
+    echo ""
+
+    # Check if Goblins is already installed
+    if check_goblins_installed; then
+        echo "✓ Spritely Goblins already installed"
+        echo ""
+        guile -c "(use-modules (goblins)) (display \"Goblins module loaded successfully\n\")"
+        return 0
+    fi
+
+    echo "Spritely Goblins not found. Installing..."
+    echo ""
+
+    # Try Guix first, then fall back to source
+    if install_goblins_guix || install_goblins_source; then
+        # Verify installation
+        if check_goblins_installed; then
+            echo ""
+            echo "✓ Spritely Goblins successfully installed"
+            guile -c "(use-modules (goblins)) (display \"Goblins module loaded successfully\n\")"
+            return 0
+        else
+            echo ""
+            echo "❌ Error: Goblins installation completed but module cannot be loaded"
+            echo "   Please check the installation logs above for errors"
+            return 1
+        fi
+    else
+        echo ""
+        echo "❌ Error: All installation methods failed"
+        echo "   Please install Goblins manually from https://codeberg.org/spritely/goblins"
+        return 1
+    fi
+}
+
+# Main installation logic
+main() {
+    echo "Step 1: Installing Guile Scheme"
+    echo "--------------------------------"
+    echo ""
+
+    # Check if Guile is already installed with correct version
+    if version=$(check_guile_version); then
+        echo "✓ Guile Scheme already installed (version $version)"
+        echo ""
+        guile --version | head -n 1
+        echo ""
+    else
+        # Guile needs to be installed or upgraded
+        if command_exists guile; then
+            local current_version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+' | head -n 1)
+            echo "⚠️  Warning: Guile $current_version is installed but version 3.0+ is required"
+            echo "  Attempting to upgrade..."
+            echo ""
+        else
+            echo "Guile Scheme not found. Installing..."
+            echo ""
+        fi
+
+        # Detect OS
+        os=$(detect_os)
+        echo "Detected OS: $os"
+        echo ""
+
+        case "$os" in
+            linux)
+                pkg_manager=$(detect_package_manager)
+                if [ "$pkg_manager" = "unknown" ]; then
+                    echo "❌ Error: Could not detect package manager"
+                    echo "   Please install Guile 3.0+ manually from https://www.gnu.org/software/guile/"
+                    exit 1
+                fi
+
+                if ! install_guile_linux "$pkg_manager"; then
+                    exit 1
+                fi
+                ;;
+
+            macos)
+                if ! install_guile_macos; then
+                    exit 1
+                fi
+                ;;
+
+            *)
+                echo "❌ Error: Unsupported operating system: $OSTYPE"
+                echo "   This script supports Linux and macOS only"
+                echo "   Please install Guile 3.0+ manually from https://www.gnu.org/software/guile/"
+                exit 1
+                ;;
+        esac
+
+        echo ""
+        echo "Verifying installation..."
+
+        # Verify Guile is now installed
+        if ! command_exists guile; then
+            echo "❌ Error: Guile installation failed - guile command not found"
+            echo "   Please check the installation logs above for errors"
+            exit 1
+        fi
+
+        # Verify Guile version
+        if version=$(check_guile_version); then
+            echo "✓ Guile Scheme successfully installed (version $version)"
+            echo ""
+            guile --version | head -n 1
+            echo ""
+        else
+            local installed_version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+' | head -n 1)
+            echo "❌ Error: Guile $installed_version was installed but version 3.0+ is required"
+            echo "   Please upgrade Guile manually or check your package manager"
+            exit 1
+        fi
+    fi
+
+    # Now install Goblins (requires Guile)
+    if ! install_goblins; then
+        echo ""
+        echo "⚠️  Warning: Goblins installation failed"
+        echo "   Guile is installed but Goblins could not be installed"
+        echo "   You can try installing manually from https://codeberg.org/spritely/goblins"
+        exit 1
+    fi
+
+    echo ""
+    echo "✅ Installation complete!"
+    echo ""
+    echo "📝 Summary:"
+    echo "  - Guile Scheme: $(check_guile_version)"
+    echo "  - Spritely Goblins: Installed"
+    echo ""
+    echo "📝 Next steps:"
+    echo "  - Step 3: Hoot installation (coming soon)"
+    echo ""
+    echo "🚀 Development environment ready!"
+}
+
+# Run main function
+main
