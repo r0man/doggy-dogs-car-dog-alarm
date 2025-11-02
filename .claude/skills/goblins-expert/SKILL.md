@@ -32,10 +32,11 @@ This is the **Doggy Dogs Dog World** project - a multiplayer networked game wher
 
 ### Tech Stack
 - **Guile Scheme** 3.0+
-- **Spritely Goblins** for distributed actors
+- **Spritely Goblins** v0.16.1+ for distributed actors
 - **OCapN/CapTP** for network communication
 - **GNU Guix** for reproducible development environment
 - **actor-lib** for common patterns (cells, queues, timers, pub/sub)
+- **Spritely Ecosystem**: Hoot (Scheme to Wasm compiler), Oaken (secure sandboxing)
 
 ## Your Approach
 
@@ -504,6 +505,46 @@ The inbox pattern queues external events for processing within the vat's transac
           (format #t "Remote result: ~a\n" result)))))
 ```
 
+#### Unix Domain Socket Netlayer (v0.16.0+)
+Efficient inter-process communication on the same machine using Unix domain sockets:
+
+```scheme
+(use-modules (goblins netlayer unix-socket))
+
+;; Create introduction server (acts as "OCaps kernel")
+;; Prevents confused deputy attacks via socket-passing
+(define intro-server (spawn ^introduction-server))
+
+;; Create Unix domain socket netlayer
+(define uds-netlayer (make-unix-socket-netlayer
+                       #:intro-server intro-server))
+
+;; Create vat with Unix socket netlayer
+(define local-vat (spawn-vat #:netlayer uds-netlayer))
+
+;; Multiple netlayers can securely communicate by sharing intro-server
+(define netlayer-a (make-unix-socket-netlayer #:intro-server intro-server))
+(define netlayer-b (make-unix-socket-netlayer #:intro-server intro-server))
+
+;; Vats can now communicate locally with high performance
+(define vat-a (spawn-vat #:netlayer netlayer-a))
+(define vat-b (spawn-vat #:netlayer netlayer-b))
+
+;; Connect and communicate efficiently
+(call-with-vat vat-a
+  (lambda ()
+    (define remote-ref (<- netlayer-a 'connect-local vat-b-id))
+    (on (<- remote-ref 'method arg)
+        (lambda (result)
+          (format #t "Local IPC result: ~a\n" result)))))
+```
+
+**Benefits of Unix Domain Socket Netlayer:**
+- **Higher Performance**: Avoids TCP overhead for local communication
+- **Security**: Introduction server prevents confused deputy attacks
+- **Socket Passing**: Leverages OS-level socket-passing capabilities
+- **Multi-Vat Communication**: Multiple netlayers share same introduction server
+
 #### Proxy Coordinator for Nested OCapN Boundaries
 The proxy coordinator pattern manages capabilities across multiple network boundaries with nested vat contexts:
 
@@ -921,6 +962,59 @@ Synchronous operations are transactional - if error occurs, state rolls back aut
     (bcom (^transactional-account bcom (- balance amount))))))
 ```
 
+### 6. Combine with Spritely Oaken for Code Sandboxing
+
+**Spritely Oaken** complements Goblins by providing secure sandboxing for untrusted code execution within actors. While Goblins provides object-capability security at the actor level, Oaken provides capability-based sandboxing for code loaded into individual actors.
+
+**What Oaken Provides:**
+- Secure Scheme sublanguage for running untrusted code safely
+- Capability-based resource controls (filesystem, network, timing, computation)
+- Taming pattern: restrict libraries to safe procedures via closures
+- Powerbox pattern: grant access to specific resources only
+- Engine-based computation limits (measured in CPU ticks)
+
+**Integration Pattern:**
+```scheme
+;; Actor that safely executes user-provided scripts
+(define (^script-executor bcom sandbox-cap allowed-operations)
+  (methods
+   ;; Execute user script with sandboxed environment
+   ((execute script-code)
+    ;; Create sandboxed environment with limited capabilities
+    (let ((safe-env ($ sandbox-cap 'make-environment allowed-operations)))
+      ;; Run script in sandbox with computation limits
+      (<- safe-env 'eval-with-limits script-code 1000000)))  ; tick limit
+
+   ;; Grant specific capability to script
+   ((grant-capability capability-name capability-ref)
+    ;; Attenuate capability before passing to sandbox
+    (let ((attenuated-cap (spawn ^read-only-view capability-ref)))
+      ($ sandbox-cap 'add-binding capability-name attenuated-cap)))))
+
+;; Usage: Game mod system
+(define mod-sandbox (spawn ^oaken-sandbox))
+(define mod-executor (spawn ^script-executor mod-sandbox
+                            '(spawn-entity get-player-data)))
+
+;; Load untrusted mod code safely
+(<- mod-executor 'execute user-mod-code)
+```
+
+**Why Use Both:**
+- **Goblins**: Secure distributed object references, capability-based communication between actors
+- **Oaken**: Secure code execution within actors, preventing malicious code from escaping sandbox
+- **Together**: Defense in depth - secure objects + secure computation
+
+**Use Cases:**
+- **Game Mods**: Load user-created content without compromising security
+- **Plugin Systems**: Third-party extensions with controlled resource access
+- **User Scripts**: Execute player-written automation scripts safely
+- **Dynamic Content**: Run level scripts or AI behavior trees from untrusted sources
+
+**Additional Resources:**
+- **Oaken Announcement**: https://spritely.institute/news/announcing-spritely-oaken.html
+- See Guile skill documentation for detailed Oaken patterns and examples
+
 ## When to Ask for Help
 
 You should ask the user for clarification when:
@@ -1280,6 +1374,48 @@ Remember: Write capability-secure code that follows POLA, leverages transactions
       (<- persist-cap 'save new-state)))
 ```
 
+## Performance Considerations (v0.16.0+)
+
+### Spawn Optimization
+Since v0.16.0, the `spawn` function is significantly faster (10-20x improvement):
+
+```scheme
+;; spawn now uses compile-time identifier analysis
+;; Instead of runtime procedure-name calls
+(define my-actor (spawn ^my-actor-constructor arg1 arg2))
+
+;; The macro captures constructor names at compile time
+;; Falls back to standard procedures for dynamic cases
+(define constructor-fn ^dynamic-actor)
+(define actor (spawn constructor-fn args))  ; Still works, but slower
+```
+
+**Key Optimization**: Avoid using `apply` with `spawn` when possible. Direct constructor calls are optimized at compile time.
+
+### Behavior Change (bcom) Acceleration
+The `bcom` operation is dramatically faster in v0.16.0+ using "encapsulated cookie comparison":
+
+```scheme
+;; Old implementation: Runtime type construction (slow)
+;; New implementation: Cookie comparison (as fast as two accessor calls + eq?)
+
+(define (^counter bcom count)
+  (methods
+   ((increment)
+    ;; bcom is now highly optimized
+    (bcom (^counter bcom (+ count 1))
+          (+ count 1)))))
+```
+
+**Performance Impact**: Behavior transitions are now approximately as fast as two accessor calls and an identity comparison. This significantly improves state machine performance and swappable actor patterns.
+
+### Performance Best Practices
+- **Prefer direct spawn calls**: `(spawn ^actor args)` over `(apply spawn (list ^actor args))`
+- **Use bcom liberally**: No longer a performance concern for state transitions
+- **Unix sockets for local**: Use Unix domain socket netlayer for inter-process communication on the same machine (avoids TCP overhead)
+- **Promise pipelining**: Chain remote operations to reduce network round-trips
+- **Batch operations**: Use ticker pattern to process collections efficiently
+
 ## Additional Resources
 
 ### Official Documentation
@@ -1312,3 +1448,110 @@ guix shell -m manifest.scm
 ```
 
 This ensures consistent versions of Guile, Goblins, and all dependencies.
+
+## Version History & Release Notes
+
+### Spritely Goblins v0.16.1 (September 3, 2025)
+
+**Release Type**: Patch release addressing critical issues discovered shortly after v0.16.0
+
+**Key Bug Fixes:**
+
+1. **OCapN/Hoot Compatibility Issue** (CRITICAL)
+   - **Issue**: `(goblins actor-lib io)` depended on `current-scheduler` from Fibers, which is not available in Hoot's fibers API implementation
+   - **Impact**: Prevented OCapN networking from working correctly with Hoot-compiled code
+   - **Resolution**: Updated IO actor implementation to be Hoot-compatible
+   - **Developer Note**: When using `(goblins actor-lib io)` with Hoot, ensure you're on v0.16.1+
+
+2. **Multiple OCapN Peer Connections** (HIGH)
+   - **Issue**: Multiple connections could exist between two OCapN peers if their OCapN Locator hints differed
+   - **Impact**: Duplicate connections wasted resources and could cause message ordering issues
+   - **Resolution**: Connection deduplication logic based on peer identity rather than locator hints
+   - **Developer Note**: If you experienced duplicate connection issues in v0.16.0, upgrade immediately
+
+3. **OCapN Connection Duplication Bug** (MEDIUM)
+   - **Issue**: Record hashing bug that would have caused additional duplicate connections
+   - **Impact**: Could not be independently triggered due to the IO actor bug, but would have compounded the duplicate connection issue
+   - **Resolution**: Fixed record hashing to ensure proper connection identity
+   - **Developer Note**: This was a latent bug that's now resolved
+
+4. **Vat Event Log Data Loss** (HIGH)
+   - **Issue**: Resize function bug in `(goblins utils ring-buffer)` caused data loss when expanding the vat event log
+   - **Impact**: Lost transaction history, affecting time-travel debugging and event replay functionality
+   - **Resolution**: Fixed ring buffer resize to preserve all data during expansion
+   - **Developer Note**: If you rely on vat event logs for persistence or debugging, this fix is critical
+   - **Pattern Impact**: Affects time-travel debugging patterns and event recorder patterns that depend on ring buffers
+
+**Installation:**
+For Guix users:
+```bash
+guix pull
+guix install guile-goblins
+```
+
+**Migration from v0.16.0:**
+- No breaking changes; v0.16.1 is a drop-in replacement
+- If you experienced OCapN networking issues, connection problems, or event log corruption, these should be resolved
+- If you're using Hoot with OCapN, upgrade is mandatory
+
+**Patterns Affected by These Fixes:**
+- **OCapN Networked Communication**: Now works correctly with Hoot
+- **Time-Travel Debugging with Actormap Snapshots**: Event log data loss resolved
+- **Event Recorder Pattern**: Ring buffer resize now preserves all events
+- **Proxy Coordinator for Nested OCapN Boundaries**: Connection deduplication improves reliability
+
+### Spritely Goblins v0.16.0 (August 7, 2025)
+
+**Release Type**: Major feature release with significant performance improvements
+
+**Major Features:**
+
+1. **Unix Domain Socket Netlayer** (NEW)
+   - **Feature**: New networking layer for efficient inter-process communication on the same machine
+   - **Implementation**: Uses Unix domain sockets with socket-passing capabilities
+   - **Security**: Introduction server acts as "OCaps kernel" to prevent confused deputy attacks
+   - **Multi-Vat Support**: Multiple netlayers can securely communicate by sharing the same introduction server
+   - **Use Case**: High-performance local IPC between vats without TCP overhead
+   - **Developer Note**: See "Unix Domain Socket Netlayer" section for implementation patterns
+
+2. **Spawn Optimization** (PERFORMANCE)
+   - **Improvement**: 10-20x faster execution for `spawn` function
+   - **Implementation**: Compile-time identifier analysis instead of runtime `procedure-name` calls
+   - **Technical Details**: Macro captures constructor names at compile time, falls back to standard procedures for dynamic cases (like `apply`)
+   - **Developer Impact**: Dramatically faster actor creation across all Goblins programs
+   - **Best Practice**: Prefer direct spawn calls `(spawn ^actor args)` over `(apply spawn ...)`
+
+3. **Behavior Change (bcom) Acceleration** (PERFORMANCE)
+   - **Improvement**: Dramatically faster actor behavior transitions
+   - **Implementation**: New sealer implementation using "encapsulated cookie comparison"
+   - **Technical Details**: Replaces runtime type construction with cookie comparison, approximately as fast as two accessor calls and an identity comparison (`eq?`)
+   - **Developer Impact**: State machines and swappable actor patterns see significant performance gains
+   - **Pattern Impact**: `bcom` is no longer a performance concern; use liberally for state transitions
+
+**Installation:**
+
+For Guix users:
+```bash
+guix pull
+guix install guile-goblins
+```
+
+For Racket users:
+```bash
+raco pkg install goblins
+```
+
+**OCapN Compatibility:**
+- Both Guile and Racket versions updated for OCapN compatibility
+- Full support for distributed object capability networking
+
+**Additional Resources:**
+- Full changelog available in the project's NEWS file
+- Community support at community.spritely.institute
+- Regular office hours for questions and discussions
+
+**Performance Impact Summary:**
+- **Spawn**: 10-20x faster (compile-time optimization)
+- **bcom**: Dramatically faster (cookie comparison vs runtime type construction)
+- **Unix sockets**: Eliminates TCP overhead for local IPC
+- **Overall**: All Goblins programs benefit from core performance improvements

@@ -31,6 +31,7 @@ You specialize in building games with Guile Scheme, drawing from proven patterns
 - **FFI**: (system foreign) for C integration
 - **Build Tools**: GNU Guix for reproducible environment
 - **Testing**: SRFI-64, custom test harnesses
+- **Spritely Ecosystem**: Goblins (actors), Hoot (Wasm), Oaken (sandboxing)
 
 ## Your Approach
 
@@ -1465,6 +1466,258 @@ Terminal Phase uses cells to enable time-travel debugging without sacrificing pe
  (lambda ()
    (allocation-heavy-code)))
 ```
+
+## Sandboxing and Security with Spritely Oaken
+
+### What is Spritely Oaken?
+
+**Spritely Oaken** is a secure Scheme sublanguage designed to run untrusted code safely within applications. It enables third-party modifications and extensions without compromising security, making it ideal for moddable games, plugin systems, and user-generated content.
+
+**Key Capabilities:**
+- **Capability-Based Security**: Uses closures and lambda calculus to restrict access to resources
+- **Resource Controls**: Limits filesystem access, network operations, timing data, and computation cycles
+- **Taming Pattern**: Restricts untrusted libraries to safe procedures via closures
+- **Powerbox Pattern**: Grants access to specific files/directories only, not entire filesystem
+- **Engine-Based Limits**: Measures CPU ticks (not wall-clock time) to prevent resource exhaustion
+
+**Built on Guile:**
+- References Guile's `(ice-9 sandbox)` library for sandboxing primitives
+- Uses Whippet garbage collector for enhanced memory management
+- Leverages R6RS/R7RS Scheme standards
+- Based on Jonathan Rees's "Security Based on the Lambda Calculus" dissertation
+
+### Basic Sandboxing Patterns
+
+#### Using (ice-9 sandbox)
+
+```scheme
+(use-modules (ice-9 sandbox))
+
+;; Create a sandboxed evaluator with limited bindings
+(define safe-eval
+  (make-sandbox-module
+    ;; Only provide safe operations
+    #:bindings '((scheme base)
+                (only (guile) + - * /))
+    ;; Disable dangerous operations
+    #:allow-io? #f
+    #:allow-network? #f))
+
+;; Evaluate untrusted code safely
+(define result
+  (eval-in-sandbox safe-eval
+    '(+ (* 2 3) 5)))  ; => 11
+
+;; Attempting file I/O would fail
+;; (eval-in-sandbox safe-eval '(open-input-file "/etc/passwd"))
+;; => Error: Binding not available
+```
+
+#### Capability-Based File Access
+
+```scheme
+;; BAD: Ambient authority - plugin has full filesystem access
+(define (load-plugin-unsafe plugin-path)
+  (load plugin-path))
+
+;; GOOD: Powerbox pattern - plugin gets limited file access
+(define (make-file-capability directory)
+  "Returns a capability that only allows access to specific directory"
+  (lambda (filename mode)
+    (let ((full-path (string-append directory "/" filename)))
+      ;; Validate path stays within directory
+      (unless (string-prefix? directory (canonicalize-path full-path))
+        (error "Access denied: path outside allowed directory"))
+      (open-file full-path mode))))
+
+;; Plugin receives limited capability, not full file system
+(define (load-plugin-safe plugin-path data-dir-cap)
+  (define plugin-env
+    (make-sandbox-module
+      #:bindings `((open-file . ,data-dir-cap)  ; Attenuated file access
+                   (scheme base))))
+
+  (load-in-sandbox plugin-env plugin-path))
+
+;; Usage
+(define plugin-data-access (make-file-capability "/var/game/plugins/data"))
+(load-plugin-safe "untrusted-plugin.scm" plugin-data-access)
+```
+
+#### Computation Limits with Engines
+
+```scheme
+(use-modules (ice-9 threads))
+
+;; Engine pattern: measure CPU ticks, not wall-clock time
+(define (run-with-timeout proc tick-limit)
+  "Run procedure with computation limit (measured in ticks, not seconds)"
+  (let ((result #f)
+        (completed? #f))
+
+    (define (timed-proc)
+      (set! result (proc))
+      (set! completed? #t))
+
+    ;; Create engine with tick limit
+    (define eng (make-engine timed-proc))
+
+    ;; Run engine with fuel (ticks)
+    (eng tick-limit
+         (lambda (result ticks-left)
+           ;; Success: procedure completed
+           result)
+         (lambda (new-eng)
+           ;; Failure: ran out of ticks
+           (error "Computation exceeded tick limit")))))
+
+;; Usage
+(run-with-timeout
+  (lambda ()
+    ;; Untrusted computation
+    (let loop ((i 0) (sum 0))
+      (if (< i 1000)
+          (loop (+ i 1) (+ sum i))
+          sum)))
+  100000)  ; Tick limit
+```
+
+#### Taming Libraries with Closures
+
+The "taming" approach restricts untrusted code by providing closures over specific resources:
+
+```scheme
+;; Instead of giving untrusted code full (srfi srfi-1) with file operations,
+;; provide a tamed version closed over safe operations only
+
+(define (make-tamed-library)
+  "Returns attenuated library interface"
+  (lambda (operation . args)
+    (case operation
+      ;; Allow pure operations
+      ((map fold filter)
+       (apply (module-ref (resolve-module '(srfi srfi-1)) operation) args))
+
+      ;; Deny dangerous operations
+      ((load call-with-input-file)
+       (error "Operation not permitted in sandbox"))
+
+      ;; Default deny
+      (else
+        (error "Unknown operation" operation)))))
+
+;; Plugin receives tamed library
+(define plugin-env
+  (make-sandbox-module
+    #:bindings `((list-utils . ,(make-tamed-library))
+                 (scheme base))))
+```
+
+### Oaken Design Principles
+
+**Capability-Based Security:**
+- If you don't have the capability (closure/reference), you can't use the resource
+- No ambient authority - all access must be explicitly granted
+- Capabilities can be attenuated (reduced authority) but not amplified
+
+**Resource Isolation:**
+- Filesystem access via powerbox (specific files/directories only)
+- Network access controlled per-socket, not globally
+- Clock access restricted to prevent timing attacks
+- Memory limits enforced via garbage collector integration
+
+**Delegation Chains:**
+- Trusted code grants capabilities to semi-trusted code
+- Semi-trusted code can further attenuate before delegating
+- Entire chain maintains security properties
+
+### Use Cases for Game Development
+
+#### Moddable Games
+
+```scheme
+;; Game mod system using Oaken security
+(define (load-game-mod mod-path mod-capabilities)
+  "Load untrusted game mod with limited capabilities"
+
+  ;; Create mod environment with restricted access
+  (define mod-env
+    (make-sandbox-module
+      #:bindings `((spawn-entity . ,(mod-capabilities 'spawn-entity))
+                   (get-player-data . ,(mod-capabilities 'get-player-data))
+                   ;; No direct world mutation
+                   (scheme base))))
+
+  ;; Load mod in sandbox
+  (load-in-sandbox mod-env mod-path))
+
+;; Mod capabilities are closures over game state
+(define (make-mod-capabilities game-world)
+  (lambda (operation)
+    (case operation
+      ((spawn-entity)
+       ;; Allow spawning, but validate entity types
+       (lambda (entity-type x y)
+         (unless (valid-entity-type? entity-type)
+           (error "Invalid entity type"))
+         (world-spawn-entity game-world entity-type x y)))
+
+      ((get-player-data)
+       ;; Read-only access to player data
+       (lambda (player-id)
+         (world-get-player-readonly game-world player-id))))))
+```
+
+#### User-Generated Content
+
+```scheme
+;; User-submitted level scripts with safety guarantees
+(define (run-level-script script-path)
+  "Execute user-created level script safely"
+
+  (define level-api
+    (lambda (command . args)
+      (case command
+        ;; Safe level building operations
+        ((place-tile set-spawn place-enemy)
+         (apply validate-and-execute command args))
+
+        ;; Deny system access
+        ((exit system load)
+         (error "Operation not permitted"))
+
+        (else (error "Unknown command" command)))))
+
+  (define script-env
+    (make-sandbox-module
+      #:bindings `((level . ,level-api)
+                   (scheme base))
+      #:allow-io? #f))
+
+  ;; Run with computation limits
+  (run-with-timeout
+    (lambda () (load-in-sandbox script-env script-path))
+    1000000))  ; Tick limit prevents infinite loops
+```
+
+### Integration with Goblins and Hoot
+
+**Oaken with Goblins:**
+- Goblins already provides object-capability security at the actor level
+- Oaken provides sandboxing for code loaded into individual actors
+- Combined: secure distributed systems with sandboxed computation
+
+**Oaken with Hoot:**
+- Hoot compiles Scheme to WebAssembly
+- Oaken principles apply: restrict WebAssembly module imports
+- Browser sandbox + Oaken = defense in depth
+
+### Additional Resources
+
+- **Spritely Oaken Announcement**: https://spritely.institute/news/announcing-spritely-oaken.html
+- **Guile Sandbox Documentation**: https://www.gnu.org/software/guile/manual/html_node/Sandboxed-Evaluation.html
+- **Jonathan Rees's Dissertation**: "A Security Kernel Based on the Lambda Calculus"
+- **E Language**: Capability-based security inspiration for Oaken
 
 ## Foreign Function Interface (FFI)
 

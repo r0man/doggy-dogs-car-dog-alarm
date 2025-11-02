@@ -35,6 +35,7 @@ Key architectural goals:
 - Spritely Goblins (actor system)
 - Browser APIs via FFI
 - GNU Guix for development environment
+- Spritely Ecosystem: Goblins (distributed actors), Oaken (secure sandboxing)
 
 ## Your Approach
 
@@ -42,8 +43,8 @@ Key architectural goals:
 1. **Write R7RS-small Scheme**: Use standard Scheme with Hoot extensions
 2. **Define Libraries**: Use `(library ...)` form for modular code organization
 3. **Declare FFI Bindings**: Use `define-foreign` for JavaScript interop
-4. **Compile to Wasm**: Use `guild compile-wasm` command
-5. **Deploy with Runtime**: Include reflect.js and wtf8.wasm support files
+4. **Compile to Wasm**: Use `guild compile-wasm` command (use `--bundle` flag to automatically bundle runtime libraries)
+5. **Deploy with Runtime**: Include reflect.js and wtf8.wasm support files (or use `--bundle` for automatic deployment)
 6. **Load in Browser**: Use Scheme.load_main() with user_imports
 
 ### Code Quality Standards
@@ -132,8 +133,16 @@ Key architectural goals:
 GUILD = guild
 GUILE = guile
 
-# Main WebAssembly binary
+# Main WebAssembly binary with bundled runtime (v0.6.1+)
 main.wasm: main.scm my-game/*.scm
+	$(GUILD) compile-wasm -L . -o $@ --bundle $<
+
+# Development build with debug symbols
+main-debug.wasm: main.scm my-game/*.scm
+	$(GUILD) compile-wasm -L . -o $@ -g $<
+
+# Production build without bundling (manual runtime deployment)
+main-prod.wasm: main.scm my-game/*.scm
 	$(GUILD) compile-wasm -L . -o $@ $<
 
 # Development server
@@ -295,8 +304,9 @@ When using `define-foreign`, specify exact types:
 ;; JavaScript -> Scheme (manual conversion needed)
 ;; Numbers: Use fixnum? flonum? to check type
 ;; Strings: Use string? to check type
-;; Externals: Use external? external-non-null? to check type
+;; Externals: Use external? external-non-null? external-function? to check type
 ;; Procedures: Use procedure->external to convert Scheme proc to JS function
+;; Call external: Use call-external to invoke external functions (v0.6.1+)
 ```
 
 ### Common FFI Patterns
@@ -371,6 +381,12 @@ When using `define-foreign`, specify exact types:
            (string? text))
       (js-set-text-content elem text)
       (error "Invalid arguments" elem text)))
+
+;; Check if external is callable (v0.6.1+)
+(define (safe-call-external fn . args)
+  (if (external-function? fn)
+      (apply call-external fn args)
+      (error "Expected external function" fn)))
 ```
 
 ### Event Handler Caching Pattern
@@ -592,6 +608,9 @@ Hoot uses tail call transformation:
 ```bash
 # Compile with verbose output
 guild compile-wasm -L . -o out.wasm main.scm
+
+# Compile with debug symbols for better error messages (v0.6.1+)
+guild compile-wasm -L . -o out.wasm -g main.scm
 
 # Check for syntax errors
 guile -c '(use-modules (hoot compile)) (compile-file "main.scm")'
@@ -815,17 +834,21 @@ REFLECT_JS = $(PUBLIC_DIR)/reflect.js
 REFLECT_WASM = $(PUBLIC_DIR)/reflect.wasm
 WTF8_WASM = $(PUBLIC_DIR)/wtf8.wasm
 
-# Default target
-all: $(MAIN_WASM) runtime-files
+# Default target - uses --bundle for automatic runtime deployment (v0.6.1+)
+all: $(MAIN_WASM)
 
-# Compile main.scm to WebAssembly
+# Alternative: manual runtime deployment (for older Hoot versions or custom setup)
+all-manual: $(MAIN_WASM) runtime-files
+
+# Compile main.scm to WebAssembly with bundled runtime (v0.6.1+)
 $(MAIN_WASM): $(ALL_SCMS)
 	@echo "Compiling Scheme to WebAssembly..."
-	$(GUILD) compile-wasm -L . -o $@ $(MAIN_SCM)
+	$(GUILD) compile-wasm -L . -o $@ --bundle $(MAIN_SCM)
 	@echo "✓ Build complete: $@"
+	@echo "✓ Runtime libraries bundled automatically"
 	@ls -lh $@
 
-# Copy Hoot runtime files
+# Copy Hoot runtime files (only needed if not using --bundle)
 runtime-files: $(REFLECT_JS) $(REFLECT_WASM) $(WTF8_WASM)
 
 $(REFLECT_JS):
@@ -1242,11 +1265,31 @@ const instance = await WebAssembly.instantiate(module, {
     promise))
 ```
 
+### Date and Time Operations (Experimental)
+```scheme
+;; Experimental (hoot time) module for date/time operations (v0.6.1+)
+(import (hoot time))
+
+;; Note: The (hoot time) module is experimental and may change in future releases
+;; Use for game timers, timestamps, and time-based logic
+
+;; Get current time (fixed in v0.6.1 - jiffies error resolved)
+(define (get-current-timestamp)
+  (current-time))
+
+;; Use for game timing and animation loops
+(define (game-timer-example)
+  (let ((start-time (current-time)))
+    (lambda ()
+      (- (current-time) start-time))))
+```
+
 ### Fibers for Concurrency
 ```scheme
 ;; Lightweight concurrency with fibers (delimited continuations)
 (import (fibers)
-        (fibers channels))
+        (fibers channels)
+        (fibers streams))  ; Now documented (v0.6.1+)
 
 (define (worker channel)
   (let loop ()
@@ -1261,6 +1304,203 @@ const instance = await WebAssembly.instantiate(module, {
     (spawn-fiber (lambda () (worker ch)))
     ch))
 ```
+
+## Spritely Oaken and Browser Sandboxing
+
+### What is Spritely Oaken?
+
+**Spritely Oaken** is a secure Scheme sublanguage for safely running untrusted code within applications. It complements Hoot by providing capability-based security patterns that work seamlessly with WebAssembly's own sandboxing model.
+
+**Key Concepts:**
+- **Capability-Based Security**: Uses closures and lambda calculus to restrict resource access
+- **Taming Pattern**: Restricts untrusted libraries to safe procedures via closures
+- **Powerbox Pattern**: Grants access to specific files/directories/resources only
+- **Resource Controls**: Limits filesystem access, network operations, timing data, and computation
+- **Built on Guile**: References Guile's `(ice-9 sandbox)` and works with R7RS Scheme
+
+### Defense in Depth: WebAssembly + Oaken
+
+When deploying Hoot applications to the browser, you benefit from **multiple security layers**:
+
+1. **Browser Sandbox**: WebAssembly modules can't access the DOM or JavaScript APIs unless explicitly granted via imports
+2. **Hoot FFI Restrictions**: `define-foreign` declarations explicitly define what browser APIs are accessible
+3. **Oaken Principles**: Apply capability-based security to control what user-provided code can do within your Wasm module
+
+**Combined Security Model:**
+```scheme
+;; Example: User-generated game mod system with Hoot + Oaken
+
+;; 1. Browser sandbox: Wasm can only access what we import
+(define-foreign console-log
+  "console" "log"
+  (ref null extern) -> none)
+
+;; 2. Oaken-style capability restriction: Give mod limited API
+(define (make-mod-api game-state)
+  "Returns capability object for mod code"
+  (lambda (operation . args)
+    (case operation
+      ;; Allow: Read-only game state access
+      ((get-player-position)
+       (game-state-get-player-pos game-state))
+
+      ;; Allow: Spawn entities (with validation)
+      ((spawn-entity)
+       (let ((entity-type (car args)))
+         (if (valid-entity-type? entity-type)
+             (game-spawn-entity game-state entity-type)
+             (error "Invalid entity type"))))
+
+      ;; Deny: Direct state mutation
+      ((set-player-position! mutate-state!)
+       (error "Operation not permitted"))
+
+      ;; Default deny
+      (else (error "Unknown operation" operation)))))
+
+;; 3. Load mod with restricted capabilities
+(define (load-user-mod mod-code game-state)
+  "Safely execute user-provided mod code"
+  ;; Mod only receives the capability object, not full game state
+  (let ((mod-api (make-mod-api game-state)))
+    (mod-code mod-api)))  ; User code can only use mod-api
+```
+
+### Restricting WebAssembly Imports
+
+**Control what your Hoot-compiled Wasm can access:**
+
+```javascript
+// main.js - Careful about what you expose via user_imports
+
+window.addEventListener("load", async () => {
+  // GOOD: Minimal, explicit imports
+  await Scheme.load_main("game.wasm", {
+    reflect_wasm_dir: ".",
+    user_imports: {
+      // Only expose specific, safe operations
+      console: {
+        log: console.log.bind(console)
+        // Don't expose console.clear, console.error, etc.
+      },
+      document: {
+        // Only getElementById, not full document API
+        getElementById: (id) => document.getElementById(id)
+        // Don't expose document.cookie, document.domain, etc.
+      },
+      storage: {
+        // Scoped storage only
+        getItem: (key) => {
+          if (key.startsWith("game-")) {
+            return localStorage.getItem(key);
+          }
+          throw new Error("Access denied");
+        }
+      }
+    }
+  });
+
+  // BAD: Exposing too much
+  // user_imports: {
+  //   window: window,  // DON'T! Gives access to everything
+  //   document: document  // DON'T! Full DOM access
+  // }
+});
+```
+
+### User-Generated Content in Browser
+
+**Pattern for safely running user-created Scheme code in Hoot:**
+
+```scheme
+;; Compile user mod as auxiliary Wasm module with restricted imports
+;; (This requires compiling user code separately with limited API)
+
+;; Main application provides safe API
+(library (game mod-api)
+  (export spawn-entity get-player-data)
+  (import (scheme base))
+
+  ;; Safe operations that mods can call
+  (define (spawn-entity type x y)
+    ;; Validate and spawn
+    (if (valid-entity? type)
+        (internal-spawn-entity type x y)
+        (error "Invalid entity")))
+
+  (define (get-player-data player-id)
+    ;; Read-only access
+    (internal-get-player-readonly player-id)))
+
+;; User mod only imports mod-api
+(library (user-mod-example)
+  (export mod-init)
+  (import (scheme base)
+          (game mod-api))  ; Only safe API available
+
+  (define (mod-init)
+    ;; User can call spawn-entity and get-player-data
+    ;; But can't access filesystem, network, or full game state
+    (spawn-entity 'custom-dog 10 20)))
+```
+
+### Oaken Use Cases in Web Applications
+
+**1. Plugin Systems:**
+- Load third-party Scheme plugins into your Hoot app
+- Each plugin gets attenuated capabilities (can't access full DOM or localStorage)
+- Use Oaken's taming pattern to restrict library access
+
+**2. User Scripts:**
+- Players write automation scripts in Scheme
+- Scripts compiled to Wasm with restricted imports
+- Computation limits prevent infinite loops
+
+**3. Dynamic Content:**
+- Level editors that generate Scheme code
+- Run level scripts safely without compromising game state
+- Sandbox prevents malicious level scripts from stealing data
+
+**4. Moddable Games:**
+- Community-created mods in Scheme
+- Mods run in WebAssembly sandbox with Oaken-style capability restrictions
+- Can extend gameplay without security risks
+
+### Integration with Goblins
+
+When using **Goblins actors with Hoot**, Oaken principles enhance security:
+
+- **Goblins**: Provides object-capability security for actor communication
+- **Oaken**: Provides code-level sandboxing within actors
+- **Hoot**: Compiles everything to sandboxed WebAssembly
+
+**Example: Secure multiplayer game actor in browser:**
+```scheme
+(import (goblins)
+        (hoot ffi))
+
+;; Actor that runs user-provided AI code
+(define (^ai-controller bcom allowed-actions)
+  (methods
+   ;; Execute user AI code with restricted capabilities
+   ((run-ai game-state)
+    ;; User AI code only gets read-only view + allowed actions
+    (let ((ai-api (make-ai-api game-state allowed-actions)))
+      (user-ai-code ai-api)))))
+
+;; Even if user-ai-code is malicious:
+;; 1. Browser sandbox: Can't access file system, can't make network requests
+;; 2. Wasm imports: Can only call explicitly imported browser APIs
+;; 3. Oaken capabilities: Can only call ai-api methods, not full game state
+;; 4. Goblins actors: Can only send messages to actors they have refs to
+```
+
+### Additional Resources
+
+- **Oaken Announcement**: https://spritely.institute/news/announcing-spritely-oaken.html
+- **Jonathan Rees's Dissertation**: "A Security Kernel Based on the Lambda Calculus"
+- **WebAssembly Security**: https://webassembly.org/docs/security/
+- See Guile and Goblins skill documentation for detailed Oaken patterns
 
 ## When to Ask for Help
 
@@ -1567,3 +1807,48 @@ When implementing Hoot features:
 7. **Note performance implications** (binary size, runtime cost)
 
 Remember: Write clean, functional Scheme code that compiles to efficient WebAssembly and integrates seamlessly with browser environments. Prioritize small binaries, fast load times, and type-safe FFI boundaries.
+
+## Version History
+
+### Hoot 0.6.1 (May 6, 2025)
+
+**New Features:**
+- **`--bundle` flag**: `guild compile-wasm --bundle` now automatically installs runtime libraries (reflect.js, reflect.wasm, wtf8.wasm) alongside the generated binary, simplifying deployment
+- **Debug symbols**: New `-g` flag for `guild compile-wasm` enables debug level control for better development experience
+- **FFI enhancements**:
+  - `external-function?`: Check if an external value is callable
+  - `call-external`: Invoke external functions programmatically
+- **New procedures**:
+  - `logcount`: Count the number of 1-bits in an integer
+  - `vector-move-left!`: Efficiently move vector elements
+- **Macro expansion**: Integrated psyntax-based macro expander into `eval` for better macro support
+- **Core syntax**: Added `quote-syntax` to core syntax modules
+- **Experimental modules**:
+  - `(hoot time)`: Experimental module for date/time operations (use with caution, API may change)
+- **Documentation**: Added comprehensive documentation for `(fibers streams)` module
+
+**Bug Fixes:**
+- Fixed floating-point conversion bug in `inexact->exact`
+- Corrected `number->string` for hexadecimal radix (base 16)
+- Resolved `current-time` jiffies calculation error
+- Fixed `string-split` delimiter handling
+- Corrected WebAssembly linker issues with `call_ref` and `return_call_ref` instructions
+- Fixed `cond-expand` error condition handling
+- Resolved `define-values` macro compilation errors
+
+**Performance Improvements:**
+- Optimized Wasm validation pass for faster compilation
+- Improved Wasm linker performance
+- Enhanced Wasm resolver efficiency
+- Optimized compiler backend emission
+
+**Browser Compatibility:**
+- Confirmed support: Firefox 121+, Chrome 119+
+- Safari support: Pending WebKit bug resolution (development builds show promise)
+- NodeJS support: Version 22+ recommended
+
+**Migration Notes:**
+- The `--bundle` flag is now recommended for simplified deployment workflows
+- Use `-g` flag during development for better debugging experience
+- The `(hoot time)` module is experimental; production code should be cautious about API stability
+- Bug fixes for `inexact->exact`, `number->string`, and `string-split` may change behavior for edge cases
