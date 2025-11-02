@@ -30,7 +30,7 @@ void main() {
       final path = bark.assetPath;
 
       // Assert
-      expect(path, 'assets/sounds/rottweiler/alert_high.mp3');
+      expect(path, 'sounds/rottweiler/alert_high.mp3');
     });
 
     test('toString returns readable representation', () {
