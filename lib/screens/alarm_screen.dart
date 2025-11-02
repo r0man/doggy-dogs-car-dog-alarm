@@ -16,6 +16,43 @@ class AlarmFeedbackMessages {
   static const recalibrated = 'Sensors recalibrated';
 }
 
+/// Feedback types for snackbar styling
+enum FeedbackType {
+  /// Warning/pending state (orange/amber)
+  warning,
+
+  /// Informational state (blue)
+  info,
+
+  /// Success state (green)
+  success,
+}
+
+/// Extension to get theme-aware colors for feedback types
+extension FeedbackTypeColors on FeedbackType {
+  /// Returns appropriate color for this feedback type based on theme
+  Color getColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+
+    switch (this) {
+      case FeedbackType.warning:
+        // Use a warm amber/orange tone that works in both light and dark modes
+        return brightness == Brightness.light
+            ? Colors.orange.shade700
+            : Colors.orange.shade400;
+      case FeedbackType.info:
+        // Use theme's primary color for informational messages
+        return colorScheme.primary;
+      case FeedbackType.success:
+        // Use a green tone that works in both light and dark modes
+        return brightness == Brightness.light
+            ? Colors.green.shade700
+            : Colors.green.shade400;
+    }
+  }
+}
+
 class AlarmScreen extends ConsumerStatefulWidget {
   const AlarmScreen({super.key});
 
@@ -303,13 +340,13 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
   }
 
   /// Shows a snackbar with feedback to the user
-  void _showFeedback(BuildContext context, String message, Color color) {
+  void _showFeedback(BuildContext context, String message, FeedbackType type) {
     if (!context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: color,
+        backgroundColor: type.getColor(context),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -325,7 +362,7 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         await alarmService.startActivation(mode: _selectedMode);
         if (context.mounted) {
           _showFeedback(
-              context, AlarmFeedbackMessages.activating, Colors.orange);
+              context, AlarmFeedbackMessages.activating, FeedbackType.warning);
         }
         break;
       case AlarmAction.deactivate:
@@ -335,21 +372,21 @@ class _AlarmScreenState extends ConsumerState<AlarmScreen> {
         await alarmService.cancelCountdown();
         if (context.mounted) {
           _showFeedback(
-              context, AlarmFeedbackMessages.cancelled, Colors.orange);
+              context, AlarmFeedbackMessages.cancelled, FeedbackType.warning);
         }
         break;
       case AlarmAction.acknowledge:
         await alarmService.acknowledge();
         if (context.mounted) {
           _showFeedback(
-              context, AlarmFeedbackMessages.acknowledged, Colors.blue);
+              context, AlarmFeedbackMessages.acknowledged, FeedbackType.info);
         }
         break;
       case AlarmAction.recalibrate:
         await alarmService.recalibrate();
         if (context.mounted) {
-          _showFeedback(
-              context, AlarmFeedbackMessages.recalibrated, Colors.green);
+          _showFeedback(context, AlarmFeedbackMessages.recalibrated,
+              FeedbackType.success);
         }
         break;
     }
