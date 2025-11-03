@@ -11,15 +11,22 @@ Installation script for Spritely development environment (Guile → Goblins → 
 This script automatically installs the complete Spritely stack for building the Doggy Dogs Dog World game:
 
 1. **GNU Guile** - Scheme interpreter and development environment
-   - Installs Guile 3.0+ (required for Goblins and Hoot)
-   - Supports multiple installation methods (Guix, apt, Homebrew, source)
+   - **Installs from main development branch** (required for Hoot compatibility)
+   - Hoot requires features not yet available in stable 3.0.10 release
+   - Preferred method: Guix (guile-next package) or build from Git source
+   - Supports multiple installation methods (Guix, Homebrew --HEAD, Git source, apt)
 
-2. **Spritely Goblins** - Distributed object programming library
+2. **guile-fibers** - Lightweight concurrency library for Guile
+   - **Required dependency for Goblins**
+   - Provides concurrent programming with fibers (green threads)
+   - Repository: https://github.com/wingo/fibers
+
+3. **Spritely Goblins** - Distributed object programming library
    - Actor-based programming model
    - Required for building distributed game features
    - Repository: https://codeberg.org/spritely/goblins
 
-3. **Spritely Hoot** - Scheme to WebAssembly compiler
+4. **Spritely Hoot** - Scheme to WebAssembly compiler
    - Compiles Scheme code to WASM
    - Enables running Scheme in web browsers
    - Includes `guild compile-wasm` command
@@ -58,19 +65,26 @@ Run this script to set up the Spritely development environment for working on Do
 
 The script tries installation methods in order of preference:
 
-**Guile:**
+**Guile (development version required for Hoot):**
+- **Linux**:
+  1. Guix package manager (guile-next - recommended)
+  2. Interactive choice: Git source (recommended) or system package manager
+  3. System package manager (apt/dnf/yum/pacman/zypper - may not work with Hoot)
+- **macOS**:
+  1. Guix package manager (guile-next - if available)
+  2. Homebrew with --HEAD flag (installs development version)
+
+**guile-fibers (required by Goblins):**
 1. Guix package manager
-2. System package manager (apt/dnf/yum/pacman/zypper/brew)
-3. Build from source (GNU FTP)
+2. Build from source (GitHub)
 
 **Goblins:**
 1. Guix package manager
-2. Homebrew (macOS only, via aconchillo/guile tap)
-3. Build from source (Codeberg)
+2. Build from source (Codeberg)
 
 **Hoot:**
 1. Guix package manager
-2. Homebrew (macOS only, via aconchillo/guile tap)
+2. Homebrew (macOS only)
 3. Build from source (Codeberg)
 
 ### Verification
@@ -80,6 +94,9 @@ After installation completes, verify with these commands:
 ```bash
 # Test Guile
 guile --version
+
+# Test guile-fibers
+guile -c '(use-modules (fibers))'
 
 # Test Goblins
 guile -c '(use-modules (goblins))'
@@ -97,16 +114,34 @@ guild compile-wasm --run /tmp/test.scm
 **Guile not found after installation:**
 - Restart your shell: `exec bash`
 - Or source your profile: `source ~/.bashrc` (Linux) or `source ~/.profile` (macOS)
+- Check PATH includes `/usr/local/bin`: `echo $PATH`
+
+**Hoot compilation fails with "no binding `primcall-raw-representations`":**
+- This error means you need Guile from the main development branch
+- Stable Guile 3.0.10 is NOT sufficient for Hoot
+- Solutions:
+  - Install via Guix: `guix install guile-next`
+  - macOS: `brew install guile --HEAD`
+  - Linux: Re-run script and choose option 1 (build from Git source)
 
 **Goblins module not loading:**
+- Check that guile-fibers is installed: `guile -c '(use-modules (fibers))'`
+- If missing: `guix install guile-fibers` or re-run installation script
 - Check that Guile is version 3.0+: `guile --version`
-- Ensure guile-fibers, guile-gnutls, and guile-websocket are installed
-- Try: `guix install guile-fibers guile-gnutls guile-websocket`
+
+**guile-fibers module not loading:**
+- Verify library path is set: `echo $GUILE_LOAD_PATH`
+- Try: `export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0:$GUILE_LOAD_PATH"`
+- Run `ldconfig` to update shared library cache (Linux): `sudo ldconfig`
 
 **guild compile-wasm not found:**
 - Check PATH includes `/usr/local/bin`: `echo $PATH`
 - Try: `export PATH="$PATH:/usr/local/bin"`
 - Verify Hoot installation: `find /usr/local -name "*hoot*"`
+
+**Build from source takes too long:**
+- Building Guile from Git can take 10-30 minutes depending on CPU
+- Use Guix for faster installation: `guix install guile-next guile-fibers guile-goblins guile-hoot`
 
 ### Related
 
