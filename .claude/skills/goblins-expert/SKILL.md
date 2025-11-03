@@ -1646,6 +1646,26 @@ You should ask the user for clarification when:
   "test message")
 ```
 
+## Terminal Game Development with Goblins
+
+Terminal Phase is a complete space shooter game built with Goblins that demonstrates production-quality real-time game architecture. It showcases advanced patterns for game development including time-travel debugging, cell-based transactional state, and actor-based entity management.
+
+**Key Insights from Terminal Phase:**
+- All game state uses cells (not `set!`) for transactional semantics
+- Time-travel debugging via `copy-whactormap` snapshots
+- Pushdown automata for game state stack (menu → game → pause)
+- Engine actions pattern for deferred side effects
+- `define-slot-actor` macro separates setup from behavior
+- `#:frozen` actors for immutability and debugging
+
+See the Guile Scheme Programmer skill for detailed terminal game development patterns including:
+- Posinfo pattern for unified rendering/collision
+- Grid-based collision detection
+- Level tape system for text-based levels
+- NCurses integration
+- Fixed timestep game loop
+- Multiple collision phases
+
 ## Debugging and Persistence
 
 ### Time-Travel Debugging with Actormap Snapshots
@@ -2414,7 +2434,23 @@ The **GNU Shepherd** is an init system and process manager originally built for 
 The advanced patterns in this skill come from production Goblins applications:
 
 - **brassica-chat**: P2P chat demonstrating CRDTs, revokable capabilities, and sealer/unsealer authentication patterns
-- **goblinville**: Distributed multiplayer game showcasing event synchronization, swappable actors for state machines, and the ticker pattern
+- **goblinville**: Distributed multiplayer game (Spring Lisp Game Jam 2025) demonstrating:
+  - **Client-Server Architecture**: Hoot-compiled client (WebAssembly) + Guile server with Goblins actors
+  - **Chunked World Design**: Tile map partitioned into chunks for scalable multiplayer
+  - **Body Pattern**: Corporeal form (`^body`) actors for world interaction and inspection
+  - **Husk Pattern**: Soulless body (`^husk`) to break recursive knot during initialization
+  - **Swappable Client State**: `^client` vs `^client/disconnected` for connection lifecycle
+  - **Event Broadcasting**: Pub/sub pattern for synchronized multiplayer state
+  - **Timer System**: World-managed async waits for growth loops and delayed actions
+  - **Dynamic Objects**: Players, plants with growth state machines, pickups, crops
+  - **Movement System**: Body records with direction, speed, and tick-based movement
+  - **Collision Detection**: Tile clipping, chunk-partitioned spatial queries
+  - **Inventory Management**: Cell-based with capacity limits and async operations
+  - **Admin Patterns**: Attenuated `^registrar` for player registration, `^admin` for full control
+  - **OCapN Integration**: WebSocket netlayer for browser-to-server communication
+  - **60 FPS Game Loop**: Fiber-based update loop with lag compensation
+  - **Capability-Based Actions**: Client actors scoped to individual players
+  - **Production Architecture**: Maps data structure patterns, grid utilities, and efficient chunk synchronization for real-world multiplayer games
 - **terminal-phase**: Game with time-travel debugging, actormap snapshots, ticker pattern for entity collections, and Syrup persistence
 - **navi**: Object capability user agent demonstrating:
   - Multiple incompatible OCapN boundaries (app ↔ navi ↔ outside world)
