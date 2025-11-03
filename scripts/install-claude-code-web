@@ -1013,6 +1013,46 @@ main() {
         echo ""
     fi
 
+    # Configure Guile environment variables
+    echo ""
+    echo "Step 4: Configuring Guile Environment"
+    echo "-------------------------------------"
+    echo ""
+
+    # Add Guile paths to bashrc and profile
+    local guile_env_setup='
+# Guile load paths for Spritely development
+export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0:${GUILE_LOAD_PATH}"
+export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache:${GUILE_LOAD_COMPILED_PATH}"'
+
+    # Add to ~/.bashrc if not already present
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "GUILE_LOAD_PATH" "$HOME/.bashrc"; then
+            echo "$guile_env_setup" >> "$HOME/.bashrc"
+            echo "  ✓ Added Guile paths to ~/.bashrc"
+        else
+            echo "  ✓ Guile paths already in ~/.bashrc"
+        fi
+    fi
+
+    # Add to ~/.profile if not already present
+    if [ -f "$HOME/.profile" ]; then
+        if ! grep -q "GUILE_LOAD_PATH" "$HOME/.profile"; then
+            echo "$guile_env_setup" >> "$HOME/.profile"
+            echo "  ✓ Added Guile paths to ~/.profile"
+        else
+            echo "  ✓ Guile paths already in ~/.profile"
+        fi
+    fi
+
+    # Export for current session
+    export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0:${GUILE_LOAD_PATH}"
+    export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache:${GUILE_LOAD_COMPILED_PATH}"
+
+    echo "  ✓ Environment variables configured"
+    echo ""
+    echo "ℹ️  Note: Restart your shell or run 'source ~/.bashrc' to load new paths"
+
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "✅ Installation Complete!"
