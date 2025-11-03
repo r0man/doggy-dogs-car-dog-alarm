@@ -610,10 +610,97 @@ Efficient inter-process communication on the same machine using Unix domain sock
 - **Multi-Vat Communication**: Multiple netlayers share same introduction server
 
 #### Proxy Coordinator for Nested OCapN Boundaries
-The proxy coordinator pattern manages capabilities across multiple network boundaries with nested vat contexts:
+The proxy coordinator pattern manages capabilities across multiple network boundaries with nested vat contexts. This pattern is essential when you have multiple incompatible OCapN boundaries (e.g., Navi user agent with app boundary + network boundary):
 
 ```scheme
-;; Proxy coordinator for managing capabilities across vat boundaries
+;; Advanced proxy coordinator managing TWO incompatible OCapN boundaries
+;; Example: Navi app <-> Navi <-> outside world
+;; Each boundary requires bi-directional proxy wrapping with round-tripping
+(define (^proxies _bcom)
+  ;; Tables for app <-> navi boundary
+  (define app-remote->proxy (spawn ^ghash))
+  (define proxy->app-remote (spawn ^ghash))
+  ;; Tables for navi <-> outside boundary
+  (define outside-remote->proxy (spawn ^ghash))
+  (define proxy->outside-remote (spawn ^ghash))
+
+  (define (maybe-make-proxy-for-outside remote-refr)
+    "Wrap remote-refr from app to be usable by outside world"
+    (unless (remote-refr? remote-refr)
+      (error "Expected remote refr"))
+    (match ($ app-remote->proxy 'ref remote-refr)
+      [#f
+       (let ((proxy (spawn ^outside-proxy remote-refr)))
+         ($ app-remote->proxy 'set remote-refr proxy)
+         ($ proxy->app-remote 'set proxy remote-refr)
+         proxy)]
+      [proxy proxy]))
+
+  (define (maybe-make-proxy-for-app remote-refr)
+    "Wrap remote-refr from outside to be usable by app"
+    (unless (remote-refr? remote-refr)
+      (error "Expected remote refr"))
+    (match ($ outside-remote->proxy 'ref remote-refr)
+      [#f
+       (let ((proxy (spawn ^internal-proxy remote-refr)))
+         ($ outside-remote->proxy 'set remote-refr proxy)
+         ($ proxy->outside-remote 'set proxy remote-refr)
+         proxy)]
+      [proxy proxy]))
+
+  ;; Proxy representing outside world object, handed to app
+  (define-actor (^outside-proxy _bcom remote-object)
+    (define (outside->app arg)
+      (match arg
+        [(? remote-refr? refr) (maybe-make-proxy-for-app refr)]
+        [(? local-refr? refr) ($ proxy->app-remote 'ref refr)]
+        [(? pair?) (map outside->app arg)]
+        [something-else something-else]))
+
+    (define (app->outside arg)
+      (match arg
+        [(? local-refr? refr) ($ proxy->outside-remote 'ref refr)]
+        [(? remote-refr?) (maybe-make-proxy-for-outside arg)]
+        [(? pair?) (map app->outside arg)]
+        [something-else something-else]))
+
+    (lambda args
+      ;; Call from internal app to outside world
+      (define processed-args (app->outside args))
+      (define vow (apply <- remote-object processed-args))
+      (on vow outside->app #:promise? #t)))
+
+  ;; Proxy representing app object, handed to outside world
+  (define-actor (^internal-proxy _bcom remote-object)
+    (define (outside->app arg)
+      (match arg
+        [(? remote-refr? refr) (maybe-make-proxy-for-app refr)]
+        [(? local-refr? refr) ($ proxy->app-remote 'ref refr refr)]
+        [(? pair?) (map outside->app arg)]
+        [something-else something-else]))
+
+    (define (app->outside arg)
+      (match arg
+        [(? local-refr? refr) ($ proxy->outside-remote 'ref refr)]
+        [(? remote-refr? refr) (maybe-make-proxy-for-outside refr)]
+        [(? pair?) (map app->outside arg)]
+        [something-else something-else]))
+
+    (lambda args
+      ;; Call from outside world to internal app
+      (define processed-args (outside->app args))
+      (define vow (apply <- remote-object processed-args))
+      (on vow app->outside #:promise? #t)))
+
+  (methods
+   (maybe-make-proxy-for-outside maybe-make-proxy-for-outside)
+   (maybe-make-proxy-for-app maybe-make-proxy-for-app)
+   (proxy->remote-refr
+    (lambda (obj)
+      (or ($ proxy->app-remote 'ref obj)
+          ($ proxy->outside-remote 'ref obj))))))
+
+;; Simpler single-boundary proxy coordinator
 (define (^proxy-coordinator bcom local-vat remote-vat)
   (define proxies (make-hash-table))
 
@@ -654,6 +741,8 @@ The proxy coordinator pattern manages capabilities across multiple network bound
       (error "Proxy revoked"))
     (<- remote-ref method args))))
 ```
+
+**Key Insight from Navi**: When building user agents or platforms that host untrusted code, you often need TWO incompatible OCapN boundaries with bi-directional proxy wrapping. The proxy coordinator must handle round-tripping: an object that originated in the app should be unwrapped when passed back to the app.
 
 #### Prelay Pattern for Relay Services
 The prelay (proxy relay) pattern creates intermediary services for routing, monitoring, or transforming messages:
@@ -733,6 +822,197 @@ The on-sever pattern gracefully handles network disconnections and resource clea
       (format #t "Player ~a disconnected\n" player-name)
       (<- game-world 'remove-player player)))
 ```
+
+#### MessagePort Netlayer for Browser-Based OCapN
+The MessagePort netlayer enables OCapN communication within browsers using JavaScript's MessageChannel API. This is essential for object-capability user agents like Navi:
+
+```scheme
+(use-modules (goblins ocapn netlayer message-port))
+
+;; Message port network manages multiple app connections
+(define-actor (^message-port-network _bcom)
+  (define apps->conn-establisher-port (make-hash-table))
+
+  (define (make-handle-connection-request from-peer)
+    (define encoded-from-peer
+      (syrup-encode from-peer #:marshallers (list marshall::ocapn-peer)))
+    (lambda (data ports)
+      (define data-bv (uint8-array->bytevector data))
+      (match (syrup-decode data-bv #:unmarshallers (list unmarshall::ocapn-peer))
+        (($ <ocapn-peer> 'message-port peer-name #f)
+         (let ((new-conn-ch (hash-ref apps->conn-establisher-port peer-name)))
+           (message-port-post-message new-conn-ch encoded-from-peer ports))))))
+
+  (methods
+   ((add-app)
+    (define app-id (base32-encode (strong-random-bytes 32)))
+    (when (hash-ref apps->conn-establisher-port app-id)
+      (error "App ID collision"))
+    (define app-loc (make-ocapn-peer 'message-port app-id #f))
+    (define channel (new-message-channel))
+    (define port1 (message-channel-port1 channel))
+    (define port2 (message-channel-port2 channel))
+    (hash-set! apps->conn-establisher-port app-id port1)
+    (let* ((handle-connection-request (make-handle-connection-request app-loc))
+           (callback (procedure->external handle-connection-request)))
+      (message-port-set-callback! port1 callback))
+    (list app-loc port2))))
+
+;; MessagePort netlayer for individual app
+(define-actor (^message-port-netlayer bcom peer-location new-conn-port)
+  (define-values (conn-establisher-vow conn-establisher-resolver)
+    (spawn-promise-and-resolver))
+
+  (define (^establish-new-conn _bcom)
+    (lambda (location port)
+      (<-np conn-establisher-vow (spawn ^message-io port) location)
+      *unspecified*))
+  (define establish-new-conn (spawn ^establish-new-conn))
+
+  (methods
+   [(netlayer-name) 'message-port]
+   [(our-location) peer-location]
+   [(self-location? loc) (same-peer-location? peer-location loc)]
+   [(setup conn-establisher)
+    (<-np conn-establisher-resolver 'fulfill conn-establisher)
+    (define (listen-new-conn encoded-remote-loc port)
+      (define remote-loc
+        (syrup-decode (uint8-array->bytevector encoded-remote-loc)
+                      #:unmarshallers (list unmarshall::ocapn-peer)))
+      (<-np-extern establish-new-conn remote-loc port))
+    (message-port-set-callback! new-conn-port
+                                (procedure->external listen-new-conn))
+    *unspecified*]
+   [(connect-to remote-peer)
+    (define channel (new-message-channel))
+    (define port1 (message-channel-port1 channel))
+    (define port2 (message-channel-port2 channel))
+    (define encoded-location
+      (syrup-encode remote-peer #:marshallers (list marshall::ocapn-peer)))
+    (message-port-post-message new-conn-port encoded-location port2)
+    (<- conn-establisher-vow (spawn ^message-io port1) remote-peer)]))
+
+;; Usage: Browser-based app communication
+(define app-network (spawn ^message-port-network))
+(match ($ app-network 'add-app)
+  ((app-loc app-port)
+   (define netlayer (spawn ^message-port-netlayer app-loc app-port))
+   (define mycapn (spawn-mycapn netlayer))
+   ;; Now app can use OCapN over MessagePort
+   ...))
+```
+
+**Use Cases:**
+- **Browser User Agents**: Like Navi, for running sandboxed capability-secure apps
+- **WebAssembly Isolation**: OCapN communication between host and Wasm modules
+- **Cross-Origin Capabilities**: Secure communication between iframes with different origins
+- **Hoot Integration**: Enable Scheme-to-Wasm apps to use full Goblins networking
+
+#### Object Capability User Agent Architecture (Navi Pattern)
+Building secure user agents for running untrusted applications with object capability security:
+
+```scheme
+;; User agent architecture with three layers:
+;; 1. Backend (server with Tor + WebSocket)
+;; 2. Frontend (Hoot/Wasm in browser)
+;; 3. Apps (Hoot/Wasm with isolated OCapN boundaries)
+
+;; Backend: Navi controller managing apps and prelay
+(define-actor (^navi-controller bcom #:optional [apps (spawn ^ghash)])
+  (methods
+   [(prelay-info)
+    (list (<- mycapn 'register prelay-endpoint 'onion)
+          (<- mycapn 'register prelay-controller 'websocket))]
+
+   [(install-app self-proposed-name data)
+    (define app-id (strong-random-bytes 32))
+    (when ($ apps 'ref app-id)
+      (error "App ID collision"))
+    (define new-app-data
+      (hashmap ('id app-id)
+               ('self-proposed-name self-proposed-name)
+               ('source (spawn ^cell data))
+               ('active? #f)))
+    ($ apps 'set app-id new-app-data)]
+
+   [(activate-app app-id)
+    (define app ($ apps 'ref app-id))
+    ($ apps 'set app-id (hashmap-set app 'active? #t))]
+
+   [(get-installed-apps)
+    (hashmap-fold
+     (lambda (app-id app-data prev)
+       (cons app-data prev))
+     '()
+     ($ apps 'data))]))
+
+;; Backend setup with multiple netlayers
+(define-values (vat mycapn prelay-endpoint prelay-controller navi-controller)
+  (spawn-persistent-vat
+   env
+   (lambda ()
+     ;; WebSocket for browser frontend (unencrypted, local)
+     (define websocket-netlayer
+       (spawn ^websocket-netlayer
+              #:verify-certificates? #f
+              #:encrypted? #f))
+     ;; Onion for peer-to-peer (encrypted via Tor)
+     (define onion-netlayer (spawn ^onion-netlayer))
+     (define mycapn (spawn-mycapn websocket-netlayer onion-netlayer))
+     (define-values (prelay-endpoint prelay-controller)
+       (spawn-prelay-pair (facet mycapn 'enliven)))
+     (define controller (spawn ^navi-controller))
+     (values mycapn prelay-endpoint prelay-controller controller))
+   (make-bloblin-store "navi-backend-server")))
+
+;; Frontend: Navi in browser
+(define vat (spawn-vat))
+(define ws-netlayer
+  (with-vat vat
+    (spawn ^websocket-netlayer #:encrypted? #f)))
+(define mycapn
+  (with-vat vat
+    (spawn-mycapn ws-netlayer)))
+(define navi-controller-vow
+  (with-vat vat
+    (<- mycapn 'enliven (string->ocapn-id navi-server-sref))))
+(define proxy-coordinator
+  (with-vat vat
+    (spawn ^proxies)))  ; Manages two boundaries
+
+;; App network with MessagePort isolation
+(define app-network
+  (with-vat vat
+    (spawn ^message-port-network)))
+
+;; Install app from binary
+(define (^navi-app bcom id self-proposed-name src-cell element)
+  (define controller (spawn ^navi-app-controller element))
+
+  (methods
+   ((uninstall) (<-np navi-controller-vow 'uninstall-app id))
+   ((self-proposed-name) self-proposed-name)
+   ((start-app)
+    (<-np navi-controller-vow 'activate-app id)
+    (match ($ app-network 'add-app)
+      ((app-loc app-port)
+       (let-on ((src (<- src-cell))
+                (sref (<- mycapn 'register controller 'message-port)))
+         ;; Load WebAssembly with isolated OCapN boundary
+         (load-wasm! (bytevector->uint8-array src)
+                     (ocapn-id->string app-loc)
+                     app-port
+                     (ocapn-id->string sref))))))))
+```
+
+**Architecture Benefits:**
+- **Multiple Isolation Boundaries**: Backend ↔ Frontend ↔ Apps with different security properties
+- **Tor Integration**: P2P networking via onion services for distributed capabilities
+- **WebSocket Local**: Efficient local communication between backend and browser frontend
+- **MessagePort Isolation**: Each app gets isolated OCapN vat with attenuated capabilities
+- **Dynamic Loading**: Apps loaded as WebAssembly with capability injection
+
+**Key Pattern**: User agent acts as capability broker between sandboxed apps and outside world, using proxy coordinator to manage bi-directional capability flow across incompatible boundaries.
 
 #### Enhanced Revokable Capabilities via Proxies
 Advanced revocation pattern with caretaker and membrane:
@@ -1026,7 +1306,43 @@ Synchronous operations are transactional - if error occurs, state rolls back aut
     (bcom (^transactional-account bcom (- balance amount))))))
 ```
 
-### 6. Combine with Spritely Oaken for Code Sandboxing
+### 6. Use Sturdyrefs for Persistent Capabilities
+
+**Sturdyrefs** (sturdy references) are persistent OCapN identifiers that can be saved, shared, and used to reconnect to capabilities across network boundaries and time:
+
+```scheme
+;; Register capability and get sturdyref
+(define my-service (spawn ^my-service))
+(define sturdyref-vow (<- mycapn 'register my-service 'onion))
+
+(on sturdyref-vow
+    (lambda (sref)
+      ;; sref is an ocapn-id that can be shared
+      (define sref-string (ocapn-id->string sref))
+      (format #t "Share this sturdyref: ~a\n" sref-string)
+      ;; Save to file, send to peer, display to user, etc.
+      ...))
+
+;; Later, or on another machine, enliven the sturdyref
+(define remote-service-vow
+  (<- mycapn 'enliven (string->ocapn-id sref-string)))
+
+;; Use the remote capability
+(on remote-service-vow
+    (lambda (service)
+      (<- service 'do-something)))
+```
+
+**Best Practices:**
+- **Export selectively**: Only register capabilities you want to be accessible remotely
+- **Use prelay for routing**: Combine with prelay pattern for relay/rendezvous services
+- **Revokable sturdyrefs**: Wrap in caretaker before registering for revokability
+- **Self-proposed names**: Include method for human-readable identification
+- **Copy/paste workflow**: Users share sturdyrefs like URLs but with capability semantics
+
+**Security Note**: Sturdyrefs grant access to whoever has them. They're like passwords but for capabilities - treat them as sensitive, use them for trusted exports, and consider time-limited or revokable wrappers for untrusted scenarios.
+
+### 7. Combine with Spritely Oaken for Code Sandboxing
 
 **Spritely Oaken** complements Goblins by providing secure sandboxing for untrusted code execution within actors. While Goblins provides object-capability security at the actor level, Oaken provides capability-based sandboxing for code loaded into individual actors.
 
@@ -1078,6 +1394,205 @@ Synchronous operations are transactional - if error occurs, state rolls back aut
 **Additional Resources:**
 - **Oaken Announcement**: https://spritely.institute/news/announcing-spritely-oaken.html
 - See Guile skill documentation for detailed Oaken patterns and examples
+
+## Browser UI Integration Patterns (Hoot + Navi)
+
+When building browser-based Goblins applications with Hoot (Scheme-to-WebAssembly), integrate UI declaratively with capability security:
+
+### SXML to DOM with Capability-Secure Events
+
+```scheme
+(use-modules (navi ui)
+             (navi dom element)
+             (navi dom event))
+
+;; Convert SXML to DOM with capability-secure event handlers
+(define (sxml->dom exp)
+  (match exp
+    ;; Text node
+    [(? string? str) (make-text-node str)]
+    [(? number? num) (make-text-node (number->string num))]
+
+    ;; Element with attributes and children
+    [((? symbol? tag) . body)
+     (let ((elem (make-element (symbol->string tag))))
+       (match body
+         ;; With attributes
+         [(('@ . attrs) . children)
+          (for-each
+           (lambda (attr)
+             (match attr
+               ;; String attribute
+               [((? symbol? name) (? string? val))
+                (set-attribute! elem (symbol->string name) val)]
+               ;; Capability attribute (event handler)
+               [((? symbol? name) (? procedure? proc))
+                (add-event-listener! elem
+                                     (symbol->string name)
+                                     (procedure->external proc))]
+               ;; Actor attribute (capability)
+               [((? symbol? name) (? live-refr? refr))
+                (add-event-listener! elem
+                                     (symbol->string name)
+                                     (procedure->external
+                                      (lambda (event)
+                                        (<-np-extern refr))))]))
+           attrs)
+          ;; Add children recursively
+          (for-each
+           (lambda (child)
+             (append-child! elem (sxml->dom child)))
+           children)]
+         ;; No attributes
+         [children
+          (for-each
+           (lambda (child)
+             (append-child! elem (sxml->dom child)))
+           children)])
+       elem)]))
+
+;; Usage: Declarative UI with capability-secure callbacks
+(define (^my-app-ui bcom counter)
+  (define (handle-increment event)
+    (<- counter 'increment))
+
+  (define (handle-reset event)
+    (<- counter 'reset))
+
+  (methods
+   ((render)
+    (on (<- counter 'get)
+        (lambda (count)
+          (sxml->dom
+           `(div (@ (class "app"))
+                 (h1 "Counter App")
+                 (p "Count: " ,(number->string count))
+                 (button (@ (click ,handle-increment)) "Increment")
+                 (button (@ (click ,handle-reset)) "Reset"))))))))
+```
+
+### Declarative GUI Framework (Navi Pattern)
+
+```scheme
+;; GUI expressions with capability integration
+(define (make-gui->sxml vat mycapn proxy-coordinator)
+  (lambda (gui-sexp)
+    (match gui-sexp
+      ;; Text
+      [('text txt ...)
+       `(p ,@(map (lambda (t) (gui->sxml t)) txt))]
+
+      ;; Button with capability callback
+      [('button label (? remote-refr? callback))
+       `(button (@ (click ,callback)) ,label)]
+
+      ;; Object display with self-proposed name
+      [('object (? remote-refr? obj))
+       (define spn-vow (<- obj 'self-proposed-name))
+       (define label-element (sxml->dom `(span "Object")))
+       (on spn-vow
+           (lambda (spn)
+             (set-element-text-content! label-element spn)))
+       `(span (@ (class "object spn")) ,label-element)]
+
+      ;; Text entry bound to capability
+      [('text-entry (? remote-refr? notify))
+       (define (notify-them! event)
+         (define entry (get-element-by-id "text-entry"))
+         (define text (element-value entry))
+         (<-np-extern notify text))
+       `(input (@ (id "text-entry") (type "text") (input ,notify-them!)))]
+
+      ;; Import dialog (sturdyref input)
+      [('ask-for-import (? string? description) (? live-refr? resolver))
+       (define (provide-import! event)
+         (event-prevent-default event)
+         (define sref-text
+           (string->ocapn-id (element-value sref-input-element)))
+         (with-vat vat
+           (<-np resolver 'fulfill (<- mycapn 'enliven sref-text))))
+       (define sref-input-element
+         (sxml->dom `(input (@ (type "text") (placeholder "Sturdyref")))))
+       `(form (@ (submit ,provide-import!))
+              (p ,(format #f "Import: ~a" description))
+              (fieldset (@ (role "group"))
+                        ,sref-input-element
+                        (button (@ (type "submit")) "Import")))]
+
+      ;; Group multiple elements
+      [('group elements ...)
+       `(span (@ (class "group")) ,@(map gui->sxml elements))])))
+
+;; Usage: Build interactive app UI
+(define (^chat-app bcom)
+  (define messages (spawn ^cell '()))
+  (define current-message (spawn ^cell ""))
+
+  (define (send-message)
+    (define msg ($ current-message))
+    ($ messages (cons msg ($ messages)))
+    ($ current-message "")
+    (<- self 'redraw))
+
+  (methods
+   ((render)
+    (let ((send-button (spawn ^callback send-message)))
+      `(group
+        (text "Chat Application")
+        (group ,@(reverse ($ messages)))
+        (group
+         (text-entry ,current-message)
+         (button "Send" ,send-button)))))))
+```
+
+### DOM Abstraction for Capability Security
+
+Instead of giving apps full DOM access, provide attenuated capabilities:
+
+```scheme
+;; Read-only DOM element capability
+(define (^dom-element-readonly element)
+  (methods
+   ((get-text-content)
+    (element-text-content element))
+   ((get-attribute name)
+    (element-attribute element name))))
+
+;; Controlled DOM element (can modify but not escape)
+(define (^dom-element-controlled element allowed-tags)
+  (methods
+   ((set-text-content text)
+    (set-element-text-content! element text))
+
+   ((append-child child-sxml)
+    ;; Verify child uses allowed tags
+    (unless (allowed-tag? child-sxml allowed-tags)
+      (error "Tag not allowed"))
+    (append-child! element (sxml->dom child-sxml)))
+
+   ((clear)
+    (set-element-text-content! element ""))))
+
+;; Give apps controlled DOM capabilities, not full document access
+(define app-container (get-element-by-id "app-container"))
+(define app-dom-cap (spawn ^dom-element-controlled
+                            app-container
+                            '(div span p button input)))
+(<- app-actor 'set-dom app-dom-cap)
+```
+
+**Security Benefits:**
+- **No ambient DOM authority**: Apps can't access arbitrary elements
+- **Attenuated capabilities**: Limited to specific elements and operations
+- **Tag whitelisting**: Prevent apps from injecting dangerous elements (script, iframe)
+- **Event capabilities**: Event handlers are capabilities, not eval'd strings
+- **SXML safety**: Declarative structure prevents injection attacks
+
+**Use Cases:**
+- **Browser-based Goblins apps**: Like Navi, for capability-secure web applications
+- **Hoot integration**: Scheme-to-Wasm apps with UI
+- **Plugin systems**: Let plugins render UI in controlled containers
+- **Secure dashboards**: Multiple untrusted widgets with isolated DOM capabilities
 
 ## When to Ask for Help
 
@@ -1584,6 +2099,309 @@ The `bcom` operation is dramatically faster in v0.16.0+ using "encapsulated cook
 - **Promise pipelining**: Chain remote operations to reduce network round-trips
 - **Batch operations**: Use ticker pattern to process collections efficiently
 
+## Service Management and Deployment
+
+### GNU Shepherd × Goblins Integration
+
+The **GNU Shepherd** is an init system and process manager originally built for GNU Hurd and now used by Guix System. Spritely Institute is actively porting Shepherd to Goblins, bringing object-capability security to system-level service management.
+
+**Project Status (2025):**
+- **Lead Developer**: Juliana Sims (Spritely Integration Engineer)
+- **Funding**: NLnet Foundation support
+- **Timeline**: Over 1 year of active development
+- **Branch**: `wip-goblinsify` in Shepherd repository
+- **Presentation**: FOSDEM 2025 - "Shepherd with Spritely Goblins for Secure System Layer Collaboration"
+
+**What Shepherd Provides:**
+- Init system and process/daemon manager for GNU/Linux systems
+- Service dependency management and supervision
+- Can run with root privileges (system services) or user privileges (user services)
+- Task execution and process lifecycle management
+
+**Why Port to Goblins:**
+- **Object-Capability Security at System Layer**: Apply POLA to service management
+- **Distributed Service Management**: Secure collaboration across network boundaries
+- **Higher-Level Programming Model**: Replace ad-hoc actor model with Goblins actors
+- **Secure Machine-Local Collaboration**: Unix domain sockets with capability security
+- **Vision**: "Plan9ification of Guix" - distributed, secure system services
+
+### Shepherd's Original Architecture vs Goblins
+
+**Original Shepherd:**
+- Ad-hoc actor model using Guile Fibers (lightweight threads)
+- Message passing via channels
+- Traditional process supervision model
+
+**Goblins Shepherd:**
+- Full Goblins actor model with vats and transactional semantics
+- Object-capability security for service access control
+- Distributed service coordination via OCapN
+- Capability-based service dependencies
+
+### Service Management Patterns with Goblins
+
+#### Service Actor Pattern
+```scheme
+;; Service actor with lifecycle management
+(define (^service bcom service-name config supervisor-cap)
+  (define state 'stopped)
+  (define process-pid #f)
+
+  (methods
+   ;; Start service
+   ((start)
+    (unless (equal? state 'stopped)
+      (error "Service already running"))
+    (let ((pid (spawn-process service-name config)))
+      (bcom (^service bcom service-name config supervisor-cap)
+            state: 'running
+            process-pid: pid)))
+
+   ;; Stop service
+   ((stop)
+    (unless (equal? state 'running)
+      (error "Service not running"))
+    (kill-process process-pid)
+    (bcom (^service bcom service-name config supervisor-cap)
+          state: 'stopped
+          process-pid: #f))
+
+   ;; Restart service
+   ((restart)
+    (when (equal? state 'running)
+      ($ self 'stop))
+    ($ self 'start))
+
+   ;; Get service status
+   ((status)
+    `((name . ,service-name)
+      (state . ,state)
+      (pid . ,process-pid)))
+
+   ;; Health check
+   ((health-check)
+    (if (and (equal? state 'running)
+             (process-alive? process-pid))
+        'healthy
+        'unhealthy))))
+
+;; Usage
+(define web-service (spawn ^service "nginx" config supervisor-cap))
+(<- web-service 'start)
+(<- web-service 'status)
+```
+
+#### Supervisor with Capability-Based Access
+```scheme
+;; Supervisor that grants attenuated service capabilities
+(define (^service-supervisor bcom services admin-seal)
+  (methods
+   ;; Register new service (admin only)
+   ((register service-name service-ref admin-token)
+    (unless ($ admin-seal 'sealed? admin-token)
+      (error "Admin access required"))
+    (bcom (^service-supervisor bcom
+                               (acons service-name service-ref services)
+                               admin-seal)))
+
+   ;; Get service capability (attenuated)
+   ((get-service service-name)
+    (let ((service (assoc-ref services service-name)))
+      (unless service
+        (error "Service not found"))
+      ;; Return read-only view
+      (spawn ^service-readonly-view service)))
+
+   ;; Admin control
+   ((admin-control service-name action admin-token)
+    (unless ($ admin-seal 'sealed? admin-token)
+      (error "Admin access required"))
+    (let ((service (assoc-ref services service-name)))
+      (<- service action)))))
+
+;; Read-only service view (attenuated capability)
+(define (^service-readonly-view service-ref)
+  (methods
+   ((status) ($ service-ref 'status))
+   ((health-check) ($ service-ref 'health-check))))
+```
+
+#### Distributed Service Coordination
+```scheme
+;; Coordinate services across multiple machines
+(define (^distributed-supervisor bcom local-services remote-supervisors)
+  (methods
+   ;; Start service with dependencies
+   ((start-with-deps service-name)
+    (let* ((service (assoc-ref local-services service-name))
+           (deps ($ service 'dependencies)))
+      ;; Check dependencies across all supervisors
+      (for-each
+       (lambda (dep-name)
+         ;; May be on remote supervisor
+         (on (<- self 'find-service dep-name)
+             (lambda (dep-service)
+               (on (<- dep-service 'health-check)
+                   (lambda (health)
+                     (unless (eq? health 'healthy)
+                       (error "Dependency unhealthy")))))))
+       deps)
+      ;; Start service
+      (<- service 'start)))
+
+   ;; Find service across all supervisors
+   ((find-service service-name)
+    (let ((local (assoc-ref local-services service-name)))
+      (if local
+          local
+          ;; Search remote supervisors
+          (let loop ((supervisors remote-supervisors))
+            (if (null? supervisors)
+                (error "Service not found")
+                (on (<- (car supervisors) 'has-service? service-name)
+                    (lambda (has?)
+                      (if has?
+                          (<- (car supervisors) 'get-service service-name)
+                          (loop (cdr supervisors)))))))))))
+```
+
+#### Service with Unix Domain Socket Communication
+```scheme
+;; Service using Unix domain sockets for efficient IPC
+(define (^ipc-service bcom service-name uds-netlayer)
+  (define service-vat (spawn-vat #:netlayer uds-netlayer))
+
+  (methods
+   ;; Start service with Unix socket endpoint
+   ((start)
+    (call-with-vat service-vat
+      (lambda ()
+        (define handler (spawn ^request-handler))
+        ;; Expose handler via Unix domain socket
+        (<- uds-netlayer 'expose 'request-handler handler))))
+
+   ;; Connect to service
+   ((connect)
+    ;; Return capability to remote handler
+    (<- uds-netlayer 'connect 'request-handler))))
+
+;; Usage: High-performance local service communication
+(define intro-server (spawn ^introduction-server))
+(define netlayer (make-unix-socket-netlayer #:intro-server intro-server))
+(define db-service (spawn ^ipc-service "database" netlayer))
+(<- db-service 'start)
+
+;; Client connects
+(on (<- db-service 'connect)
+    (lambda (db-cap)
+      (<- db-cap 'query "SELECT * FROM users")))
+```
+
+### Deployment Patterns for Goblins Applications
+
+#### Production Service Wrapper
+```scheme
+;; Wrap Goblins application as a system service
+(define (^goblins-service-wrapper bcom app-constructor config)
+  (define app-vat #f)
+  (define app-ref #f)
+
+  (methods
+   ;; Start application
+   ((start)
+    (set! app-vat (spawn-vat #:netlayer (make-tcp-netlayer config)))
+    (call-with-vat app-vat
+      (lambda ()
+        (set! app-ref (spawn app-constructor config))
+        (<- app-ref 'initialize)))
+    'started)
+
+   ;; Stop application
+   ((stop)
+    (when app-vat
+      (call-with-vat app-vat
+        (lambda ()
+          (<- app-ref 'shutdown)))
+      (vat-stop app-vat))
+    'stopped)
+
+   ;; Health check
+   ((health)
+    (if app-vat
+        (call-with-vat app-vat
+          (lambda ()
+            (<- app-ref 'health-check)))
+        'not-running))
+
+   ;; Reload configuration
+   ((reload new-config)
+    (call-with-vat app-vat
+      (lambda ()
+        (<- app-ref 'reload-config new-config))))))
+```
+
+#### Multi-Process Deployment
+```scheme
+;; Deploy Goblins app across multiple processes
+(define (^multi-process-coordinator bcom process-configs intro-server)
+  (define processes '())
+
+  (methods
+   ;; Spawn process group
+   ((spawn-all)
+    (let ((new-processes
+           (map
+            (lambda (config)
+              (let* ((netlayer (make-unix-socket-netlayer
+                               #:intro-server intro-server))
+                     (vat (spawn-vat #:netlayer netlayer))
+                     (process-id (assoc-ref config 'id)))
+                (cons process-id vat)))
+            process-configs)))
+      (bcom (^multi-process-coordinator bcom process-configs intro-server)
+            processes: new-processes)))
+
+   ;; Stop all processes
+   ((stop-all)
+    (for-each
+     (lambda (process-entry)
+       (vat-stop (cdr process-entry)))
+     processes)
+    (bcom (^multi-process-coordinator bcom process-configs intro-server)
+          processes: '()))
+
+   ;; Get process by ID
+   ((get-process process-id)
+    (assoc-ref processes process-id))))
+```
+
+### Key Benefits for Production Deployments
+
+**Security:**
+- **POLA**: Services only get capabilities they need
+- **Confused Deputy Prevention**: No ambient authority in service management
+- **Revokable Capabilities**: Dynamically revoke service access
+- **Audit Trail**: Capability flow provides clear security audit path
+
+**Reliability:**
+- **Transactional Semantics**: Service state changes are atomic
+- **Supervision Trees**: Capability-based service dependencies
+- **Distributed Coordination**: Manage services across machines securely
+- **Health Monitoring**: Capability-based health checks
+
+**Operations:**
+- **Zero-Trust Architecture**: Every service interaction requires capability
+- **Dynamic Reconfiguration**: Hot-swap service implementations
+- **Secure IPC**: Unix domain sockets with introduction server
+- **Network Transparency**: Local and remote services use same patterns
+
+### Additional Resources for Shepherd × Goblins
+
+- **FOSDEM 2025 Talk**: "Shepherd with Spritely Goblins for Secure System Layer Collaboration" by Juliana Sims
+- **Shepherd Repository**: `wip-goblinsify` branch for Goblins port development
+- **NLnet Project Page**: Distributed System Daemons grant information
+- **GNU Shepherd Documentation**: https://www.gnu.org/software/shepherd/
+
 ## Additional Resources
 
 ### Official Documentation
@@ -1598,14 +2416,26 @@ The advanced patterns in this skill come from production Goblins applications:
 - **brassica-chat**: P2P chat demonstrating CRDTs, revokable capabilities, and sealer/unsealer authentication patterns
 - **goblinville**: Distributed multiplayer game showcasing event synchronization, swappable actors for state machines, and the ticker pattern
 - **terminal-phase**: Game with time-travel debugging, actormap snapshots, ticker pattern for entity collections, and Syrup persistence
-- **navi**: Networking infrastructure showing nested OCapN boundaries, proxy coordinator pattern, and prelay for relay services
+- **navi**: Object capability user agent demonstrating:
+  - Multiple incompatible OCapN boundaries (app ↔ navi ↔ outside world)
+  - Advanced proxy coordinator with bi-directional wrapping and round-tripping
+  - MessagePort netlayer for browser-based OCapN (Hoot/WebAssembly)
+  - Prelay pattern bridging Tor onion services and WebSocket
+  - DOM abstraction with capability-secure event handlers
+  - Declarative UI framework (SXML) integrated with Goblins actors
+  - Sturdyref import/export workflow for user-facing capability sharing
+  - Dynamic app loading with isolated security boundaries
+  - Self-proposed names for human-readable object identification
 
 These patterns are battle-tested in real distributed systems and provide proven solutions for:
 - Distributed multiplayer gameplay (goblinville, terminal-phase)
 - P2P communication and synchronization (brassica-chat)
-- Network boundary management (navi)
+- Network boundary management with multiple incompatible OCapN boundaries (navi)
+- Browser-based capability-secure applications (navi)
 - Persistent game state (terminal-phase)
 - Secure authentication without passwords (brassica-chat, navi)
+- WebAssembly/Hoot integration with full Goblins networking (navi)
+- User agent architecture for hosting untrusted code securely (navi)
 
 ## Development Environment
 
