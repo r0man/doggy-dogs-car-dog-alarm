@@ -1,0 +1,1093 @@
+#!/bin/bash
+
+# Installation script for Claude Code Web development environment
+# Installs the complete Spritely stack:
+# Step 1: Guile Scheme (interpreter)
+# Step 2: Spritely Goblins (distributed object programming)
+# Step 3: Spritely Hoot (Scheme to WebAssembly compiler)
+#
+# Supports:
+# - Linux: Guix, apt, dnf, yum, pacman, zypper, or source
+# - macOS: Homebrew, Guix, or source
+#
+# The script is idempotent and safe to run multiple times.
+
+set -e
+
+echo "🔧 Claude Code Web Development Environment Installer"
+echo "===================================================="
+echo ""
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to run command with sudo only if not root
+run_as_root() {
+    if [ "$EUID" -eq 0 ]; then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
+# Function to detect OS
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "linux"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to detect Linux package manager
+detect_package_manager() {
+    if command_exists apt-get; then
+        echo "apt"
+    elif command_exists dnf; then
+        echo "dnf"
+    elif command_exists yum; then
+        echo "yum"
+    elif command_exists pacman; then
+        echo "pacman"
+    elif command_exists zypper; then
+        echo "zypper"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to check Guile version
+check_guile_version() {
+    if ! command_exists guile; then
+        return 1
+    fi
+
+    local version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+    local patch=$(echo "$version" | cut -d. -f3)
+    [ -z "$patch" ] && patch=0
+
+    # Check if version is 3.0 or higher
+    # Note: For Hoot compatibility, we need Guile from main branch (3.0.11+ or development version)
+    if [ "$major" -ge 3 ]; then
+        echo "$version"
+        return 0
+    else
+        echo "$version"
+        return 1
+    fi
+}
+
+# Function to check if Guile version is sufficient for Hoot
+check_hoot_compatible_guile() {
+    if ! command_exists guile; then
+        return 1
+    fi
+
+    local version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+    local patch=$(echo "$version" | cut -d. -f3)
+    [ -z "$patch" ] && patch=0
+
+    # Hoot requires Guile 3.0.11+ or development version
+    # Guile 3.0.9 and 3.0.10 are NOT sufficient (missing primcall-raw-representations)
+    if [ "$major" -eq 3 ] && [ "$minor" -eq 0 ]; then
+        if [ "$patch" -ge 11 ]; then
+            return 0  # 3.0.11+ is good
+        else
+            return 1  # 3.0.0-3.0.10 are not sufficient
+        fi
+    elif [ "$major" -gt 3 ]; then
+        return 0  # Any version > 3.x should be fine
+    else
+        return 1  # < 3.0 is not sufficient
+    fi
+}
+
+# Function to install build dependencies
+install_build_dependencies() {
+    local os_type=$(detect_os)
+    local pkg_manager=$(detect_package_manager)
+
+    echo "  Installing build dependencies..."
+
+    case "$os_type" in
+        linux)
+            case "$pkg_manager" in
+                apt)
+                    echo "  Using apt to install build tools..."
+                    run_as_root apt-get update -qq
+                    run_as_root apt-get install -y \
+                        git autoconf automake libtool pkg-config make \
+                        gcc g++ texinfo libgmp-dev libltdl-dev \
+                        libunistring-dev libgc-dev libffi-dev \
+                        flex gettext
+                    ;;
+                dnf|yum)
+                    echo "  Using $pkg_manager to install build tools..."
+                    run_as_root $pkg_manager install -y \
+                        git autoconf automake libtool pkgconfig make \
+                        gcc gcc-c++ texinfo gmp-devel libtool-ltdl-devel \
+                        libunistring-devel gc-devel libffi-devel \
+                        flex gettext-devel
+                    ;;
+                pacman)
+                    echo "  Using pacman to install build tools..."
+                    run_as_root pacman -S --noconfirm --needed \
+                        git autoconf automake libtool pkgconf make \
+                        gcc texinfo gmp libunistring gc libffi \
+                        flex gettext
+                    ;;
+                zypper)
+                    echo "  Using zypper to install build tools..."
+                    run_as_root zypper install -y \
+                        git autoconf automake libtool pkg-config make \
+                        gcc gcc-c++ texinfo gmp-devel libunistring-devel \
+                        gc-devel libffi-devel flex gettext-tools
+                    ;;
+                *)
+                    echo "  ⚠️  Unknown package manager, cannot install build dependencies"
+                    echo "  Please manually install: git autoconf automake libtool pkg-config make gcc g++ texinfo libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev flex gettext"
+                    return 1
+                    ;;
+            esac
+            ;;
+        macos)
+            if command_exists brew; then
+                echo "  Using Homebrew to install build tools..."
+                brew install autoconf automake libtool pkg-config texinfo gmp libunistring bdw-gc libffi gettext
+            else
+                echo "  ⚠️  Homebrew not found, cannot install build dependencies"
+                echo "  Please install Homebrew from https://brew.sh/"
+                return 1
+            fi
+            ;;
+        *)
+            echo "  ⚠️  Unknown OS, cannot install build dependencies"
+            return 1
+            ;;
+    esac
+
+    echo "  ✓ Build dependencies installed"
+    return 0
+}
+
+# Function to install Guile from source (main development branch for Hoot compatibility)
+install_guile_from_source() {
+    echo "  Installing Guile from Git main branch (required for Hoot)..."
+    echo "  Note: This provides the latest development version with all features needed by Hoot"
+    echo ""
+
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
+        return 1
+    fi
+
+    echo ""
+
+    # Clone the Guile repository
+    local tmp_dir="/tmp/guile-install-$$"
+    echo "  Cloning Guile repository from git.savannah.gnu.org..."
+    if ! git clone https://git.savannah.gnu.org/git/guile.git "$tmp_dir" --depth=1; then
+        echo "  ❌ Failed to clone Guile repository"
+        echo "  This may be due to network issues or git.savannah.gnu.org being unavailable"
+        return 1
+    fi
+
+    if [ ! -d "$tmp_dir" ]; then
+        echo "  ❌ Clone directory not created"
+        return 1
+    fi
+
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
+
+    echo "  Building Guile from source (this may take 10-30 minutes)..."
+    if ! ./autogen.sh; then
+        echo "  ❌ autogen.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure --prefix=/usr/local; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2); then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    echo "  Installing Guile (requires sudo)..."
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ Guile installed from source (main branch)"
+    return 0
+}
+
+# Function to install Guile via Guix (recommended for Hoot)
+install_guile_guix() {
+    echo "  Using Guix to install Guile development version..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found"
+        return 1
+    fi
+
+    # Try to install guile-next (development version) first, fall back to guile
+    if guix install guile-next 2>/dev/null; then
+        echo "  ✓ Guile development version installed via Guix (guile-next)"
+        return 0
+    else
+        echo "  guile-next not available, trying regular guile package..."
+        guix install guile
+        echo "  ✓ Guile installed via Guix"
+        return 0
+    fi
+}
+
+# Function to install Guile on Linux
+install_guile_linux() {
+    local pkg_manager=$1
+
+    echo "  Detected package manager: $pkg_manager"
+    echo "  Determining best installation method for Hoot compatibility..."
+    echo ""
+
+    # Try installation methods in order of speed and compatibility:
+    # 1. Guix (fastest, pre-built, Hoot-compatible)
+    # 2. Git source (slower, Hoot-compatible)
+    # 3. Package manager (fastest, may not be Hoot-compatible)
+
+    # First try Guix (recommended - fast and Hoot-compatible)
+    if command_exists guix; then
+        echo "  Attempting Guix installation (guile-next - recommended)..."
+        if install_guile_guix; then
+            return 0
+        fi
+        echo "  Guix installation failed, trying source build..."
+    fi
+
+    # Try building from source (Hoot-compatible but slower)
+    echo "  Building from Git source for Hoot compatibility (10-30 min)..."
+    if install_guile_from_source; then
+        return 0
+    fi
+
+    # Last resort: package manager (fast but may not be Hoot-compatible)
+    echo "  Source build failed, falling back to package manager..."
+    echo "  ⚠️  Warning: Package manager version may not work with Hoot"
+    echo ""
+
+    case "$pkg_manager" in
+        apt)
+            run_as_root apt-get update
+            run_as_root apt-get install -y guile-3.0 guile-3.0-dev
+            ;;
+        dnf)
+            run_as_root dnf install -y guile30 guile30-devel
+            ;;
+        yum)
+            run_as_root yum install -y guile30 guile30-devel
+            ;;
+        pacman)
+            run_as_root pacman -S --noconfirm guile
+            ;;
+        zypper)
+            run_as_root zypper install -y guile guile-devel
+            ;;
+        *)
+            echo "❌ Error: Unsupported package manager '$pkg_manager'"
+            return 1
+            ;;
+    esac
+}
+
+# Function to install Guile on macOS
+install_guile_macos() {
+    echo "  Determining best installation method for Hoot compatibility..."
+    echo ""
+
+    # Try installation methods in order of speed and compatibility:
+    # 1. Guix (fastest, pre-built, Hoot-compatible)
+    # 2. Homebrew --HEAD (fast, Hoot-compatible)
+    # 3. Git source (slower, Hoot-compatible)
+
+    # First try Guix if available (fastest, Hoot-compatible)
+    if command_exists guix; then
+        echo "  Attempting Guix installation (guile-next - recommended)..."
+        if install_guile_guix; then
+            return 0
+        fi
+        echo "  Guix installation failed, trying Homebrew..."
+    fi
+
+    # Try Homebrew --HEAD (Hoot-compatible)
+    if command_exists brew; then
+        echo "  Installing Guile --HEAD via Homebrew (Hoot-compatible)..."
+        if brew install guile --HEAD; then
+            echo "  ✓ Guile HEAD (development version) installed via Homebrew"
+            return 0
+        fi
+        echo "  Homebrew installation failed, trying source build..."
+    fi
+
+    # Last resort: build from source
+    if ! command_exists brew && ! command_exists guix; then
+        echo "❌ Error: Neither Homebrew nor Guix is installed"
+        echo "   Please install Homebrew from https://brew.sh/"
+        echo "   Or install Guix from https://guix.gnu.org/"
+        return 1
+    fi
+
+    echo "  Building from Git source for Hoot compatibility (10-30 min)..."
+    install_guile_from_source
+}
+
+# Function to check if guile-fibers is installed
+check_fibers_installed() {
+    # Try to use guile to check if fibers module is available
+    if command_exists guile; then
+        guile -c "(use-modules (fibers))" 2>/dev/null && return 0
+    fi
+    return 1
+}
+
+# Function to install guile-fibers via Guix
+install_fibers_guix() {
+    echo "  Using Guix to install guile-fibers..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found, will use source installation"
+        return 1
+    fi
+
+    guix install guile-fibers
+
+    # Verify installation
+    if check_fibers_installed; then
+        echo "  ✓ guile-fibers installed via Guix"
+        return 0
+    else
+        echo "  ⚠️  Guix installation completed but module not found, trying source install"
+        return 1
+    fi
+}
+
+# Function to install guile-fibers from source
+install_fibers_source() {
+    echo "  Installing guile-fibers from source..."
+    echo ""
+
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
+        return 1
+    fi
+
+    echo ""
+
+    # Clone the repository
+    local tmp_dir="/tmp/fibers-install-$$"
+    echo "  Cloning guile-fibers repository..."
+    if ! git clone https://github.com/wingo/fibers "$tmp_dir"; then
+        echo "  ❌ Failed to clone guile-fibers repository"
+        return 1
+    fi
+
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
+
+    echo "  Building guile-fibers..."
+    if ! ./autogen.sh; then
+        echo "  ❌ autogen.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    echo "  Installing guile-fibers (requires sudo)..."
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ guile-fibers installed from source"
+    return 0
+}
+
+# Function to install guile-fibers
+install_fibers() {
+    echo ""
+    echo "Step 1.5: Installing guile-fibers (required by Goblins)"
+    echo "-------------------------------------------------------"
+    echo ""
+
+    # Check if fibers is already installed
+    if check_fibers_installed; then
+        echo "✓ guile-fibers already installed"
+        echo ""
+        guile -c "(use-modules (fibers)) (display \"Fibers module loaded successfully\n\")"
+        return 0
+    fi
+
+    echo "guile-fibers not found. Installing..."
+    echo ""
+
+    # Try Guix first, then fall back to source
+    if install_fibers_guix || install_fibers_source; then
+        # Verify installation
+        if check_fibers_installed; then
+            echo ""
+            echo "✓ guile-fibers successfully installed"
+            guile -c "(use-modules (fibers)) (display \"Fibers module loaded successfully\n\")"
+            return 0
+        else
+            echo ""
+            echo "❌ Error: guile-fibers installation completed but module cannot be loaded"
+            echo "   Please check the installation logs above for errors"
+            return 1
+        fi
+    else
+        echo ""
+        echo "❌ Error: All installation methods failed"
+        echo "   Please install guile-fibers manually from https://github.com/wingo/fibers"
+        return 1
+    fi
+}
+
+# Function to check if Goblins is installed
+check_goblins_installed() {
+    # Try to use guile to check if goblins module is available
+    if command_exists guile; then
+        guile -c "(use-modules (goblins))" 2>/dev/null && return 0
+    fi
+    return 1
+}
+
+# Function to install Goblins via Guix
+install_goblins_guix() {
+    echo "  Using Guix to install Goblins..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found, will use source installation"
+        return 1
+    fi
+
+    guix install guile-goblins
+
+    # Verify installation
+    if check_goblins_installed; then
+        echo "  ✓ Goblins installed via Guix"
+        return 0
+    else
+        echo "  ⚠️  Guix installation completed but module not found, trying source install"
+        return 1
+    fi
+}
+
+# Function to install Goblins from source
+install_goblins_source() {
+    echo "  Installing Goblins from source..."
+    echo ""
+
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
+        return 1
+    fi
+
+    echo ""
+
+    # Clone the repository
+    local tmp_dir="/tmp/goblins-install-$$"
+    echo "  Cloning Goblins repository..."
+    if ! git clone https://codeberg.org/spritely/goblins "$tmp_dir"; then
+        echo "  ❌ Failed to clone Goblins repository"
+        return 1
+    fi
+
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
+
+    echo "  Building Goblins..."
+    if ! ./bootstrap.sh; then
+        echo "  ❌ bootstrap.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    echo "  Installing Goblins (requires sudo)..."
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ Goblins installed from source"
+    return 0
+}
+
+# Function to install Goblins
+install_goblins() {
+    echo ""
+    echo "Step 2: Installing Spritely Goblins"
+    echo "------------------------------------"
+    echo ""
+
+    # Check if Goblins is already installed
+    if check_goblins_installed; then
+        echo "✓ Spritely Goblins already installed"
+        echo ""
+        guile -c "(use-modules (goblins)) (display \"Goblins module loaded successfully\n\")"
+        return 0
+    fi
+
+    echo "Spritely Goblins not found. Installing..."
+    echo ""
+
+    # Try Guix first, then fall back to source
+    if install_goblins_guix || install_goblins_source; then
+        # Verify installation
+        if check_goblins_installed; then
+            echo ""
+            echo "✓ Spritely Goblins successfully installed"
+            guile -c "(use-modules (goblins)) (display \"Goblins module loaded successfully\n\")"
+            return 0
+        else
+            echo ""
+            echo "❌ Error: Goblins installation completed but module cannot be loaded"
+            echo "   Please check the installation logs above for errors"
+            return 1
+        fi
+    else
+        echo ""
+        echo "❌ Error: All installation methods failed"
+        echo "   Please install Goblins manually from https://codeberg.org/spritely/goblins"
+        return 1
+    fi
+}
+
+# Function to check if Hoot is installed
+check_hoot_installed() {
+    # Check if guild command exists and has compile-wasm subcommand
+    if command_exists guild; then
+        guild compile-wasm --version >/dev/null 2>&1 && return 0
+    fi
+    return 1
+}
+
+# Function to install Hoot via Guix
+install_hoot_guix() {
+    echo "  Using Guix to install Hoot..."
+
+    if ! command_exists guix; then
+        echo "  ⚠️  Guix not found, will use source installation"
+        return 1
+    fi
+
+    guix install guile-hoot
+
+    # Verify installation
+    if check_hoot_installed; then
+        echo "  ✓ Hoot installed via Guix"
+        return 0
+    else
+        echo "  ⚠️  Guix installation completed but guild compile-wasm not found, trying source install"
+        return 1
+    fi
+}
+
+# Function to install Hoot via Homebrew (macOS)
+install_hoot_homebrew() {
+    echo "  Using Homebrew to install Hoot..."
+
+    if ! command_exists brew; then
+        echo "  ⚠️  Homebrew not found, will use source installation"
+        return 1
+    fi
+
+    # Add the Guile tap if not already added
+    brew tap aconchillo/guile 2>/dev/null || true
+    brew install guile-hoot
+
+    # Verify installation
+    if check_hoot_installed; then
+        echo "  ✓ Hoot installed via Homebrew"
+        return 0
+    else
+        echo "  ⚠️  Homebrew installation completed but guild compile-wasm not found"
+        return 1
+    fi
+}
+
+# Function to install Hoot from source
+install_hoot_source() {
+    echo "  Installing Hoot from source..."
+    echo ""
+
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
+        return 1
+    fi
+
+    echo ""
+
+    # Clone the repository
+    local tmp_dir="/tmp/hoot-install-$$"
+    echo "  Cloning Hoot repository from Codeberg..."
+    if ! git clone https://codeberg.org/spritely/hoot "$tmp_dir"; then
+        echo "  ❌ Failed to clone Hoot repository"
+        return 1
+    fi
+
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
+
+    echo "  Building Hoot..."
+    if ! (./bootstrap.sh 2>/dev/null || autoreconf -vif); then
+        echo "  ❌ bootstrap/autoreconf failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure --prefix=/usr/local; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    echo "  Running tests (may take a while)..."
+    make check || echo "  ⚠️  Some tests failed, but continuing installation..."
+
+    echo "  Installing Hoot (requires sudo)..."
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    # Clean up
+    cd /
+    rm -rf "$tmp_dir"
+
+    # Update library cache on Linux
+    if [[ "$(detect_os)" == "linux" ]]; then
+        run_as_root ldconfig 2>/dev/null || true
+    fi
+
+    echo "  ✓ Hoot installed from source"
+    return 0
+}
+
+# Function to install Hoot
+install_hoot() {
+    echo ""
+    echo "Step 3: Installing Spritely Hoot"
+    echo "---------------------------------"
+    echo ""
+
+    # Check if Hoot is already installed
+    if check_hoot_installed; then
+        echo "✓ Spritely Hoot already installed"
+        echo ""
+        guild compile-wasm --version 2>&1 | head -n 1 || echo "guild compile-wasm is available"
+        return 0
+    fi
+
+    echo "Spritely Hoot not found. Installing..."
+    echo ""
+
+    # Try installation methods based on OS
+    os=$(detect_os)
+    local installed=false
+
+    case "$os" in
+        linux)
+            # Try Guix first, then fall back to source
+            if install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+
+        macos)
+            # Try Homebrew first, then Guix, then source
+            if install_hoot_homebrew || install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+
+        *)
+            echo "  Unsupported OS, trying Guix and source installation..."
+            if install_hoot_guix || install_hoot_source; then
+                installed=true
+            fi
+            ;;
+    esac
+
+    if [ "$installed" = true ]; then
+        # Verify installation
+        if check_hoot_installed; then
+            echo ""
+            echo "✓ Spritely Hoot successfully installed"
+            guild compile-wasm --version 2>&1 | head -n 1 || echo "guild compile-wasm is available"
+            return 0
+        else
+            echo ""
+            echo "⚠️  Warning: Hoot installation completed but guild compile-wasm not available"
+            echo "   This may be due to PATH issues. Try running:"
+            echo "   export PATH=\"\$PATH:/usr/local/bin\""
+            echo "   Or check if Hoot needs additional configuration"
+            return 0
+        fi
+    else
+        echo ""
+        echo "❌ Error: All installation methods failed"
+        echo "   Please install Hoot manually from https://codeberg.org/spritely/hoot"
+        return 1
+    fi
+}
+
+# Main installation logic
+main() {
+    echo "Step 1: Installing Guile Scheme"
+    echo "--------------------------------"
+    echo ""
+
+    # Check if Guile is already installed with correct version
+    if version=$(check_guile_version); then
+        echo "✓ Guile Scheme installed (version $version)"
+        echo ""
+
+        # Check if this version is compatible with Hoot
+        if ! check_hoot_compatible_guile; then
+            echo "⚠️  WARNING: Guile $version is NOT sufficient for Hoot"
+            echo "   Hoot requires Guile 3.0.11+ or development version from Git"
+            echo "   Current version $version is missing features like primcall-raw-representations"
+            echo ""
+            echo "Automatically upgrading to Guile development version..."
+            echo ""
+
+            # Try installation methods in order of speed: Guix > Homebrew > Source
+            local upgraded=false
+
+            # Try Guix first (fastest, pre-built binaries)
+            if command_exists guix; then
+                echo "  Attempting Guix installation (guile-next)..."
+                if install_guile_guix; then
+                    version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version via Guix"
+                    upgraded=true
+                fi
+            fi
+
+            # Try Homebrew on macOS (fast, pre-built)
+            if [ "$upgraded" = false ] && [[ "$(detect_os)" == "macos" ]] && command_exists brew; then
+                echo "  Attempting Homebrew installation (guile --HEAD)..."
+                if brew install guile --HEAD 2>/dev/null; then
+                    version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version via Homebrew"
+                    upgraded=true
+                fi
+            fi
+
+            # Fall back to building from source (slower but works everywhere)
+            if [ "$upgraded" = false ]; then
+                echo "  Building from Git source (this may take 10-30 minutes)..."
+                if install_guile_from_source; then
+                    version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version from source"
+                    upgraded=true
+                fi
+            fi
+
+            if [ "$upgraded" = false ]; then
+                echo "❌ Error: Failed to upgrade Guile to Hoot-compatible version"
+                echo "   Hoot installation will likely fail"
+                echo "   Please upgrade Guile manually or use Guix"
+            else
+                echo ""
+                echo "✓ Guile successfully upgraded"
+                guile --version | head -n 1
+                echo ""
+            fi
+        else
+            echo "✓ Guile version $version is compatible with Hoot"
+            guile --version | head -n 1
+            echo ""
+        fi
+    else
+        # Guile needs to be installed or upgraded
+        if command_exists guile; then
+            local current_version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+' | head -n 1)
+            echo "⚠️  Warning: Guile $current_version is installed but version 3.0+ is required"
+            echo "  Attempting to upgrade..."
+            echo ""
+        else
+            echo "Guile Scheme not found. Installing..."
+            echo ""
+        fi
+
+        # Detect OS
+        os=$(detect_os)
+        echo "Detected OS: $os"
+        echo ""
+
+        case "$os" in
+            linux)
+                pkg_manager=$(detect_package_manager)
+                if [ "$pkg_manager" = "unknown" ]; then
+                    echo "❌ Error: Could not detect package manager"
+                    echo "   Please install Guile 3.0+ manually from https://www.gnu.org/software/guile/"
+                    exit 1
+                fi
+
+                if ! install_guile_linux "$pkg_manager"; then
+                    exit 1
+                fi
+                ;;
+
+            macos)
+                if ! install_guile_macos; then
+                    exit 1
+                fi
+                ;;
+
+            *)
+                echo "❌ Error: Unsupported operating system: $OSTYPE"
+                echo "   This script supports Linux and macOS only"
+                echo "   Please install Guile 3.0+ manually from https://www.gnu.org/software/guile/"
+                exit 1
+                ;;
+        esac
+
+        echo ""
+        echo "Verifying installation..."
+
+        # Verify Guile is now installed
+        if ! command_exists guile; then
+            echo "❌ Error: Guile installation failed - guile command not found"
+            echo "   Please check the installation logs above for errors"
+            exit 1
+        fi
+
+        # Verify Guile version
+        if version=$(check_guile_version); then
+            echo "✓ Guile Scheme successfully installed (version $version)"
+            echo ""
+            guile --version | head -n 1
+            echo ""
+        else
+            local installed_version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+' | head -n 1)
+            echo "❌ Error: Guile $installed_version was installed but version 3.0+ is required"
+            echo "   Please upgrade Guile manually or check your package manager"
+            exit 1
+        fi
+    fi
+
+    # Install guile-fibers (required by Goblins)
+    local fibers_status="Installed"
+    if ! install_fibers; then
+        fibers_status="Not installed"
+        echo ""
+        echo "⚠️  Warning: guile-fibers installation failed"
+        echo "   This is required by Goblins - Goblins installation will likely fail"
+        echo ""
+    fi
+
+    # Now install Goblins (requires Guile and guile-fibers) - optional
+    local goblins_status="Installed"
+    if ! install_goblins; then
+        goblins_status="Not installed (optional)"
+        echo ""
+        echo "⚠️  Note: Goblins installation was skipped or failed"
+        echo "   This is optional - the core Guile environment is ready"
+        echo "   Manual installation: https://codeberg.org/spritely/goblins"
+        echo ""
+    fi
+
+    # Now install Hoot (requires Guile) - optional
+    local hoot_status="Installed"
+    if ! install_hoot; then
+        hoot_status="Not installed (optional)"
+        echo ""
+        echo "⚠️  Note: Hoot installation was skipped or failed"
+        echo "   This is optional - the core Guile environment is ready"
+        echo "   Manual installation: https://codeberg.org/spritely/hoot"
+        echo ""
+    fi
+
+    # Configure Guile environment variables
+    echo ""
+    echo "Step 4: Configuring Guile Environment"
+    echo "-------------------------------------"
+    echo ""
+
+    # Add Guile paths to bashrc and profile
+    local guile_env_setup='
+# Guile load paths for Spritely development
+export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0:${GUILE_LOAD_PATH}"
+export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache:${GUILE_LOAD_COMPILED_PATH}"'
+
+    # Add to ~/.bashrc if not already present
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "GUILE_LOAD_PATH" "$HOME/.bashrc"; then
+            echo "$guile_env_setup" >> "$HOME/.bashrc"
+            echo "  ✓ Added Guile paths to ~/.bashrc"
+        else
+            echo "  ✓ Guile paths already in ~/.bashrc"
+        fi
+    fi
+
+    # Add to ~/.profile if not already present
+    if [ -f "$HOME/.profile" ]; then
+        if ! grep -q "GUILE_LOAD_PATH" "$HOME/.profile"; then
+            echo "$guile_env_setup" >> "$HOME/.profile"
+            echo "  ✓ Added Guile paths to ~/.profile"
+        else
+            echo "  ✓ Guile paths already in ~/.profile"
+        fi
+    fi
+
+    # Export for current session
+    export GUILE_LOAD_PATH="/usr/local/share/guile/site/3.0:${GUILE_LOAD_PATH}"
+    export GUILE_LOAD_COMPILED_PATH="/usr/local/lib/guile/3.0/site-ccache:${GUILE_LOAD_COMPILED_PATH}"
+
+    echo "  ✓ Environment variables configured"
+    echo ""
+    echo "ℹ️  Note: Restart your shell or run 'source ~/.bashrc' to load new paths"
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "✅ Installation Complete!"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "📝 Summary of installed components:"
+    echo ""
+    echo "  ✓ GNU Guile: $(check_guile_version)"
+    echo "  guile-fibers: $fibers_status"
+    echo "  Spritely Goblins: $goblins_status"
+    echo "  Spritely Hoot: $hoot_status"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧪 Quick verification commands:"
+    echo ""
+    echo "Test Guile REPL:"
+    echo "  guile"
+    echo ""
+    echo "Test guile-fibers:"
+    echo "  guile -c '(use-modules (fibers))'"
+    echo ""
+    echo "Test Goblins:"
+    echo "  guile -c '(use-modules (goblins))'"
+    echo ""
+    echo "Test Hoot:"
+    echo "  guild compile-wasm --version"
+    echo ""
+    echo "Compile Scheme to WASM (example):"
+    echo "  echo '42' > /tmp/test.scm"
+    echo "  guild compile-wasm --run /tmp/test.scm"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🚀 Spritely development environment ready!"
+    echo ""
+}
+
+# Run main function
+main
