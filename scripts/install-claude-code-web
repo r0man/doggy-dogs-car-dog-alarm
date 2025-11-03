@@ -195,17 +195,51 @@ install_guile_from_source() {
     # Clone the Guile repository
     local tmp_dir="/tmp/guile-install-$$"
     echo "  Cloning Guile repository from git.savannah.gnu.org..."
-    git clone https://git.savannah.gnu.org/git/guile.git "$tmp_dir" --depth=1
+    if ! git clone https://git.savannah.gnu.org/git/guile.git "$tmp_dir" --depth=1; then
+        echo "  ❌ Failed to clone Guile repository"
+        echo "  This may be due to network issues or git.savannah.gnu.org being unavailable"
+        return 1
+    fi
 
-    cd "$tmp_dir"
+    if [ ! -d "$tmp_dir" ]; then
+        echo "  ❌ Clone directory not created"
+        return 1
+    fi
+
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
 
     echo "  Building Guile from source (this may take 10-30 minutes)..."
-    ./autogen.sh
-    ./configure --prefix=/usr/local
-    make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+    if ! ./autogen.sh; then
+        echo "  ❌ autogen.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure --prefix=/usr/local; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2); then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     echo "  Installing Guile (requires sudo)..."
-    run_as_root make install
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     # Clean up
     cd /
@@ -217,6 +251,7 @@ install_guile_from_source() {
     fi
 
     echo "  ✓ Guile installed from source (main branch)"
+    return 0
 }
 
 # Function to install Guile via Guix (recommended for Hoot)
@@ -384,17 +419,45 @@ install_fibers_source() {
     # Clone the repository
     local tmp_dir="/tmp/fibers-install-$$"
     echo "  Cloning guile-fibers repository..."
-    git clone https://github.com/wingo/fibers "$tmp_dir"
+    if ! git clone https://github.com/wingo/fibers "$tmp_dir"; then
+        echo "  ❌ Failed to clone guile-fibers repository"
+        return 1
+    fi
 
-    cd "$tmp_dir"
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
 
     echo "  Building guile-fibers..."
-    ./autogen.sh
-    ./configure
-    make
+    if ! ./autogen.sh; then
+        echo "  ❌ autogen.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     echo "  Installing guile-fibers (requires sudo)..."
-    run_as_root make install
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     # Clean up
     cd /
@@ -406,6 +469,7 @@ install_fibers_source() {
     fi
 
     echo "  ✓ guile-fibers installed from source"
+    return 0
 }
 
 # Function to install guile-fibers
@@ -494,17 +558,45 @@ install_goblins_source() {
     # Clone the repository
     local tmp_dir="/tmp/goblins-install-$$"
     echo "  Cloning Goblins repository..."
-    git clone https://codeberg.org/spritely/goblins "$tmp_dir"
+    if ! git clone https://codeberg.org/spritely/goblins "$tmp_dir"; then
+        echo "  ❌ Failed to clone Goblins repository"
+        return 1
+    fi
 
-    cd "$tmp_dir"
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
 
     echo "  Building Goblins..."
-    ./bootstrap.sh
-    ./configure
-    make
+    if ! ./bootstrap.sh; then
+        echo "  ❌ bootstrap.sh failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     echo "  Installing Goblins (requires sudo)..."
-    run_as_root make install
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     # Clean up
     cd /
@@ -516,6 +608,7 @@ install_goblins_source() {
     fi
 
     echo "  ✓ Goblins installed from source"
+    return 0
 }
 
 # Function to install Goblins
@@ -627,20 +720,48 @@ install_hoot_source() {
     # Clone the repository
     local tmp_dir="/tmp/hoot-install-$$"
     echo "  Cloning Hoot repository from Codeberg..."
-    git clone https://codeberg.org/spritely/hoot "$tmp_dir"
+    if ! git clone https://codeberg.org/spritely/hoot "$tmp_dir"; then
+        echo "  ❌ Failed to clone Hoot repository"
+        return 1
+    fi
 
-    cd "$tmp_dir"
+    cd "$tmp_dir" || {
+        echo "  ❌ Failed to change to build directory"
+        return 1
+    }
 
     echo "  Building Hoot..."
-    ./bootstrap.sh 2>/dev/null || autoreconf -vif
-    ./configure --prefix=/usr/local
-    make
+    if ! (./bootstrap.sh 2>/dev/null || autoreconf -vif); then
+        echo "  ❌ bootstrap/autoreconf failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! ./configure --prefix=/usr/local; then
+        echo "  ❌ configure failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+
+    if ! make; then
+        echo "  ❌ make failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     echo "  Running tests (may take a while)..."
     make check || echo "  ⚠️  Some tests failed, but continuing installation..."
 
     echo "  Installing Hoot (requires sudo)..."
-    run_as_root make install
+    if ! run_as_root make install; then
+        echo "  ❌ make install failed"
+        cd /
+        rm -rf "$tmp_dir"
+        return 1
+    fi
 
     # Clean up
     cd /
@@ -652,6 +773,7 @@ install_hoot_source() {
     fi
 
     echo "  ✓ Hoot installed from source"
+    return 0
 }
 
 # Function to install Hoot
