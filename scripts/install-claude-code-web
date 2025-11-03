@@ -245,36 +245,33 @@ install_guile_linux() {
     local pkg_manager=$1
 
     echo "  Detected package manager: $pkg_manager"
-    echo "  "
-    echo "  ⚠️  IMPORTANT: Hoot requires Guile from the main development branch"
-    echo "  Package manager versions (3.0.x stable) may not have all required features"
-    echo "  Recommended: Install via Guix or build from source"
-    echo "  "
+    echo "  Determining best installation method for Hoot compatibility..."
+    echo ""
 
-    # First try Guix (recommended)
+    # Try installation methods in order of speed and compatibility:
+    # 1. Guix (fastest, pre-built, Hoot-compatible)
+    # 2. Git source (slower, Hoot-compatible)
+    # 3. Package manager (fastest, may not be Hoot-compatible)
+
+    # First try Guix (recommended - fast and Hoot-compatible)
     if command_exists guix; then
-        echo "  Guix detected - using Guix for optimal Hoot compatibility..."
+        echo "  Attempting Guix installation (guile-next - recommended)..."
         if install_guile_guix; then
             return 0
         fi
+        echo "  Guix installation failed, trying source build..."
     fi
 
-    # Ask user if they want to build from source or use package manager
-    echo "  Choose installation method:"
-    echo "  1) Build from Git source (recommended for Hoot, may take 10-30 min)"
-    echo "  2) Use package manager (faster, but may not work with Hoot)"
-    echo "  "
-    read -p "Enter choice [1/2] (default: 1): " choice
-    choice=${choice:-1}
-
-    if [ "$choice" = "1" ]; then
-        install_guile_from_source
-        return $?
+    # Try building from source (Hoot-compatible but slower)
+    echo "  Building from Git source for Hoot compatibility (10-30 min)..."
+    if install_guile_from_source; then
+        return 0
     fi
 
-    # Fall back to package manager
-    echo "  Installing Guile via package manager..."
-    echo "  ⚠️  Warning: This may not include features required by Hoot"
+    # Last resort: package manager (fast but may not be Hoot-compatible)
+    echo "  Source build failed, falling back to package manager..."
+    echo "  ⚠️  Warning: Package manager version may not work with Hoot"
+    echo ""
 
     case "$pkg_manager" in
         apt)
@@ -295,42 +292,50 @@ install_guile_linux() {
             ;;
         *)
             echo "❌ Error: Unsupported package manager '$pkg_manager'"
-            echo "   Falling back to source installation..."
-            install_guile_from_source
-            return $?
+            return 1
             ;;
     esac
 }
 
 # Function to install Guile on macOS
 install_guile_macos() {
-    echo "  Checking for Homebrew..."
+    echo "  Determining best installation method for Hoot compatibility..."
+    echo ""
 
-    if ! command_exists brew; then
-        echo "❌ Error: Homebrew is not installed"
-        echo "   Please install Homebrew from https://brew.sh/"
-        echo "   Or install Guix and run this script again"
-        return 1
-    fi
+    # Try installation methods in order of speed and compatibility:
+    # 1. Guix (fastest, pre-built, Hoot-compatible)
+    # 2. Homebrew --HEAD (fast, Hoot-compatible)
+    # 3. Git source (slower, Hoot-compatible)
 
-    echo "  ✓ Homebrew found"
-    echo "  "
-    echo "  ⚠️  IMPORTANT: Hoot requires Guile from the main development branch"
-    echo "  Installing Guile --HEAD (development version)..."
-    echo "  "
-
-    # First try Guix if available (preferred)
+    # First try Guix if available (fastest, Hoot-compatible)
     if command_exists guix; then
-        echo "  Guix detected - using Guix for optimal Hoot compatibility..."
+        echo "  Attempting Guix installation (guile-next - recommended)..."
         if install_guile_guix; then
             return 0
         fi
+        echo "  Guix installation failed, trying Homebrew..."
     fi
 
-    # Install Guile HEAD version via Homebrew
-    brew install guile --HEAD
+    # Try Homebrew --HEAD (Hoot-compatible)
+    if command_exists brew; then
+        echo "  Installing Guile --HEAD via Homebrew (Hoot-compatible)..."
+        if brew install guile --HEAD; then
+            echo "  ✓ Guile HEAD (development version) installed via Homebrew"
+            return 0
+        fi
+        echo "  Homebrew installation failed, trying source build..."
+    fi
 
-    echo "  ✓ Guile HEAD (development version) installed via Homebrew"
+    # Last resort: build from source
+    if ! command_exists brew && ! command_exists guix; then
+        echo "❌ Error: Neither Homebrew nor Guix is installed"
+        echo "   Please install Homebrew from https://brew.sh/"
+        echo "   Or install Guix from https://guix.gnu.org/"
+        return 1
+    fi
+
+    echo "  Building from Git source for Hoot compatibility (10-30 min)..."
+    install_guile_from_source
 }
 
 # Function to check if guile-fibers is installed
@@ -734,47 +739,50 @@ main() {
             echo "   Hoot requires Guile 3.0.11+ or development version from Git"
             echo "   Current version $version is missing features like primcall-raw-representations"
             echo ""
-            echo "   Choose upgrade method:"
-            echo "   1) Install Guile development version from Git (recommended, 10-30 min)"
-            echo "   2) Skip and continue with current version (Hoot will likely fail)"
+            echo "Automatically upgrading to Guile development version..."
             echo ""
-            read -p "Enter choice [1/2] (default: 1): " upgrade_choice
-            upgrade_choice=${upgrade_choice:-1}
 
-            if [ "$upgrade_choice" = "1" ]; then
-                echo ""
-                echo "Upgrading Guile to development version..."
-                echo ""
+            # Try installation methods in order of speed: Guix > Homebrew > Source
+            local upgraded=false
 
-                # Try Guix first
-                if command_exists guix; then
-                    if install_guile_guix; then
-                        version=$(check_guile_version)
-                        echo "✓ Guile upgraded to version $version"
-                    else
-                        # Fall back to source
-                        if ! install_guile_from_source; then
-                            echo "❌ Error: Failed to upgrade Guile"
-                            exit 1
-                        fi
-                        version=$(check_guile_version)
-                    fi
-                else
-                    # No Guix, use source
-                    if ! install_guile_from_source; then
-                        echo "❌ Error: Failed to upgrade Guile"
-                        exit 1
-                    fi
+            # Try Guix first (fastest, pre-built binaries)
+            if command_exists guix; then
+                echo "  Attempting Guix installation (guile-next)..."
+                if install_guile_guix; then
                     version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version via Guix"
+                    upgraded=true
                 fi
+            fi
 
+            # Try Homebrew on macOS (fast, pre-built)
+            if [ "$upgraded" = false ] && [[ "$(detect_os)" == "macos" ]] && command_exists brew; then
+                echo "  Attempting Homebrew installation (guile --HEAD)..."
+                if brew install guile --HEAD 2>/dev/null; then
+                    version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version via Homebrew"
+                    upgraded=true
+                fi
+            fi
+
+            # Fall back to building from source (slower but works everywhere)
+            if [ "$upgraded" = false ]; then
+                echo "  Building from Git source (this may take 10-30 minutes)..."
+                if install_guile_from_source; then
+                    version=$(check_guile_version)
+                    echo "  ✓ Guile upgraded to version $version from source"
+                    upgraded=true
+                fi
+            fi
+
+            if [ "$upgraded" = false ]; then
+                echo "❌ Error: Failed to upgrade Guile to Hoot-compatible version"
+                echo "   Hoot installation will likely fail"
+                echo "   Please upgrade Guile manually or use Guix"
+            else
                 echo ""
                 echo "✓ Guile successfully upgraded"
                 guile --version | head -n 1
-                echo ""
-            else
-                echo ""
-                echo "⚠️  Continuing with Guile $version (Hoot installation will likely fail)"
                 echo ""
             fi
         else
