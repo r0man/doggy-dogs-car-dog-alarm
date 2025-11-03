@@ -2422,6 +2422,612 @@ The **GNU Shepherd** is an init system and process manager originally built for 
 - **NLnet Project Page**: Distributed System Daemons grant information
 - **GNU Shepherd Documentation**: https://www.gnu.org/software/shepherd/
 
+
+## P2P and Distributed Application Patterns
+
+### Overview
+
+Peer-to-peer applications built with Goblins leverage the **unum pattern** - a distributed object where multiple peers maintain local presences that synchronize to form a single logical entity. This section covers real-world patterns from production P2P systems like **brassica-chat** (https://codeberg.org/spritely/brassica-chat) - an experimental distributed p2p chat application.
+
+### The Unum Pattern
+
+The **unum** (unity through uniformity) pattern creates distributed objects where:
+- Each peer maintains a local "presence" of the shared object
+- Presences are co-equal (no hierarchy or central authority)
+- State synchronizes via peer-to-peer message propagation
+- Network topology represents trust relationships
+
+**Key Characteristics:**
+- **Decentralized**: No single point of control or failure
+- **Eventually Consistent**: Peers converge to same state over time
+- **Byzantine Fault Tolerant**: Malicious peers can't corrupt honest peers
+- **Capability-Based**: Network connections use object capabilities
+
+**Security Implications of Co-Equal Presences:**
+
+In a co-equal P2P network, if Alice, Bob, and Carol are nodes, sending Alice a message means indirectly sending Bob and Carol messages too. This creates unique security considerations:
+
+- **Revocation requires coordination**: To remove Mallet from the network, ALL peers with capabilities to Mallet must revoke
+- **Network topology = trust model**: How strongly connected a node is represents how trusted they are
+- **Complete networks discouraged**: Fully meshed networks (everyone connected to everyone) are hard to revoke from
+- **Availability vs Security tradeoff**: More connections = better availability, but harder to remove bad actors later
+
+```scheme
+;; Unum pattern for distributed chat room
+(define (^chat-room-presence bcom identity root-signer peer-connections)
+  (define replica-id (make-replica-id))
+  (define local-state (spawn ^crdt-state replica-id))
+  (define peers (spawn ^cell peer-connections))
+
+  (methods
+   ;; Add a peer connection (grant capability to another presence)
+   ((add-peer peer-presence)
+    (: peers (cons peer-presence (: peers)))
+    ;; Synchronize state with new peer
+    (<- peer-presence 'sync (: local-state 'get-heads)))
+
+   ;; Post message - propagates to all peers
+   ((post message)
+    (let ((event (: local-state 'commit-event message)))
+      ;; Broadcast to all connected peers
+      (for-each
+       (lambda (peer)
+         (<-np peer 'receive-event event))
+       (: peers))
+      event))
+
+   ;; Receive event from peer
+   ((receive-event event)
+    (when (: local-state 'validate-event event)
+      ;; Apply to local state
+      (: local-state 'apply-event event)
+      ;; Propagate to other peers (except sender)
+      (for-each
+       (lambda (peer)
+         (<-np peer 'receive-event event))
+       (: peers))))
+
+   ;; Sync with peer
+   ((sync remote-heads)
+    ;; Find missing events and send them
+    (let ((missing (: local-state 'find-missing remote-heads)))
+      missing))))
+```
+
+### Hybrid Logical Clocks (HLC)
+
+Hybrid Logical Clocks combine physical time, logical time, and replica ID to create a **monotonic, partially-ordered timestamp** for distributed events. Unlike pure logical clocks (like Lamport clocks), HLCs preserve causality while approximating physical time.
+
+**HLC Structure:**
+```scheme
+(define-record-type <clock>
+  (make-clock real-time logical-time replica-id)
+  clock?
+  (real-time clock-real)      ; Physical time (milliseconds)
+  (logical-time clock-logical) ; Logical counter
+  (replica-id clock-id))       ; Unique replica identifier
+```
+
+**HLC Properties:**
+- **Monotonic**: Never goes backwards, even if system clock does
+- **Causal**: If event A happened-before event B, then clock(A) < clock(B)
+- **Physical Approximation**: Real-time component approximates wall-clock time
+- **Total Ordering**: Replica ID breaks ties for concurrent events
+
+**HLC Operations:**
+
+```scheme
+;; Clock tick - advance local clock
+(define (clock-tick clock)
+  (let ((now (current-time-ms)))
+    (if (> now (clock-real clock))
+        ;; System time advanced - reset logical counter
+        (make-clock now 0 (clock-id clock))
+        ;; System time same or behind - increment logical counter
+        (make-clock (clock-real clock)
+                    (+ 1 (clock-logical clock))
+                    (clock-id clock)))))
+
+;; Clock join - merge with remote clock
+(define (clock-join local-clock remote-clock)
+  (let* ((local-real (clock-real local-clock))
+         (remote-real (clock-real remote-clock))
+         (local-logical (clock-logical local-clock))
+         (remote-logical (clock-logical remote-clock))
+         (now (current-time-ms))
+         (max-real (max now local-real remote-real)))
+    (cond
+     ;; System time is ahead - reset logical
+     ((and (> now local-real) (> now remote-real))
+      (make-clock now 0 (clock-id local-clock)))
+     ;; Same real time - join on logical
+     ((= local-real remote-real)
+      (make-clock local-real
+                  (+ 1 (max local-logical remote-logical))
+                  (clock-id local-clock)))
+     ;; Remote ahead - adopt remote real time
+     ((< local-real remote-real)
+      (make-clock remote-real
+                  (+ 1 remote-logical)
+                  (clock-id local-clock)))
+     ;; Local ahead - keep local real time
+     (else
+      (make-clock local-real
+                  (+ 1 local-logical)
+                  (clock-id local-clock))))))
+
+;; Usage in CRDT for LWW-Register
+(define (^lww-register bcom value timestamp)
+  (methods
+   ((get) value)
+   ((set new-value new-timestamp)
+    ;; Keep value with later timestamp
+    (if (clock<? timestamp new-timestamp)
+        (bcom (^lww-register bcom new-value new-timestamp))
+        self))))
+```
+
+### Operation-Based CRDTs with Causal Delivery
+
+**CRDTs** (Conflict-free Replicated Data Types) ensure eventual consistency in distributed systems. Goblins applications use **operation-based CRDTs** where operations commute when delivered in causal order.
+
+**CRDT Core Concepts:**
+- **Commutativity**: Operations can be applied in any order (when concurrent)
+- **Causal Delivery**: Events delivered in causal order (all predecessors arrive first)
+- **Content-Addressing**: Events identified by hash of their contents (SHA-256)
+- **Byzantine Fault Tolerance**: ed25519 signatures prevent malicious event injection
+
+**CRDT Event Structure (from brassica-chat):**
+
+```scheme
+(define-record-type <crdt-event>
+  (make-crdt-event id parents timestamp public-key signature operation-data)
+  crdt-event?
+  (id event-id)                      ; SHA-256 hash
+  (parents event-parents)            ; List of parent event IDs
+  (timestamp event-timestamp)        ; Hybrid Logical Clock
+  (public-key event-public-key)      ; ed25519 public key
+  (signature event-signature)        ; ed25519 signature
+  (operation-data event-operation))  ; Serialized operation
+
+;; Content-addressed ID prevents replay attacks
+(define (compute-event-id timestamp parents operation-data)
+  (sha256 (syrup-encode (list timestamp parents operation-data))))
+
+;; Signature prevents forged events
+(define (sign-event parents operation-data private-key)
+  (sign (syrup-encode (list parents operation-data)) private-key))
+
+;; Verify event integrity
+(define (valid-event? event)
+  (and
+   ;; Check content-addressing
+   (bytevector=? (event-id event)
+                 (compute-event-id (event-timestamp event)
+                                   (event-parents event)
+                                   (event-operation event)))
+   ;; Check signature
+   (verify (event-signature event)
+           (syrup-encode (list (event-parents event)
+                              (event-operation event)))
+           (event-public-key event))))
+```
+
+**CRDT Actor with Causal Delivery:**
+
+```scheme
+(define (^crdt bcom replica-id private-key #:key init effect)
+  (define public-key (key-pair->public-key private-key))
+  (define clock (spawn ^cell (make-clock (current-time-ms) 0 replica-id)))
+  (define log (spawn ^cell (make-hashmap)))      ; Applied events
+  (define pending (spawn ^cell (make-hashmap)))  ; Out-of-order events
+  (define heads (spawn ^cell '()))               ; Events with no successors
+  (define state (spawn ^cell init))              ; CRDT state
+
+  ;; Check if all parent events have been delivered
+  (define (causally-consistent? parent-ids)
+    (every (lambda (id) (hashmap-ref (: log) id))
+           parent-ids))
+
+  ;; Deliver pending events in causal order
+  (define (deliver-pending!)
+    (let loop ((pending-events (: pending)))
+      (let ((new-pending
+             (hashmap-fold
+              (lambda (event-id event acc)
+                (if (causally-consistent? (event-parents event))
+                    ;; Can deliver - apply and remove from pending
+                    (begin
+                      (apply-event! event)
+                      (hashmap-remove acc event-id))
+                    ;; Still waiting for parents
+                    acc))
+              pending-events
+              pending-events)))
+        ;; Continue until no more events can be delivered
+        (unless (eq? pending-events new-pending)
+          (loop new-pending))
+        (: pending new-pending))))
+
+  ;; Apply event to local state
+  (define (apply-event! event)
+    ;; Update clock with event timestamp
+    (: clock (clock-join (: clock) (event-timestamp event)))
+    ;; Add to log
+    (: log (hashmap-set (: log) (event-id event) event))
+    ;; Apply effect to state
+    (: state (effect (event-id event)
+                     (event-timestamp event)
+                     (event-public-key event)
+                     (event-operation event)
+                     (: state)))
+    ;; Update heads (events with no successors)
+    (: heads
+       (cons (event-id event)
+             (filter (lambda (head-id)
+                       (not (member head-id (event-parents event))))
+                     (: heads)))))
+
+  (methods
+   ;; Commit local operation
+   ((commit operation)
+    (let* ((timestamp (clock-tick (: clock)))
+           (parents (: heads))
+           (op-data (syrup-encode operation))
+           (event-id (compute-event-id timestamp parents op-data))
+           (signature (sign-event parents op-data private-key))
+           (event (make-crdt-event event-id parents timestamp
+                                  public-key signature op-data)))
+      (: clock timestamp)
+      (apply-event! event)
+      event-id))
+
+   ;; Receive events from remote peer
+   ((push events)
+    (for-each
+     (lambda (event)
+       (when (and (valid-event? event)
+                  (not (hashmap-ref (: log) (event-id event))))
+         ;; Add to pending queue
+         (: pending (hashmap-set (: pending) (event-id event) event))))
+     events)
+    ;; Try to deliver pending events
+    (deliver-pending!))
+
+   ;; Query for missing events
+   ((missing event-ids)
+    ;; Return IDs of missing events (including transitive parents)
+    (let loop ((to-check event-ids)
+               (missing (make-hashmap)))
+      (if (null? to-check)
+          (hashmap-keys missing)
+          (let ((id (car to-check)))
+            (cond
+             ;; Already have it
+             ((hashmap-ref (: log) id)
+              (loop (cdr to-check) missing))
+             ;; Already know it's missing
+             ((hashmap-ref missing id)
+              (loop (cdr to-check) missing))
+             ;; In pending - check its parents
+             ((hashmap-ref (: pending) id) =>
+              (lambda (event)
+                (loop (append (event-parents event) (cdr to-check))
+                      (hashmap-set missing id #t))))
+             ;; Completely unknown
+             (else
+              (loop (cdr to-check)
+                    (hashmap-set missing id #t))))))))
+
+   ;; Get current state
+   ((ref) (: state))
+
+   ;; Get current heads for sync
+   ((heads) (: heads))))
+```
+
+**Byzantine Fault Tolerance in CRDTs:**
+
+As described in Martin Kleppmann's "Making CRDTs Byzantine Fault Tolerant" (https://dl.acm.org/doi/10.1145/3517209.3524042), Byzantine peers cannot:
+
+- Forge events from other users (signatures prevent this)
+- Replay events with different parents (content-addressing prevents this)
+- Corrupt the state of honest peers (validation prevents this)
+- Cause divergence between honest peers (causal delivery prevents this)
+
+Byzantine peers CAN still:
+- Spam valid events (requires network-layer revocation via object capabilities)
+- Refuse to propagate events (causes partial availability loss)
+- Present inconsistent views to different peers (can be detected via gossip)
+
+**Security Note**: As long as Alice and Bob can connect (directly or through Carol), honest peers will converge to correct state even with Byzantine nodes in the network.
+
+### Time-Partitioned Data Structures
+
+For long-running distributed applications, storing all history in a single CRDT becomes unwieldy. **Time-partitioning** splits the data structure into time-bounded chunks.
+
+**Benefits:**
+- **Bounded CRDT Size**: Each partition covers fixed time period
+- **Garbage Collection**: Old partitions can be deleted
+- **Faster Convergence**: Rebuilding smaller CRDTs is faster
+- **Efficient Querying**: Access recent data without loading full history
+
+**Time-Partitioned Chat Log (from brassica-chat):**
+
+```scheme
+(define (^partitioned-chat-log bcom replica-id private-key period)
+  (define partitions (spawn ^cell (make-hashmap)))  ; time-key -> ^crdt
+
+  ;; Get partition for given timestamp
+  (define (partition-for-time timestamp-ms)
+    (let ((partition-key (floor (/ timestamp-ms period))))
+      (or (hashmap-ref (: partitions) partition-key)
+          ;; Lazily create partition
+          (let ((partition (spawn ^chat-log-crdt replica-id private-key)))
+            (: partitions (hashmap-set (: partitions) partition-key partition))
+            partition))))
+
+  (methods
+   ;; Post message - routed to time partition
+   ((post cert-id message)
+    (let* ((now (current-time-ms))
+           (partition (partition-for-time now)))
+      (<- partition 'commit `(post ,cert-id ,message ,now))))
+
+   ;; Edit message - requires original timestamp to find partition
+   ((edit cert-id message-id created-at new-content)
+    (let ((partition (partition-for-time created-at)))
+      (<- partition 'commit `(edit ,cert-id ,message-id ,new-content ,(current-time-ms)))))
+
+   ;; Get messages for time range
+   ((query-range start-time end-time)
+    (let* ((start-key (floor (/ start-time period)))
+           (end-key (floor (/ end-time period)))
+           (partition-keys (range start-key (+ 1 end-key))))
+      ;; Collect messages from all partitions in range
+      (append-map
+       (lambda (key)
+         (match (hashmap-ref (: partitions) key)
+           (#f '())
+           (partition (: partition 'ref))))
+       partition-keys)))
+
+   ;; Garbage collect old partitions
+   ((gc-before timestamp)
+    (let ((cutoff-key (floor (/ timestamp period))))
+      (: partitions
+         (hashmap-fold
+          (lambda (key partition acc)
+            (if (< key cutoff-key)
+                acc  ; Drop old partition
+                (hashmap-set acc key partition)))
+          (make-hashmap)
+          (: partitions)))))
+
+   ;; Add peer to all partitions
+   ((add-peer peer-replica)
+    (hashmap-for-each
+     (lambda (key partition)
+       (<- partition 'add-peer (<- peer-replica 'get-partition key)))
+     (: partitions)))))
+
+;; Usage: 30-minute partitions for chat history
+(define chat-log
+  (spawn ^partitioned-chat-log
+         "replica-123"
+         my-private-key
+         (* 30 60 1000)))  ; 30 minutes in milliseconds
+```
+
+### Certificate Capabilities for Presentation-Layer Access Control
+
+**Certificate capabilities** provide a **presentation-only** form of access control in eventually consistent systems. Unlike object capabilities (which control network access), certificate capabilities control how well-behaved clients **interpret** events.
+
+**Key Distinction:**
+- **Object Capabilities**: Control who can send events (network layer)
+- **Certificate Capabilities**: Control how events are displayed (presentation layer)
+
+**Why Certificates Don't Prevent Writes (brassica-chat security model):**
+
+In a decentralized P2P system with co-equal presences, there's no central authority to enforce write policies. A Byzantine peer can commit any CRDT event if they have object capability to a peer. Certificates instead provide:
+
+1. **Accountability**: Track who did what with which permissions
+2. **Presentation Control**: Well-behaved clients hide unauthorized events
+3. **Social Enforcement**: Community can see violations and coordinate revocation
+
+**Certificate Structure:**
+
+```scheme
+(define-record-type <certificate>
+  (make-certificate id parent signer controllers predicate revoked?)
+  certificate?
+  (id certificate-id)                    ; SHA-256 hash
+  (parent certificate-parent)            ; Parent cert (or #f for root)
+  (signer certificate-signer)            ; ed25519 public key
+  (controllers certificate-controllers)  ; List of public keys
+  (predicate certificate-predicate)      ; Permission predicate
+  (revoked? certificate-revoked?))       ; Revocation flag
+
+;; Permission predicate language (combinator-based attenuation)
+;; Examples:
+;;   #t                          -> Allow all operations
+;;   (when-op (edit delete)      -> For edit/delete operations...
+;;     (allow-self))             ->   ...only if acting on own content
+```
+
+**Two-Layer Security Model:**
+
+```scheme
+;; Layer 1: Object Capabilities (network access control)
+;; Alice grants Bob a revokable capability to her chat presence
+(define-values (alice-for-bob bob-revoker)
+  (spawn-revokable-and-revoker alice-chat-presence))
+
+;; Bob can now send events to Alice's presence
+(<- alice-for-bob 'receive-event event)
+
+;; If Bob misbehaves, Alice revokes object capability
+(<- bob-revoker)  ; Bob can no longer send events
+
+;; Layer 2: Certificate Capabilities (presentation control)
+;; Even if Bob has object capability, certificates control what's shown
+(define bob-cert
+  (make-certificate
+   bob-cert-id
+   root-cert
+   alice-pubkey
+   (list bob-pubkey)
+   '(when-op (edit delete) (allow-self))  ; Can only edit own messages
+   #f))
+
+;; Bob tries to edit Carol's message
+(<- chat 'edit bob-cert-id carols-msg-id "hacked!")
+
+;; Event is committed to CRDT (can't prevent this in decentralized P2P)
+;; But well-behaved clients filter it out during presentation
+;; because certificate doesn't allow editing others' messages
+```
+
+**Soft Blocking vs Hard Blocking:**
+
+```scheme
+;; Soft block: Use certificates to hide user's content
+;; (User can still see everything and send events)
+(<- chat 'revoke-certificate mallets-cert-id)
+;; Mallet's future actions won't be shown in well-behaved clients
+;; But Mallet still has object capability and can read/write events
+
+;; Hard block: Revoke object capabilities
+;; (User can no longer send/receive events at all)
+;; Requires ALL peers to revoke their capabilities
+(for-each
+ (lambda (peer-presence)
+   (<- peer-presence 'revoke-capability-to-mallet))
+ all-peer-presences)
+
+;; Combined approach for gradual removal:
+;; 1. Soft block immediately (damage control for display)
+(<- chat 'revoke-certificate mallets-cert-id)
+;; 2. Coordinate with peers to hard block
+(<- group-coordinator 'initiate-removal mallets-pubkey)
+;; 3. Each peer revokes when ready
+;; 4. Complete removal only when ALL peers revoke
+```
+
+**Why This Model Works:**
+
+This is "good enough" security that balances eventual consistency with access control:
+
+1. **Availability**: Anyone with object capability can write (no central bottleneck)
+2. **Accountability**: All writes are signed and attributable
+3. **User Control**: Clients decide what to show based on certificates
+4. **Social Enforcement**: Community coordinates to revoke object capabilities
+5. **Prevention**: Mallet cannot irreparably destroy shared state (Byzantine fault tolerance)
+
+### Complete P2P Application Pattern
+
+**Full P2P Chat Architecture (based on brassica-chat):**
+
+```scheme
+;; Complete distributed chat room with all patterns combined
+(define (^p2p-chat-room bcom identity root-signer #:optional (period (* 30 60 1000)))
+  (define replica-id (make-replica-id))
+  (define private-key (: identity 'private-key))
+  (define public-key (: identity 'public-key))
+
+  ;; Three synchronized CRDTs
+  (define certificates
+    (spawn ^certificates-crdt replica-id root-signer private-key))
+  (define profiles
+    (spawn ^profiles-crdt replica-id private-key))
+  (define chat-logs
+    (spawn ^partitioned-chat-log replica-id private-key period))
+
+  ;; Connected peers (revokable capabilities)
+  (define peers (spawn ^cell '()))
+
+  ;; Set our profile name
+  (<- profiles 'set-name (: identity 'name))
+
+  (methods
+   ;; Create revokable replica for another peer
+   ((fresh-replica)
+    (spawn-revokable-and-revoker (spawn ^replica-interface)))
+
+   ;; Add peer connection
+   ((add-peer peer-replica)
+    ;; Add to peer list
+    (: peers (cons peer-replica (: peers)))
+    ;; Connect CRDTs
+    (<- certificates 'add-peer (<- peer-replica 'get-certificates))
+    (<- profiles 'add-peer (<- peer-replica 'get-profiles))
+    (<- chat-logs 'add-peer (<- peer-replica 'get-chat-logs)))
+
+   ;; Post message
+   ((post cert-id content)
+    (<- chat-logs 'post cert-id content))
+
+   ;; View messages (filtered by certificates)
+   ((view-messages)
+    (let ((certs (: certificates 'ref))
+          (names (: profiles 'ref))
+          (msgs (: chat-logs 'ref)))
+      (render-messages msgs certs names)))
+
+   ;; Certificate management
+   ((add-certificate parent-id controllers predicate)
+    (<- certificates 'add-certificate parent-id controllers predicate))
+
+   ((revoke-certificate cert-id)
+    (<- certificates 'revoke-certificate cert-id))))
+
+;; Usage with OCapN networking
+(define alice-vat (spawn-vat))
+(define bob-vat (spawn-vat))
+
+;; Setup OCapN netlayers (TCP-TLS for real network, or Unix sockets for local)
+(define netlayer-alice
+  (with-vat alice-vat (spawn ^tcp-tls-netlayer "localhost")))
+(define netlayer-bob
+  (with-vat bob-vat (spawn ^tcp-tls-netlayer "localhost")))
+
+;; Create identities and chat rooms
+(define alice-id (with-vat alice-vat (spawn ^identity "Alice")))
+(define alice-chat
+  (with-vat alice-vat
+    (spawn ^p2p-chat-room alice-id (: alice-id 'public-key))))
+
+;; Create revokable connections
+(define-values (alice-for-bob bob-revoker)
+  (with-vat alice-vat (: alice-chat 'fresh-replica)))
+
+;; Exchange sturdy refs over OCapN
+(define sturdyref
+  (with-vat alice-vat (: mycapn-alice 'register alice-for-bob 'tcp-tls)))
+
+;; Bob connects
+(with-vat bob-vat
+  (let ((alice-ref (: mycapn-bob 'enliven sturdyref)))
+    (<- bob-chat 'add-peer alice-ref)))
+
+;; Messages propagate through P2P network
+(with-vat alice-vat (<- alice-chat 'post cert "Hello!"))
+(with-vat bob-vat (<- bob-chat 'post cert "Hi Alice!"))
+```
+
+**Key Architectural Patterns Summary:**
+
+1. **Unum Pattern**: Multiple presences form single logical entity with co-equal authority
+2. **CRDT Synchronization**: Eventual consistency via operation-based CRDTs with causal delivery
+3. **Time Partitioning**: Manageable chunk sizes with garbage collection
+4. **Hybrid Logical Clocks**: Causal ordering with physical time approximation
+5. **Certificate Capabilities**: Presentation-layer access control for "good enough" security
+6. **Revokable Proxies**: Hard blocking via object capability revocation (requires coordination)
+7. **Network Topology = Trust**: Connection graph represents social trust relationships
+8. **Byzantine Fault Tolerance**: Content-addressing (SHA-256) + signatures (ed25519) prevent corruption
+
+**Real-World Source**: All patterns in this section are based on brassica-chat (https://codeberg.org/spritely/brassica-chat), a production-ready experimental p2p chat application built with Spritely Goblins.
+
 ## Additional Resources
 
 ### Official Documentation
