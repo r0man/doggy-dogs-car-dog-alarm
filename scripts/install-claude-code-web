@@ -70,6 +70,7 @@ check_guile_version() {
     local major=$(echo "$version" | cut -d. -f1)
     local minor=$(echo "$version" | cut -d. -f2)
     local patch=$(echo "$version" | cut -d. -f3)
+    [ -z "$patch" ] && patch=0
 
     # Check if version is 3.0 or higher
     # Note: For Hoot compatibility, we need Guile from main branch (3.0.11+ or development version)
@@ -79,6 +80,33 @@ check_guile_version() {
     else
         echo "$version"
         return 1
+    fi
+}
+
+# Function to check if Guile version is sufficient for Hoot
+check_hoot_compatible_guile() {
+    if ! command_exists guile; then
+        return 1
+    fi
+
+    local version=$(guile --version | head -n 1 | grep -oP '\d+\.\d+(\.\d+)?' | head -n 1)
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+    local patch=$(echo "$version" | cut -d. -f3)
+    [ -z "$patch" ] && patch=0
+
+    # Hoot requires Guile 3.0.11+ or development version
+    # Guile 3.0.9 and 3.0.10 are NOT sufficient (missing primcall-raw-representations)
+    if [ "$major" -eq 3 ] && [ "$minor" -eq 0 ]; then
+        if [ "$patch" -ge 11 ]; then
+            return 0  # 3.0.11+ is good
+        else
+            return 1  # 3.0.0-3.0.10 are not sufficient
+        fi
+    elif [ "$major" -gt 3 ]; then
+        return 0  # Any version > 3.x should be fine
+    else
+        return 1  # < 3.0 is not sufficient
     fi
 }
 
@@ -650,10 +678,63 @@ main() {
 
     # Check if Guile is already installed with correct version
     if version=$(check_guile_version); then
-        echo "✓ Guile Scheme already installed (version $version)"
+        echo "✓ Guile Scheme installed (version $version)"
         echo ""
-        guile --version | head -n 1
-        echo ""
+
+        # Check if this version is compatible with Hoot
+        if ! check_hoot_compatible_guile; then
+            echo "⚠️  WARNING: Guile $version is NOT sufficient for Hoot"
+            echo "   Hoot requires Guile 3.0.11+ or development version from Git"
+            echo "   Current version $version is missing features like primcall-raw-representations"
+            echo ""
+            echo "   Choose upgrade method:"
+            echo "   1) Install Guile development version from Git (recommended, 10-30 min)"
+            echo "   2) Skip and continue with current version (Hoot will likely fail)"
+            echo ""
+            read -p "Enter choice [1/2] (default: 1): " upgrade_choice
+            upgrade_choice=${upgrade_choice:-1}
+
+            if [ "$upgrade_choice" = "1" ]; then
+                echo ""
+                echo "Upgrading Guile to development version..."
+                echo ""
+
+                # Try Guix first
+                if command_exists guix; then
+                    if install_guile_guix; then
+                        version=$(check_guile_version)
+                        echo "✓ Guile upgraded to version $version"
+                    else
+                        # Fall back to source
+                        if ! install_guile_from_source; then
+                            echo "❌ Error: Failed to upgrade Guile"
+                            exit 1
+                        fi
+                        version=$(check_guile_version)
+                    fi
+                else
+                    # No Guix, use source
+                    if ! install_guile_from_source; then
+                        echo "❌ Error: Failed to upgrade Guile"
+                        exit 1
+                    fi
+                    version=$(check_guile_version)
+                fi
+
+                echo ""
+                echo "✓ Guile successfully upgraded"
+                guile --version | head -n 1
+                echo ""
+            else
+                echo ""
+                echo "⚠️  Continuing with Guile $version (Hoot installation will likely fail)"
+                echo ""
+            fi
+        else
+            echo "✓ Guile version $version is compatible with Hoot"
+            guile --version | head -n 1
+            echo ""
+        fi
     else
         # Guile needs to be installed or upgraded
         if command_exists guile; then
