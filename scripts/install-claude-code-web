@@ -110,25 +110,87 @@ check_hoot_compatible_guile() {
     fi
 }
 
+# Function to install build dependencies
+install_build_dependencies() {
+    local os_type=$(detect_os)
+    local pkg_manager=$(detect_package_manager)
+
+    echo "  Installing build dependencies..."
+
+    case "$os_type" in
+        linux)
+            case "$pkg_manager" in
+                apt)
+                    echo "  Using apt to install build tools..."
+                    run_as_root apt-get update -qq
+                    run_as_root apt-get install -y \
+                        git autoconf automake libtool pkg-config make \
+                        gcc g++ texinfo libgmp-dev libltdl-dev \
+                        libunistring-dev libgc-dev libffi-dev \
+                        flex gettext
+                    ;;
+                dnf|yum)
+                    echo "  Using $pkg_manager to install build tools..."
+                    run_as_root $pkg_manager install -y \
+                        git autoconf automake libtool pkgconfig make \
+                        gcc gcc-c++ texinfo gmp-devel libtool-ltdl-devel \
+                        libunistring-devel gc-devel libffi-devel \
+                        flex gettext-devel
+                    ;;
+                pacman)
+                    echo "  Using pacman to install build tools..."
+                    run_as_root pacman -S --noconfirm --needed \
+                        git autoconf automake libtool pkgconf make \
+                        gcc texinfo gmp libunistring gc libffi \
+                        flex gettext
+                    ;;
+                zypper)
+                    echo "  Using zypper to install build tools..."
+                    run_as_root zypper install -y \
+                        git autoconf automake libtool pkg-config make \
+                        gcc gcc-c++ texinfo gmp-devel libunistring-devel \
+                        gc-devel libffi-devel flex gettext-tools
+                    ;;
+                *)
+                    echo "  ⚠️  Unknown package manager, cannot install build dependencies"
+                    echo "  Please manually install: git autoconf automake libtool pkg-config make gcc g++ texinfo libgmp-dev libltdl-dev libunistring-dev libgc-dev libffi-dev flex gettext"
+                    return 1
+                    ;;
+            esac
+            ;;
+        macos)
+            if command_exists brew; then
+                echo "  Using Homebrew to install build tools..."
+                brew install autoconf automake libtool pkg-config texinfo gmp libunistring bdw-gc libffi gettext
+            else
+                echo "  ⚠️  Homebrew not found, cannot install build dependencies"
+                echo "  Please install Homebrew from https://brew.sh/"
+                return 1
+            fi
+            ;;
+        *)
+            echo "  ⚠️  Unknown OS, cannot install build dependencies"
+            return 1
+            ;;
+    esac
+
+    echo "  ✓ Build dependencies installed"
+    return 0
+}
+
 # Function to install Guile from source (main development branch for Hoot compatibility)
 install_guile_from_source() {
     echo "  Installing Guile from Git main branch (required for Hoot)..."
     echo "  Note: This provides the latest development version with all features needed by Hoot"
     echo ""
 
-    # Check for required build tools
-    local missing_tools=""
-    for tool in git autoconf automake libtool pkg-config make gcc g++; do
-        if ! command_exists "$tool"; then
-            missing_tools="$missing_tools $tool"
-        fi
-    done
-
-    if [ -n "$missing_tools" ]; then
-        echo "  ⚠️  Missing build tools:$missing_tools"
-        echo "  Please install these tools and run again"
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
         return 1
     fi
+
+    echo ""
 
     # Clone the Guile repository
     local tmp_dir="/tmp/guile-install-$$"
@@ -304,20 +366,15 @@ install_fibers_guix() {
 # Function to install guile-fibers from source
 install_fibers_source() {
     echo "  Installing guile-fibers from source..."
+    echo ""
 
-    # Check for required build tools
-    local missing_tools=""
-    for tool in git autoconf automake pkg-config make; do
-        if ! command_exists "$tool"; then
-            missing_tools="$missing_tools $tool"
-        fi
-    done
-
-    if [ -n "$missing_tools" ]; then
-        echo "  ⚠️  Missing build tools:$missing_tools"
-        echo "  Please install these tools and run again"
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
         return 1
     fi
+
+    echo ""
 
     # Clone the repository
     local tmp_dir="/tmp/fibers-install-$$"
@@ -419,20 +476,15 @@ install_goblins_guix() {
 # Function to install Goblins from source
 install_goblins_source() {
     echo "  Installing Goblins from source..."
+    echo ""
 
-    # Check for required build tools
-    local missing_tools=""
-    for tool in git autoconf automake pkg-config make; do
-        if ! command_exists "$tool"; then
-            missing_tools="$missing_tools $tool"
-        fi
-    done
-
-    if [ -n "$missing_tools" ]; then
-        echo "  ⚠️  Missing build tools:$missing_tools"
-        echo "  Please install these tools and run again"
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
         return 1
     fi
+
+    echo ""
 
     # Clone the repository
     local tmp_dir="/tmp/goblins-install-$$"
@@ -557,20 +609,15 @@ install_hoot_homebrew() {
 # Function to install Hoot from source
 install_hoot_source() {
     echo "  Installing Hoot from source..."
+    echo ""
 
-    # Check for required build tools
-    local missing_tools=""
-    for tool in git autoconf automake pkg-config make; do
-        if ! command_exists "$tool"; then
-            missing_tools="$missing_tools $tool"
-        fi
-    done
-
-    if [ -n "$missing_tools" ]; then
-        echo "  ⚠️  Missing build tools:$missing_tools"
-        echo "  Please install these tools and run again"
+    # Install build dependencies first
+    if ! install_build_dependencies; then
+        echo "  ❌ Failed to install build dependencies"
         return 1
     fi
+
+    echo ""
 
     # Clone the repository
     local tmp_dir="/tmp/hoot-install-$$"
