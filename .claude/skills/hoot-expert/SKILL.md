@@ -29,8 +29,8 @@ Key architectural goals:
 - Leverage Hoot's small binary size for web performance
 
 ### Tech Stack
-- Guile Hoot (latest from main branch)
-- R7RS-small Scheme
+- Guile Hoot v0.7.0+ (latest from main branch)
+- R7RS-small Scheme with Guile standard library access
 - WebAssembly GC and tail calls
 - Spritely Goblins (actor system)
 - Browser APIs via FFI
@@ -40,12 +40,15 @@ Key architectural goals:
 ## Your Approach
 
 ### Compilation Workflow
-1. **Write R7RS-small Scheme**: Use standard Scheme with Hoot extensions
+1. **Write R7RS-small Scheme**: Use standard Scheme with Hoot extensions and Guile standard library access
 2. **Define Libraries**: Use `(library ...)` form for modular code organization
-3. **Declare FFI Bindings**: Use `define-foreign` for JavaScript interop
-4. **Compile to Wasm**: Use `guild compile-wasm` command (use `--bundle` flag to automatically bundle runtime libraries)
-5. **Deploy with Runtime**: Include reflect.js and wtf8.wasm support files (or use `--bundle` for automatic deployment)
-6. **Load in Browser**: Use Scheme.load_main() with user_imports
+3. **Start with Imports**: ALL top-level programs MUST begin with `(import ...)` or `(use-modules ...)` (v0.7.0+ requirement)
+4. **Use Canonical SRFI Names**: Import SRFIs with `(srfi srfi-N)` not `(srfi :N)` (v0.7.0+ standardization)
+5. **Declare FFI Bindings**: Use `define-foreign` for JavaScript interop
+6. **Compile to Wasm**: Use `guild compile-wasm` command (use `--bundle` flag to automatically bundle runtime libraries)
+7. **Set HOOT_LOAD_PATH**: Configure custom module search paths if needed (v0.7.0+ environment variable)
+8. **Deploy with Runtime**: Include reflect.js and wtf8.wasm support files (or use `--bundle` for automatic deployment)
+9. **Load in Browser**: Use Scheme.load_main() with user_imports
 
 ### Code Quality Standards
 - **Functional Purity**: Prefer pure functions, minimize side effects
@@ -114,6 +117,7 @@ Key architectural goals:
 #### Main Module Entry Point
 ```scheme
 ;; main.scm - Entry point for compilation
+;; IMPORTANT (v0.7.0+): Top-level programs MUST start with import/use-modules
 (import (scheme base)
         (scheme write)
         (my-game dom)
@@ -266,6 +270,306 @@ window.addEventListener("load", async () => {
     (display "Tick\n")))
 ```
 
+### Guile Standard Library Access (v0.7.0+)
+
+**Major Feature**: Hoot v0.7.0 automatically adds Guile's source module directory to the load path, enabling access to Guile's extensive standard library:
+
+```scheme
+;; You can now import Guile standard library modules directly!
+
+;; Example: Using Guile's (ice-9 match) for pattern matching
+(import (scheme base)
+        (ice-9 match))
+
+(define (process-command cmd)
+  (match cmd
+    (('move x y) (format #t "Moving to ~a, ~a~%" x y))
+    (('attack target) (format #t "Attacking ~a~%" target))
+    (('quit) (display "Goodbye!\n"))
+    (_ (display "Unknown command\n"))))
+
+;; Example: Using Guile's (ice-9 format) for advanced formatting
+(import (scheme base)
+        (ice-9 format))
+
+(define (print-stats player)
+  (format #t "Player: ~a~%HP: ~d/~d~%Level: ~d~%"
+          (player-name player)
+          (player-hp player)
+          (player-max-hp player)
+          (player-level player)))
+
+;; Example: Using Guile's (srfi srfi-1) list operations
+;; Note: Use canonical naming (srfi srfi-1) not (srfi :1)
+(import (scheme base)
+        (srfi srfi-1))  ; Full SRFI-1 from Guile's pure Scheme implementation
+
+(define (game-logic entities)
+  ;; SRFI-1 procedures now available
+  (let* ((alive-entities (filter entity-alive? entities))
+         (sorted-by-priority (sort alive-entities entity-priority>))
+         (active-entities (take sorted-by-priority 10)))
+    (for-each process-entity active-entities)))
+
+;; Example: Using Guile's (ice-9 receive) for multiple values
+(import (scheme base)
+        (ice-9 receive))
+
+(define (calculate-damage attacker defender)
+  (values (- (attacker-strength attacker) (defender-defense defender))
+          (attacker-crit? attacker)))
+
+(define (apply-damage attacker defender)
+  (receive (damage is-crit)
+      (calculate-damage attacker defender)
+    (if is-crit
+        (format #t "Critical hit! ~d damage!~%" (* damage 2))
+        (format #t "Hit for ~d damage~%" damage))))
+
+;; Available Guile modules (partial list):
+;; - (ice-9 match) - Pattern matching
+;; - (ice-9 format) - Advanced string formatting
+;; - (ice-9 receive) - Multiple value binding
+;; - (ice-9 pretty-print) - Pretty printing
+;; - (srfi srfi-1) - List library (full implementation)
+;; - (srfi srfi-9) - Record types
+;; - (srfi srfi-11) - Let-values
+;; - (srfi srfi-26) - Cut and cute
+;; - And many more!
+
+;; Important: Not all Guile modules will work in Hoot
+;; - Pure Scheme modules work great
+;; - Modules requiring C bindings or OS features won't compile
+;; - Test in Hoot environment, not just Guile REPL
+```
+
+## REPL Development and Interactive Debugging
+
+### Building Web-Based REPLs with Hoot
+
+Hoot enables building metacircular evaluators that run entirely in the browser, creating interactive Scheme REPLs with no server required.
+
+#### Core REPL Pattern
+```scheme
+(import (scheme base)
+        (scheme write)
+        (hoot eval)
+        (hoot ffi)
+        (hoot error-handling))
+
+;; Create a REPL environment
+(define env (interaction-environment))
+
+;; Read-eval-print with error handling
+(define (eval-string str)
+  (let ((output (open-output-string)))
+    (parameterize ((current-output-port output))
+      (with-exception-handler
+        (lambda (exn)
+          (format-exception exn (current-output-port)))
+        (lambda ()
+          (let ((exp (read (open-input-string str))))
+            (call-with-values
+              (lambda () (eval exp env))
+              (lambda vals
+                (for-each (lambda (val)
+                           (write val)
+                           (newline))
+                         vals)))))
+        #:unwind? #t))
+    (get-output-string output)))
+```
+
+#### Interactive Evaluation with State
+```scheme
+;; Maintain REPL state
+(define *log* '("Welcome to Hoot REPL!\n"))
+(define *prev-input* #f)
+
+;; Handle invalid input gracefully
+(define %invalid (cons 'invalid 'expression))
+
+(define (read-safe port)
+  (with-exception-handler
+    (lambda (exn) %invalid)
+    (lambda () (read port))
+    #:unwind? #t))
+
+;; Evaluate and append to log
+(define (eval! str)
+  (let ((exp (read-safe (open-input-string str)))
+        (output (open-output-string)))
+    (parameterize ((current-output-port output))
+      (display "> ")
+      (display str)
+      (newline)
+      (cond
+        ((eq? exp %invalid)
+         (display "invalid Scheme expression\n"))
+        (else
+         (set! *prev-input* str)
+         (call-with-values
+           (lambda () (eval exp env))
+           (lambda vals
+             (for-each (lambda (val)
+                        (unless (unspecified? val)
+                          (display "=> ")
+                          (write val)
+                          (newline)))
+                      vals))))))
+    (set! *log* (append *log* (list (get-output-string output))))))
+```
+
+#### Web REPL UI with SXML
+```scheme
+;; SXML-based UI template
+(define (render-repl)
+  `(div (@ (class "container"))
+        (div (@ (id "repl")
+                (class "repl-text"))
+             (div (@ (class "log"))
+                  ,@*log*)
+             (div (@ (class "prompt"))
+                  "> "
+                  (textarea (@ (id "expression")
+                              (rows "5")
+                              (keyup ,handle-keypress)))))))
+
+;; Handle Enter key to evaluate
+(define (handle-keypress event)
+  (let ((key (keyboard-event-key event)))
+    (when (and (string=? key "Enter")
+               (not (keyboard-event-shift? event)))
+      (let* ((input (get-element-by-id "expression"))
+             (exp (element-value input)))
+        (unless (string=? exp "")
+          (set-element-value! input "")
+          (eval! exp)
+          (refresh-ui!)
+          (scroll-to-bottom!))))))
+```
+
+#### Error Formatting for Display
+```scheme
+(import (hoot error-handling))
+
+;; Format exceptions for user display
+(define (safe-eval exp env)
+  (let ((output (open-output-string)))
+    (parameterize ((current-output-port output))
+      (with-exception-handler
+        (lambda (exn)
+          ;; format-exception provides nice error messages
+          (format-exception exn (current-output-port)))
+        (lambda ()
+          (eval exp env))
+        #:unwind? #t))
+    (get-output-string output)))
+```
+
+#### REPL Build Workflow
+```makefile
+# Makefile for Hoot REPL
+repl.wasm: repl.scm module/repl-environment.scm
+	guild compile-wasm -L module --bundle -gruntime-modules -o repl.wasm repl.scm
+
+serve: repl.wasm
+	guile -c '((@ (hoot web-server) serve))'
+
+clean:
+	rm -f repl.wasm
+```
+
+**Key Features:**
+- `-gruntime-modules`: Include runtime modules for `eval` support
+- `--bundle`: Automatically include reflect.js and runtime libraries
+- `-L module`: Add custom module search path
+
+#### REPL Environment Setup
+```scheme
+;; Create a custom REPL environment
+(library (repl-environment)
+  (export repl-environment)
+  (import (except (guile) - / = < <= = >= >)
+          (prefix (only (guile) - / < <= = > >=) %)
+          (only (hoot modules) current-module))
+
+  ;; Residualize arithmetic macros to procedures
+  ;; (needed because macros don't work with eval yet)
+  (define - %-)
+  (define / %/)
+  (define < %<)
+  (define <= %<=)
+  (define = %=)
+  (define >= %>=)
+  (define > %>)
+
+  (define (repl-environment)
+    (current-module)))
+```
+
+### Interactive Development Features
+
+#### Command History
+```scheme
+(define *history* '())
+(define *history-pos* 0)
+
+(define (add-to-history! input)
+  (set! *history* (cons input *history*))
+  (set! *history-pos* 0))
+
+(define (previous-history!)
+  (when (< *history-pos* (length *history*))
+    (set! *history-pos* (+ *history-pos* 1))
+    (list-ref *history* (- *history-pos* 1))))
+
+(define (next-history!)
+  (when (> *history-pos* 0)
+    (set! *history-pos* (- *history-pos* 1))
+    (if (= *history-pos* 0)
+        ""
+        (list-ref *history* (- *history-pos* 1)))))
+```
+
+#### Auto-scroll to Bottom
+```scheme
+(define-foreign scroll-height
+  "element" "scrollHeight"
+  (ref null extern) -> f64)
+
+(define-foreign set-scroll-top!
+  "element" "setScrollTop"
+  (ref null extern) f64 -> none)
+
+(define (scroll-to-bottom!)
+  (let ((repl (get-element-by-id "repl")))
+    (set-scroll-top! repl (scroll-height repl))))
+```
+
+#### Keyboard Shortcuts
+```scheme
+(define (handle-keyboard-shortcuts event)
+  (let ((key (keyboard-event-key event))
+        (ctrl? (keyboard-event-ctrl? event)))
+    (cond
+      ;; Ctrl+L: Clear screen
+      ((and ctrl? (string=? key "l"))
+       (clear-log!)
+       (prevent-default! event))
+
+      ;; ArrowUp: Previous command
+      ((string=? key "ArrowUp")
+       (let ((prev (previous-history!)))
+         (when prev
+           (set-element-value! (get-element-by-id "expression") prev))))
+
+      ;; ArrowDown: Next command
+      ((string=? key "ArrowDown")
+       (let ((next (next-history!)))
+         (set-element-value! (get-element-by-id "expression") next))))))
+```
+
 ## WebAssembly Integration Details
 
 ### Type Mapping
@@ -404,9 +708,43 @@ When using `define-foreign`, specify exact types:
     btn))
 ```
 
-#### The Solution: Handler Cache
+#### The Solution: Weak Key Hashtable Cache (Best Practice)
 ```scheme
-;; ✅ GOOD: Cache handlers for reuse
+;; ✅ BEST: Use weak-key-hashtable from (hoot hashtables)
+;; This prevents memory leaks while maintaining proper caching
+(import (hoot hashtables))
+
+(define procedure->external/cached
+  (let ((cache (make-weak-key-hashtable)))
+    (lambda (proc)
+      (or (weak-key-hashtable-ref cache proc)
+          (let ((f (procedure->external proc)))
+            (weak-key-hashtable-set! cache proc f)
+            f)))))
+
+;; Wrapper for clean API
+(define (add-event-listener!/cached elem name proc)
+  (add-event-listener! elem name (procedure->external/cached proc)))
+
+(define (remove-event-listener!/cached elem name proc)
+  (remove-event-listener! elem name (procedure->external/cached proc)))
+
+;; Usage - same procedure always returns same external function
+(define my-handler (lambda (event) (display "Click!\n")))
+(add-event-listener!/cached button "click" my-handler)
+;; Later, can properly remove:
+(remove-event-listener!/cached button "click" my-handler)
+```
+
+**Why Weak Key Hashtable?**
+- Procedure is the key, external function is the value
+- When Scheme procedure is no longer referenced, cache entry is automatically collected
+- No manual cache cleanup needed
+- Referential equality preserved: same procedure → same external function
+
+#### Alternative: Standard Hash Table Cache
+```scheme
+;; ✅ GOOD: Cache handlers for reuse (when weak references unavailable)
 (define handler-cache (make-hash-table))
 
 (define (get-cached-handler key handler-fn)
@@ -574,6 +912,248 @@ Hoot enables lightweight reactive UIs using virtual DOM patterns without heavy f
        "Add Todo")))
 ```
 
+### SXML-Based Virtual DOM (Production Pattern)
+
+**SXML** (S-expression XML) provides a more natural Scheme syntax for HTML templates, commonly used in Guile applications.
+
+#### SXML to DOM Conversion
+```scheme
+(import (ice-9 match))
+
+;; Convert SXML expression to real DOM node
+(define (sxml->dom exp)
+  (match exp
+    ;; Text node
+    ((? string? str)
+     (make-text-node str))
+
+    ;; Element with attributes and children
+    (((? symbol? tag) . body)
+     (let ((elem (make-element (symbol->string tag))))
+       (define (add-children children)
+         (for-each (lambda (child)
+                    (append-child! elem (sxml->dom child)))
+                  children))
+       (match body
+         ;; Attributes present
+         ((('@ . attrs) . children)
+          (for-each (lambda (attr)
+                     (match attr
+                       ;; Regular attribute
+                       (((? symbol? name) (? attr-value? val))
+                        (set-attribute!* elem
+                                        (symbol->string name)
+                                        val))
+                       ;; Event listener
+                       (((? symbol? name) (? procedure? proc))
+                        (add-event-listener!/cached elem
+                                                   (symbol->string name)
+                                                   proc))))
+                   attrs)
+          (add-children children))
+         ;; No attributes
+         (children
+          (add-children children)))
+       elem))))
+
+;; Helper for attribute values
+(define (attr-value? x)
+  (or (string? x) (boolean? x)))
+
+;; Special handling for form controls
+(define (set-attribute!* elem name val)
+  (if (string=? name "checked")
+      ;; Checkbox: set property not attribute
+      (set-element-checked! elem (if val 1 0))
+      ;; Normal attribute
+      (set-attribute! elem name val)))
+```
+
+#### TreeWalker-Based Reconciliation Algorithm
+```scheme
+;; FFI bindings for TreeWalker API
+(define-foreign make-tree-walker
+  "document" "createTreeWalker"
+  (ref null extern) -> (ref null extern))
+
+(define-foreign current-node
+  "treeWalker" "currentNode"
+  (ref null extern) -> (ref null extern))
+
+(define-foreign set-current-node!
+  "treeWalker" "setCurrentNode"
+  (ref null extern) (ref null extern) -> (ref null extern))
+
+(define-foreign next-node!
+  "treeWalker" "nextNode"
+  (ref null extern) -> (ref null extern))
+
+(define-foreign first-child!
+  "treeWalker" "firstChild"
+  (ref null extern) -> (ref null extern))
+
+(define-foreign next-sibling!
+  "treeWalker" "nextSibling"
+  (ref null extern) -> (ref null extern))
+
+;; Efficient virtual DOM rendering with TreeWalker
+(define (virtual-dom-render root old new)
+  (define (attrs+children exp)
+    (match exp
+      ((('@ . attrs) . children)
+       (values attrs children))
+      (children
+       (values '() children))))
+
+  (define (find-attr attrs name)
+    (match attrs
+      (() #f)
+      ((attr . rest)
+       (match attr
+         ((name* val)
+          (if (eq? name name*)
+              val
+              (find-attr rest name)))))))
+
+  (define (update-attrs node old-attrs new-attrs)
+    ;; Add or update new attributes
+    (for-each
+     (lambda (attr)
+       (match attr
+         ((name val)
+          (let ((name-str (symbol->string name)))
+            (match (find-attr old-attrs name)
+              ;; New attribute
+              (#f
+               (match val
+                 ((? attr-value?)
+                  (set-attribute!* node name-str val))
+                 ((? procedure?)
+                  (add-event-listener!/cached node name-str val))))
+              ;; Update existing
+              (old-val
+               (match val
+                 ((? attr-value?)
+                  (unless (equal? old-val val)
+                    (set-attribute!* node name-str val)))
+                 ((? procedure?)
+                  (unless (eq? old-val val)
+                    (remove-event-listener!/cached node name-str old-val)
+                    (add-event-listener!/cached node name-str val))))))))))
+     new-attrs)
+
+    ;; Remove deleted attributes
+    (for-each
+     (lambda (attr)
+       (match attr
+         ((name val)
+          (let ((name-str (symbol->string name)))
+            (match (find-attr new-attrs name)
+              (#f
+               (match val
+                 ((? attr-value?)
+                  (remove-attribute! node name-str))
+                 ((? procedure?)
+                  (remove-event-listener! node name-str val))))
+              (_ #t))))))
+     old-attrs))
+
+  ;; Main reconciliation with TreeWalker
+  (let ((walker (make-tree-walker root)))
+    (first-child! walker)
+    (let loop ((parent root)
+               (old old)
+               (new new))
+      (match old
+        ;; First render - clear and create
+        (#f
+         (let clear-loop ((node (current-node walker)))
+           (unless (external-null? node)
+             (let ((next (next-sibling! walker)))
+               (remove! node)
+               (clear-loop next))))
+         (append-child! parent (sxml->dom new)))
+
+        ;; Old text node
+        ((? string?)
+         (unless (and (string? new) (string=? old new))
+           (let ((new-node (sxml->dom new)))
+             (replace-with! (current-node walker) new-node)
+             (set-current-node! walker new-node))))
+
+        ;; Old element
+        (((? symbol? old-tag) . old-rest)
+         (let-values (((old-attrs old-children)
+                       (attrs+children old-rest)))
+           (match new
+             ;; Replace element with text
+             ((? string?)
+              (let ((new-text (make-text-node new)))
+                (replace-with! (current-node walker) new-text)
+                (set-current-node! walker new-text)))
+
+             ;; Update element
+             (((? symbol? new-tag) . new-rest)
+              (let-values (((new-attrs new-children)
+                            (attrs+children new-rest)))
+                (cond
+                 ;; Same tag - update in place
+                 ((eq? old-tag new-tag)
+                  (let ((parent (current-node walker)))
+                    (update-attrs parent old-attrs new-attrs)
+                    (first-child! walker)
+                    (let child-loop ((old old-children)
+                                     (new new-children))
+                      (match old
+                        ;; Add remaining new children
+                        (()
+                         (for-each
+                          (lambda (new)
+                            (append-child! parent (sxml->dom new)))
+                          new))
+                        ;; Process children
+                        ((old-child . old-rest)
+                         (match new
+                           ;; Remove remaining old children
+                           (()
+                            (let rem-loop ((node (current-node walker)))
+                              (unless (external-null? node)
+                                (let ((next (next-sibling! walker)))
+                                  (remove! node)
+                                  (rem-loop next)))))
+                           ;; Recursively diff children
+                           ((new-child . new-rest)
+                            (loop parent old-child new-child)
+                            (next-sibling! walker)
+                            (child-loop old-rest new-rest))))))
+                    (set-current-node! walker parent)))
+
+                 ;; Different tag - replace entire subtree
+                 (else
+                  (replace-with! (current-node walker)
+                                (sxml->dom new)))))))))))))
+
+;; Usage example
+(define *current-vdom* #f)
+
+(define (refresh!)
+  (let ((new-vdom (render)))
+    (virtual-dom-render (document-body) *current-vdom* new-vdom)
+    (set! *current-vdom* new-vdom)))
+
+(define (render)
+  `(div (@ (class "app"))
+        (h1 "Hello from SXML!")
+        (button (@ (onclick ,handle-click))
+                "Click me")))
+```
+
+**TreeWalker Benefits:**
+- Efficient DOM traversal without manual node tracking
+- Handles deep nested structures gracefully
+- Preserves DOM nodes when possible (better for browser optimization)
+- Minimizes reflows by batching updates
+
 ### Calling Convention
 Hoot uses tail call transformation:
 - All calls are tail calls in WebAssembly
@@ -657,13 +1237,42 @@ console.log("Wasm GC support:",
 
 ## Common Pitfalls and Solutions
 
+### Pitfall 0: Missing Import Statement (v0.7.0+ BREAKING CHANGE)
+**Problem**: Compilation fails with error about missing imports/modules
+**Solution**: ALL top-level programs MUST start with `(import ...)` or `(use-modules ...)`
+```scheme
+;; ❌ BAD (fails in v0.7.0+)
+(define (hello)
+  (display "Hello, world!\n"))
+
+;; ✅ GOOD (required in v0.7.0+)
+(import (scheme base)
+        (scheme write))
+
+(define (hello)
+  (display "Hello, world!\n"))
+```
+
+### Pitfall 0b: Using Old SRFI Import Syntax (v0.7.0+ BREAKING CHANGE)
+**Problem**: Imports fail with `(srfi :1)` style naming
+**Solution**: Use canonical naming `(srfi srfi-1)` for all SRFIs
+```scheme
+;; ❌ BAD (old R6RS style, fails in v0.7.0+)
+(import (srfi :1)
+        (srfi :9))
+
+;; ✅ GOOD (canonical R7RS style, v0.7.0+)
+(import (srfi srfi-1)
+        (srfi srfi-9))
+```
+
 ### Pitfall 1: Forgetting FFI Type Checks
 **Problem**: Runtime error when passing wrong type to foreign function
 **Solution**: Hoot automatically checks types with `define-foreign`, trust it
 
 ### Pitfall 2: Mixing Guile-specific and R7RS Code
 **Problem**: Guile-only features don't compile to Hoot
-**Solution**: Stick to R7RS-small, use `(hoot ...)` libraries for extensions
+**Solution**: v0.7.0+ provides automatic access to Guile's pure Scheme standard library modules - you can now use many `(ice-9 ...)` and `(srfi ...)` modules directly
 
 ### Pitfall 3: Large Binary Size
 **Problem**: Wasm binary is larger than expected
@@ -780,6 +1389,10 @@ EOF
 
 # Enter development environment
 guix shell -m manifest.scm
+
+# Set HOOT_LOAD_PATH for custom module directories (v0.7.0+)
+# (Optional - Guile's standard library is now automatically available)
+export HOOT_LOAD_PATH="/path/to/custom/modules:$HOOT_LOAD_PATH"
 
 # Verify Hoot is available (from Guile main branch)
 guild compile-wasm --help
@@ -1218,6 +1831,107 @@ const instance = await WebAssembly.instantiate(module, {
 - Configure server or use dev server that handles this
 
 ## Advanced Patterns
+
+### New in v0.7.0: Enhanced List Operations
+
+Hoot v0.7.0 includes full SRFI-1 support with destructive variants for performance:
+
+```scheme
+;; Import SRFI-1 with canonical naming (v0.7.0+)
+(import (scheme base)
+        (srfi srfi-1))  ; Note: use (srfi srfi-1) NOT (srfi :1)
+
+;; filter! - Destructive filtering (new in v0.7.0)
+(define my-list (list 1 2 3 4 5 6))
+(define evens (filter! even? my-list))
+;; evens => (2 4 6)
+;; Note: my-list is modified in place - use with caution!
+
+;; reverse! - Destructive reversal (new in v0.7.0)
+(define nums (list 1 2 3 4 5))
+(reverse! nums)
+;; nums => (5 4 3 2 1)
+;; Faster than reverse for performance-critical code
+
+;; Use cases for destructive operations:
+;; 1. Large lists where allocation is a bottleneck
+;; 2. Lists that won't be used again after operation
+;; 3. Inner loops in performance-critical sections
+
+;; Example: Efficient list processing pipeline
+(define (process-large-dataset data)
+  ;; Using destructive operations for performance
+  (let* ((filtered (filter! valid-item? data))
+         (sorted (sort! filtered item-comparator))
+         (reversed (reverse! sorted)))
+    reversed))
+
+;; with-fluids* - Dynamic binding (new in v0.7.0)
+;; Available in guile module for fluid variables
+(use-modules (guile))
+
+(define my-fluid (make-fluid))
+(with-fluids* (list my-fluid) (list "temporary value")
+  (lambda ()
+    (display (fluid-ref my-fluid))
+    (newline)))
+```
+
+### ArrayBuffer Module Loading (v0.7.0+)
+
+Hoot v0.7.0 enables loading modules from JavaScript ArrayBuffer and typed arrays:
+
+```scheme
+;; This is primarily a runtime feature - useful for dynamic module loading
+;; from network, IndexedDB, or other binary sources
+```
+
+JavaScript side:
+```javascript
+// Load Hoot module from ArrayBuffer (v0.7.0+)
+async function loadModuleFromArrayBuffer(arrayBuffer) {
+  // Fetch compiled Wasm module as ArrayBuffer
+  const moduleBytes = new Uint8Array(arrayBuffer);
+
+  // Hoot can now instantiate modules from typed arrays
+  const module = await WebAssembly.compile(moduleBytes);
+  const instance = await WebAssembly.instantiate(module, {
+    // user_imports here
+  });
+
+  return instance;
+}
+
+// Example: Load from IndexedDB
+async function loadCachedModule() {
+  const db = await openIndexedDB();
+  const transaction = db.transaction(['modules'], 'readonly');
+  const store = transaction.objectStore('modules');
+  const request = store.get('game-module');
+
+  request.onsuccess = async () => {
+    const arrayBuffer = request.result;
+    const instance = await loadModuleFromArrayBuffer(arrayBuffer);
+    // Use instance
+  };
+}
+
+// Example: Load from network with caching
+async function loadModuleWithCache(url) {
+  // Check cache first
+  const cached = await getCachedArrayBuffer(url);
+  if (cached) {
+    return loadModuleFromArrayBuffer(cached);
+  }
+
+  // Fetch and cache
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  await cacheArrayBuffer(url, arrayBuffer);
+
+  return loadModuleFromArrayBuffer(arrayBuffer);
+}
+```
 
 ### Using Inline WebAssembly
 ```scheme
@@ -1809,6 +2523,52 @@ When implementing Hoot features:
 Remember: Write clean, functional Scheme code that compiles to efficient WebAssembly and integrates seamlessly with browser environments. Prioritize small binaries, fast load times, and type-safe FFI boundaries.
 
 ## Version History
+
+### Hoot 0.7.0 (October 22, 2025)
+
+**Release Focus:** Module system improvements, Guile standard library integration, and R7RS compliance enhancements.
+
+**New Features:**
+- **Guile Standard Library Integration**: Guile's source module directory is now automatically added to Hoot's load path, enabling direct imports from Guile's standard library without manual configuration
+- **SRFI-1 Full Support**: Replaced stub SRFI-1 implementation with Guile's complete pure Scheme version, providing all list operations
+- **ArrayBuffer Loading**: Hoot modules can now load from JavaScript typed arrays and ArrayBuffer objects, enabling dynamic module loading from binary data
+- **BREAKING: Module Requirements**: Top-level programs MUST now start with `use-modules` or `import` forms - no more implicit module contexts
+- **R7RS Import Syntax**: Import forms now use R7RS syntax rules instead of R6RS for better R7RS-small compliance
+- **SRFI Library Name Canonicalization**: SRFI library names are now standardized - use `(srfi srfi-1)` instead of `(srfi :1)` for consistency
+- **New Procedures**:
+  - `filter!`: Destructive version of `filter` for efficient in-place list filtering
+  - `reverse!`: Destructive version of `reverse` for efficient in-place list reversal
+  - `with-fluids*`: Dynamic binding support added to guile module
+- **Record Type Printer**: Added printer support for record type descriptors, improving REPL debugging experience
+- **Environment Variable**: Documented `HOOT_LOAD_PATH` for customizing module search paths
+
+**Performance Improvements:**
+- Optimized `min` and `max` procedures for better numeric performance
+- Enhanced module loading efficiency
+
+**Bug Fixes:**
+- Fixed file permissions in bundled reflection libraries
+- Corrected hash code consistency for `equal?` objects
+- Fixed record type validation
+- Resolved R6RS rename syntax issues
+- Fixed module replace directives
+- Corrected string port handling
+- Fixed quasiquote compilation
+
+**Browser Compatibility:**
+- Firefox 121+
+- Chrome 119+
+- Safari 26+ (full support confirmed)
+
+**Installation:**
+- Available via GNU Guix or source tarball
+- Requires bleeding-edge Guile (Guile 3.0.10+)
+
+**Migration Guide:**
+- **BREAKING**: All top-level programs must now explicitly start with `(use-modules ...)` or `(import ...)` - implicit module contexts are no longer supported
+- Update SRFI imports: Change `(srfi :1)` → `(srfi srfi-1)`, `(srfi :9)` → `(srfi srfi-9)`, etc.
+- Set `HOOT_LOAD_PATH` if using custom module directories
+- Use `filter!` and `reverse!` for performance-critical list operations (destructive versions)
 
 ### Hoot 0.6.1 (May 6, 2025)
 
